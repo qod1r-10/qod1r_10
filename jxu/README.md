@@ -1,13 +1,9 @@
-# JXU panoramalari
+# JXU sayohati rasmlari
 
-Panorama rasmlarini shu papkaga quyidagi nomlar bilan yuklang:
+- 01-darvoza.jpg: bosh darvoza
+- 02-bino.jpg: asosiy bino
+- 03-hudud.jpg: hudud yuqoridan
+- 04-saf.jpg: tantanali saf
+- 05-basseyn.jpg: suzish havzasi
 
-- 01-darvoza.jpg
-- 02-kirish.jpg
-- 03-hol.jpg
-- 04-auditoriya.jpg
-- 05-kutubxona.jpg
-- 06-sport.jpg
-- 07-hovli.jpg
-
-Rasm bo'lmasa, sayohatda namuna rasm ko'rsatiladi.
+Rasmlar manbasi: abt.uz, Matbuot xizmati.

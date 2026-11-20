@@ -136,11 +136,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
         <button class="tool" id="btn-full" type="button">⛶</button>
       </div>
     </div>
-    <div style="display:flex;justify-content:center"><div class="demo-tag">Namuna: haqiqiy 360° rasmlar va ma'lumotlar keyin qo'yiladi</div></div>
+    <div style="display:flex;justify-content:center"><div class="demo-tag">Rasmlar: abt.uz, Matbuot xizmati · ba'zi ma'lumotlar keyin to'ldiriladi</div></div>
   </div>
   <div class="bottom">
     <div class="panel" id="panel">
-      <div class="step" id="p-step">01 / 07</div>
+      <div class="step" id="p-step">01 / 05</div>
       <h2 id="p-title">Bosh darvoza</h2>
       <p id="p-text"></p>
       <div class="hint">↔ Suring · 2 marta bosing: oldinga · 3 marta: orqaga</div>
@@ -166,34 +166,26 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
    hfov: rasm necha gradusni qamraydi (to'liq 360° panorama uchun 360).
    yaw: gorizontal burchak (0 = rasm markazi), pitch: vertikal burchak. */
 const SCENES = [
-  { id:"darvoza", name:"Bosh darvoza", kind:"out", hue:205, img:"jxu/01-darvoza.jpg", hfov:360, start:0,
+  { id:"darvoza", name:"Bosh darvoza", kind:"out", hue:205, img:"jxu/01-darvoza.jpg", hfov:115, start:0,
     text:"Sayohat shu yerdan boshlanadi. Universitet hududiga kirish shu darvoza orqali bo'ladi.",
-    info:[{yaw:32,pitch:-4,t:"Darvoza",d:"Universitet hududiga asosiy kirish joyi."},{yaw:120,pitch:4,t:"Nazorat punkti",d:"Kirish tartibi haqida ma'lumot shu yerga yoziladi."},{yaw:-120,pitch:4,t:"Hudud",d:"Universitet hududi va binolar joylashuvi haqida."},{yaw:-32,pitch:-4,t:"Yo'nalish",d:"Oldinga yuring: asosiy bino kirishi."}],
-    next:{yaw:0}, back:null },
-  { id:"kirish", name:"Asosiy bino kirishi", kind:"out", hue:190, img:"jxu/02-kirish.jpg", hfov:360, start:0,
-    text:"Asosiy o'quv binosiga kirish. Talabalar va mehmonlar shu yerdan ichkariga o'tadi.",
-    info:[{yaw:32,pitch:-4,t:"Asosiy bino",d:"Bino haqida: qavatlar soni, qurilgan yili."},{yaw:120,pitch:4,t:"Bayroq maydoni",d:"Bu joy haqida ma'lumot qo'shiladi."},{yaw:-120,pitch:4,t:"Mehmonlar uchun",d:"Qabul tartibi va ish vaqti haqida."},{yaw:-32,pitch:-4,t:"Tarix",d:"Universitet tarixi haqida qisqa ma'lumot."}],
-    next:{yaw:15}, back:{yaw:180} },
-  { id:"hol", name:"Asosiy hol", kind:"in", hue:220, img:"jxu/03-hol.jpg", hfov:360, start:0,
-    text:"Binoning markaziy holi. Bu yerdan auditoriyalar, kutubxona va boshqa bo'limlarga yo'l boshlanadi.",
-    info:[{yaw:32,pitch:-4,t:"Ma'lumot stendi",d:"Fakultetlar va yo'nalishlar ro'yxati."},{yaw:120,pitch:4,t:"Qavatlar",d:"Qaysi qavatda nima joylashgani."},{yaw:-120,pitch:4,t:"Yutuqlar",d:"Universitet yutuqlari va mukofotlari."},{yaw:-32,pitch:-4,t:"Talabalar hayoti",d:"To'garaklar va tadbirlar haqida."}],
-    next:{yaw:-20}, back:{yaw:180} },
-  { id:"auditoriya", name:"Auditoriya", kind:"in", hue:255, img:"jxu/04-auditoriya.jpg", hfov:360, start:0,
-    text:"Ma'ruza va seminar mashg'ulotlari o'tadigan o'quv xonasi.",
-    info:[{yaw:32,pitch:-4,t:"O'quv jarayoni",d:"Ta'lim yo'nalishlari va o'qitish usullari."},{yaw:120,pitch:4,t:"Jihozlar",d:"Proyektor, kompyuterlar va boshqa jihozlar."},{yaw:-120,pitch:4,t:"O'qituvchilar",d:"Professor-o'qituvchilar tarkibi haqida."},{yaw:-32,pitch:-4,t:"Dars jadvali",d:"Mashg'ulotlar qanday tashkil etilishi."}],
-    next:{yaw:25}, back:{yaw:180} },
-  { id:"kutubxona", name:"Kutubxona", kind:"in", hue:30, img:"jxu/05-kutubxona.jpg", hfov:360, start:0,
-    text:"Talabalar mustaqil o'qishi va tadqiqot qilishi uchun joy.",
-    info:[{yaw:32,pitch:-4,t:"Kitob fondi",d:"Kitoblar soni va elektron resurslar."},{yaw:120,pitch:4,t:"O'qish zali",d:"Mustaqil ta'lim uchun joylar soni."},{yaw:-120,pitch:4,t:"Elektron kutubxona",d:"Onlayn bazalardan foydalanish tartibi."},{yaw:-32,pitch:-4,t:"Ish vaqti",d:"Kutubxonaning ish vaqti."}],
-    next:{yaw:-10}, back:{yaw:180} },
-  { id:"sport", name:"Sport majmuasi", kind:"in", hue:150, img:"jxu/06-sport.jpg", hfov:360, start:0,
-    text:"Jismoniy tayyorgarlik mashg'ulotlari o'tadigan joy.",
-    info:[{yaw:32,pitch:-4,t:"Sport turlari",d:"Qaysi sport turlari bilan shug'ullanish mumkin."},{yaw:120,pitch:4,t:"Jismoniy tayyorgarlik",d:"Mashg'ulotlar qanday o'tishi haqida."},{yaw:-120,pitch:4,t:"Musobaqalar",d:"Talabalar ishtirok etgan musobaqalar."},{yaw:-32,pitch:-4,t:"Jihozlar",d:"Sport zali jihozlari haqida."}],
-    next:{yaw:10}, back:{yaw:180} },
-  { id:"hovli", name:"Universitet hovlisi", kind:"out", hue:165, img:"jxu/07-hovli.jpg", hfov:360, start:0,
-    text:"Sayohat yakuni. Talabalar dam oladigan va tadbirlar o'tadigan ochiq maydon.",
-    info:[{yaw:32,pitch:-4,t:"Tadbirlar",d:"Universitetda o'tadigan tadbirlar."},{yaw:120,pitch:4,t:"Dam olish",d:"Talabalar dam oladigan joylar."},{yaw:-120,pitch:4,t:"Bitiruvchilar",d:"Bitiruvchilar qayerlarda ishlashi."},{yaw:-32,pitch:-4,t:"Sayohat yakuni",d:"Rahmat! Ikki marta bosib boshiga qayting."}],
-    next:null, back:{yaw:180} }
+    info:[{yaw:-34,pitch:16,t:"Lavha",d:"Qora granit lavhada oltin harflar: O'zbekiston Respublikasi Jamoat xavfsizligi universiteti."},{yaw:34,pitch:16,t:"Bosh darvoza",d:"Naqshinkor temir darvoza universitet hududiga olib kiradi."},{yaw:-48,pitch:2,t:"Gerb",d:"Lavhadagi dumaloq belgi universitet ramzi."},{yaw:48,pitch:0,t:"Bayroqlar",d:"Darvoza yonida O'zbekiston bayroqlari hilpiraydi."}],
+    next:{yaw:0,pitch:-20}, back:null },
+  { id:"bino", name:"Asosiy bino", kind:"out", hue:30, img:"jxu/02-bino.jpg", hfov:125, start:0,
+    text:"Darvozadan o'tgach, ko'z oldingizda universitetning asosiy binosi paydo bo'ladi.",
+    info:[{yaw:-34,pitch:16,t:"Darvoza ichkaridan",d:"Chap tomonda biz hozir kirgan darvoza."},{yaw:34,pitch:16,t:"Asosiy bino",d:"Hududdagi asosiy binolardan biri."},{yaw:-48,pitch:2,t:"Xiyobon",d:"Bino oldida archalar va gulzorlar bilan yashil xiyobon."},{yaw:48,pitch:0,t:"Yo'lak",d:"Naqshli tosh yo'laklar hudud bo'ylab olib boradi."}],
+    next:{yaw:0,pitch:-20}, back:{yaw:22,pitch:-26} },
+  { id:"hudud", name:"Hudud yuqoridan", kind:"out", hue:150, img:"jxu/03-hudud.jpg", hfov:120, start:0,
+    text:"Universitet hududiga yuqoridan nazar: o'quv binolari, saf maydoni va yashil xiyobonlar.",
+    info:[{yaw:-34,pitch:16,t:"Saf maydoni",d:"Binolar orasidagi katta ochiq maydon. Bu yerda tantanali saflar o'tadi."},{yaw:34,pitch:16,t:"O'quv binolari",d:"Maydonni o'rab turgan ko'p qavatli binolar."},{yaw:-48,pitch:2,t:"Yashil hudud",d:"Daraxtlar va maysazorlar hududni o'rab turadi."},{yaw:48,pitch:0,t:"Bayroq ustunlari",d:"Maydon chetida bir qator bayroq ustunlari."}],
+    next:{yaw:0,pitch:-20}, back:{yaw:22,pitch:-26} },
+  { id:"saf", name:"Tantanali saf", kind:"out", hue:120, img:"jxu/04-saf.jpg", hfov:105, start:0,
+    text:"Saf maydonida tantanali tadbir: talabalar saf tortgan.",
+    info:[{yaw:-34,pitch:16,t:"Tantanali saf",d:"Talabalar maydonda saf tortib, tadbirda qatnashmoqda."},{yaw:34,pitch:16,t:"Bino fasadi",d:"Orqadagi bino bayroqlar bilan bezatilgan."},{yaw:-48,pitch:2,t:"Forma",d:"Talabalar tantanali formada."},{yaw:48,pitch:0,t:"Tadbirlar",d:"Bu yerga tadbir nomi va sanasi yoziladi."}],
+    next:{yaw:0,pitch:-20}, back:{yaw:22,pitch:-26} },
+  { id:"basseyn", name:"Suzish havzasi", kind:"out", hue:195, img:"jxu/05-basseyn.jpg", hfov:120, start:0,
+    text:"Sport majmuasidagi yopiq suzish havzasi. Sayohat yakuni.",
+    info:[{yaw:-34,pitch:16,t:"Yopiq havza",d:"Ko'k plitkali katta yopiq suzish havzasi."},{yaw:34,pitch:16,t:"Sakrash minorasi",d:"Havzaning narigi tomonida sakrash minorasi bor."},{yaw:-48,pitch:2,t:"Tomoshabinlar",d:"Ikki yondagi balkonlar tomoshabinlar uchun."},{yaw:48,pitch:0,t:"Sayohat yakuni",d:"Rahmat! 2 marta bosib, boshiga qayting."}],
+    next:null, back:{yaw:22,pitch:-26} }
 ];
 
 /* ---------- Namuna panorama chizish ---------- */
@@ -254,9 +246,10 @@ const mesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMater
 scene3.add(mesh);
 
 const D = Math.PI / 180;
-let lon = 0, lat = 0, fov = 75, cur = 0, busy = false, auto = true, lastTouch = 0, limits = { hfov:360, vfov:180 };
+let autoDir = 1, lon = 0, lat = 0, fov = 75, cur = 0, busy = false, auto = true, lastTouch = 0, limits = { hfov:360, vfov:180 };
 const cache = {};
 
+function baseFov(){ return limits.hfov < 360 ? Math.min(75, limits.vfov*0.9) : 75; }
 function dir(yaw, pitch){ const p = Math.PI + yaw*D, t = pitch*D; return new THREE.Vector3(Math.cos(p)*Math.cos(t), Math.sin(t), Math.sin(p)*Math.cos(t)); }
 
 function loadScene(i){
@@ -291,15 +284,15 @@ function buildSpots(i){
     const b = document.createElement("button"); b.type = "button"; b.className = "hs walk";
     b.innerHTML = `<span class="ring">${ARROW}</span><span class="lbl">${SCENES[i+1].name} →</span>`;
     b.setAttribute("aria-label", "Keyingi joy: " + SCENES[i+1].name);
-    b.onclick = e => { e.stopPropagation(); go(i+1, s.next.yaw, -18); };
-    add(b, s.next.yaw, -18);
+    b.onclick = e => { e.stopPropagation(); go(i+1, s.next.yaw, s.next.pitch); };
+    add(b, s.next.yaw, s.next.pitch);
   }
   if (s.back){
     const b = document.createElement("button"); b.type = "button"; b.className = "hs walk back";
     b.innerHTML = `<span class="ring">${ARROW}</span><span class="lbl">← ${SCENES[i-1].name}</span>`;
     b.setAttribute("aria-label", "Orqaga: " + SCENES[i-1].name);
-    b.onclick = e => { e.stopPropagation(); go(i-1, s.back.yaw, -22); };
-    add(b, s.back.yaw, -22);
+    b.onclick = e => { e.stopPropagation(); go(i-1, s.back.yaw, s.back.pitch); };
+    add(b, s.back.yaw, s.back.pitch);
   }
   s.info.forEach(n => {
     const b = document.createElement("div"); b.className = "hs note";
@@ -317,7 +310,9 @@ function placeSpots(){
     const x = (tmp.x + 1) / 2 * w, y = (1 - tmp.y) / 2 * h;
     if (!visible || x < -150 || x > w + 150 || y < -150 || y > h + 150){ s.el.style.display = "none"; continue; }
     s.el.style.display = "";
-    s.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+    let px = x;
+    if (s.el.classList.contains("note")){ const hw = s.el.offsetWidth/2 + 12; px = Math.max(hw, Math.min(w - hw, x)); }
+    s.el.style.transform = `translate(${px}px, ${y}px) translate(-50%, -50%)`;
   }
 }
 
@@ -355,9 +350,9 @@ async function go(i, yaw, pitch){
     await tween(700, k => { fov = f0 + (28 - f0)*k; fade.style.opacity = k; });            // oldinga yurish
   }
   const d = await next; applyScene(d); cur = i; buildSpots(i);
-  lon = SCENES[i].start; lat = 0; fov = reduce ? 75 : 100;
+  lon = SCENES[i].start; lat = 0; const bf = baseFov(); fov = reduce ? bf : bf*1.35;
   updatePanel(i, false);
-  if (!reduce) await tween(800, k => { fov = 100 - 25*k; fade.style.opacity = 1 - k; });
+  if (!reduce) await tween(900, k => { fov = bf*1.35 - bf*0.35*k; fade.style.opacity = 1 - k; });
   fade.style.opacity = 0; busy = false; setTimeout(() => panel.classList.remove("out"), 60);
 }
 
@@ -375,7 +370,7 @@ view.addEventListener("pointerup", e => {
   taps++; clearTimeout(tapTimer);
   tapTimer = setTimeout(() => { if (taps === 2) forward(); else if (taps >= 3) backward(); taps = 0; }, 380);
 }); view.addEventListener("pointercancel", endDrag);
-view.addEventListener("wheel", e => { e.preventDefault(); if (!busy) fov = Math.max(35, Math.min(95, fov + e.deltaY * 0.05)); }, { passive:false });
+view.addEventListener("wheel", e => { e.preventDefault(); if (!busy) fov = Math.max(30, fov + e.deltaY * 0.05); }, { passive:false });
 addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") lon -= 5; if (e.key === "ArrowRight") lon += 5;
   if (e.key === "ArrowUp" && SCENES[cur].next) go(cur+1, SCENES[cur].next.yaw, -18);
@@ -414,10 +409,16 @@ function resize(){ renderer.setSize(innerWidth, innerHeight); camera.aspect = in
 addEventListener("resize", resize); resize();
 function loop(){
   requestAnimationFrame(loop);
-  if (auto && !drag && !busy && !gyro && performance.now() - lastTouch > 2500 && !reduce) lon += 0.035;
-  const vmax = Math.max(0, limits.vfov/2 - fov/2 * 0.9);
-  lat = Math.max(-Math.min(85, vmax), Math.min(Math.min(85, vmax), lat));
-  if (limits.hfov < 360){ const hmax = Math.max(0, limits.hfov/2 - fov*camera.aspect/2*0.9); lon = Math.max(-hmax, Math.min(hmax, lon)); }
+  const partial = limits.hfov < 360;
+  if (!busy) fov = Math.min(fov, partial ? limits.vfov*0.95 : 95);
+  const hv = 2*Math.atan(Math.tan(fov*D/2)*camera.aspect)/D;
+  const vmax = Math.max(0, Math.min(85, limits.vfov/2 - fov/2));
+  const hmax = partial ? Math.max(0, limits.hfov/2 - hv/2) : Infinity;
+  if (auto && !drag && !busy && !gyro && performance.now() - lastTouch > 2500 && !reduce){
+    lon += 0.04 * autoDir;
+    if (partial && Math.abs(lon) >= hmax){ autoDir = lon > 0 ? -1 : 1; }
+  }
+  if (!busy){ lat = Math.max(-vmax, Math.min(vmax, lat)); if (partial) lon = Math.max(-hmax, Math.min(hmax, lon)); }
   camera.fov = fov; camera.updateProjectionMatrix();
   camera.lookAt(dir(lon, lat));
   renderer.render(scene3, camera);
