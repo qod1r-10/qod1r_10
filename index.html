@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Qodirbek Sobirov</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Qodirbek Sobirov — iqtisodiy xavfsizlik talabasi, Python, matematika, tillar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Manrope:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&text=%E5%AE%89%E5%85%A8%E7%BB%8F%E6%B5%8E%E5%85%B3%E4%BA%8E%E6%8A%80%E8%83%BD%E8%AF%AD%E8%A8%80%E6%96%87%E7%AB%A0%E8%81%94%E7%B3%BB%E4%B8%AD%E6%88%91%E5%9C%A8%E5%AD%A6&display=swap">
+<style>
+/* Layout: a personal "balance sheet" — ledger rows and account totals, punctuated by Chinese section seals */
+:root{
+  --paper:#F1F4F3; --sheet:#FBFCFC; --ink:#0E1A24; --muted:#56666C; --rule:#C9D3D1;
+  --jade:#0A7560; --jade-soft:#D7ECE6; --seal:#C2362B; --seal-ink:#FFF6F3;
+  --f-display:"Bricolage Grotesque", "Manrope", system-ui, sans-serif;
+  --f-body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-han:"Noto Serif SC", "Songti SC", "SimSun", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0B1317; --sheet:#111C21; --ink:#E4EBE9; --muted:#8C9D9F; --rule:#24353B;
+  --jade:#46C7A3; --jade-soft:#123129; --seal:#E05447; --seal-ink:#1A0907; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0B1317; --sheet:#111C21; --ink:#E4EBE9; --muted:#8C9D9F; --rule:#24353B;
+  --jade:#46C7A3; --jade-soft:#123129; --seal:#E05447; --seal-ink:#1A0907; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.6 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+a{color:var(--jade);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--jade);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1080px;margin:0 auto}
+
+/* top bar */
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:20px;flex-wrap:wrap}
+.mark{font:500 13px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mark b{color:var(--ink);font-weight:500}
+.langs{display:flex;border:1px solid var(--rule);border-radius:999px;padding:3px;background:var(--sheet)}
+.langs button{font:500 13px/1 var(--f-mono);letter-spacing:.06em;border:0;background:none;color:var(--muted);
+  padding:8px 14px;border-radius:999px;cursor:pointer}
+.langs button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.25fr 1fr;gap:48px;align-items:end;padding-block:40px 64px;border-bottom:2px solid var(--ink)}
+.hero > *{min-width:0}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--jade)}
+h1{font:800 clamp(52px, 9vw, 112px)/.9 var(--f-display);letter-spacing:-.035em;margin:18px 0 22px;text-wrap:balance}
+h1 .ln{display:block}
+h1 .ln:last-child{color:var(--jade)}
+.lede{font-size:clamp(17px, 2vw, 20px);max-width:34ch;color:var(--ink);margin:0}
+.lede span{color:var(--muted)}
+
+.statement{position:relative;background:var(--sheet);border:1px solid var(--rule);padding:26px 24px 18px}
+.statement h2{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.row{display:grid;grid-template-columns:1fr auto;gap:16px;padding:10px 0;border-top:1px dashed var(--rule);align-items:baseline}
+.row dt{color:var(--muted);font-size:14px}
+.row dd{margin:0;font:500 15px/1.3 var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.row.total{border-top:2px solid var(--ink);margin-top:6px}
+.row.total dt{color:var(--ink);font-weight:700}
+.row.total dd{color:var(--jade)}
+.seal{position:absolute;top:-30px;right:-14px;width:76px;height:76px;background:var(--seal);color:var(--seal-ink);
+  display:grid;place-items:center;font:900 44px/1 var(--f-han);border-radius:8px;transform:rotate(-8deg);
+  box-shadow:inset 0 0 0 4px var(--seal),inset 0 0 0 6px var(--seal-ink);animation:stamp .7s cubic-bezier(.2,1.6,.4,1) .3s both}
+@keyframes stamp{from{transform:rotate(-20deg) scale(1.6);opacity:.2}to{transform:rotate(-8deg) scale(1);opacity:1}}
+
+/* sections */
+section{display:grid;grid-template-columns:180px 1fr;gap:40px;padding-block:64px;border-bottom:1px solid var(--rule)}
+section > *{min-width:0}
+.sec-head{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 24px);align-self:start}
+.han{font:900 64px/1 var(--f-han);color:var(--ink);display:block;letter-spacing:.02em}
+.sec-head h2{font:600 15px/1.3 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 0}
+h3{font:600 clamp(26px, 3.4vw, 36px)/1.15 var(--f-display);letter-spacing:-.02em;margin:0 0 18px;text-wrap:balance}
+p{max-width:64ch}
+
+.facts{display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:28px}
+.fact{background:var(--sheet);padding:18px}
+.fact small{display:block;font:500 11px/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fact strong{display:block;font:600 19px/1.3 var(--f-display);margin-top:6px}
+
+/* ledger table */
+.ledger{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ledger th{font:500 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 0 12px;border-bottom:2px solid var(--ink)}
+.ledger th:last-child,.ledger td:last-child{text-align:right}
+.ledger td{padding:16px 0;border-bottom:1px dashed var(--rule);vertical-align:middle}
+.ledger td:first-child{font-weight:700;padding-right:16px}
+.ledger td:first-child span{display:block;font-weight:400;font-size:13px;color:var(--muted)}
+.meter{width:100%;min-width:90px;height:8px;background:var(--jade-soft);border-radius:2px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--jade);width:var(--v);transform-origin:left;animation:grow 1s ease-out .2s both}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ledger td:nth-child(2){width:45%;padding-right:20px}
+.pct{font:500 14px/1 var(--f-mono)}
+
+/* languages */
+.langs-grid{display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:16px}
+.lang{border:1px solid var(--rule);background:var(--sheet);padding:20px;display:flex;flex-direction:column;gap:10px}
+.lang .glyph{font:800 30px/1 var(--f-display)}
+.lang .glyph.zh{font-family:var(--f-han);font-weight:900}
+.lang b{font-size:15px}
+.lang small{color:var(--muted);font-size:13px;line-height:1.4}
+.hsk{display:grid;grid-template-columns:repeat(6, 1fr);gap:3px;margin-top:auto}
+.hsk i{height:22px;border:1px solid var(--rule);display:grid;place-items:center;font:500 10px/1 var(--f-mono);font-style:normal;color:var(--muted)}
+.hsk i.on{background:var(--seal);border-color:var(--seal);color:var(--seal-ink)}
+.hsk-cap{font:500 11px/1.3 var(--f-mono);letter-spacing:.06em;color:var(--muted)}
+
+/* articles */
+.articles{display:flex;flex-direction:column}
+.art{display:grid;grid-template-columns:64px 1fr auto;gap:20px;padding:22px 0;border-top:1px dashed var(--rule);align-items:start}
+.art:first-child{border-top:2px solid var(--ink)}
+.art .no{font:500 13px/1.6 var(--f-mono);color:var(--muted)}
+.art h4{font:600 19px/1.35 var(--f-display);margin:0 0 6px}
+.art p{margin:0;color:var(--muted);font-size:14px}
+.art .tag{font:500 12px/1 var(--f-mono);white-space:nowrap;padding:7px 10px;border:1px solid var(--jade);color:var(--jade);text-decoration:none;border-radius:2px}
+.art.pending h4{color:var(--muted);font-weight:400;font-style:italic}
+
+/* contact */
+.contacts{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.c{background:var(--sheet);padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;text-decoration:none;color:var(--ink);transition:background .2s}
+a.c:hover{background:var(--jade-soft)}
+.c small{display:block;font:500 11px/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.c strong{font:600 18px/1.3 var(--f-display);word-break:break-all}
+.c .arr{font:500 18px/1 var(--f-mono);color:var(--jade)}
+.copy{font:500 12px/1 var(--f-mono);border:1px solid var(--rule);background:var(--paper);color:var(--ink);padding:8px 12px;cursor:pointer;border-radius:2px;white-space:nowrap}
+.copy:hover{border-color:var(--jade);color:var(--jade)}
+
+footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:28px 40px;font:500 12px/1.5 var(--f-mono);color:var(--muted);letter-spacing:.04em}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;gap:56px}
+  section{grid-template-columns:1fr;gap:22px}
+  .sec-head{position:static;display:flex;align-items:baseline;gap:16px}
+  .han{font-size:44px}
+  .sec-head h2{margin:0}
+  .langs-grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
+}
+@media (max-width:540px){
+  .facts{grid-template-columns:1fr 1fr}
+  .contacts{grid-template-columns:1fr}
+  .art{grid-template-columns:1fr;gap:8px}
+  .art .tag{justify-self:start}
+  .ledger td:nth-child(2){width:38%}
+  .seal{right:6px;width:64px;height:64px;font-size:36px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="mark"><b>qod1r_10</b> · <span data-i="mark">Shaxsiy balans</span> 2026</div>
+    <div class="langs" role="group" aria-label="Language">
+      <button type="button" id="btn-uz" data-lang="uz" aria-pressed="true">UZ</button>
+      <button type="button" id="btn-ru" data-lang="ru" aria-pressed="false">RU</button>
+      <button type="button" id="btn-en" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow" data-i="eyebrow">Iqtisodiy xavfsizlik · 3-kurs talabasi</div>
+      <h1><span class="ln">Qodirbek</span><span class="ln">Sobirov</span></h1>
+      <p class="lede" data-i="lede">Iqtisodiyotni raqamlar bilan tushunaman, <span>uni kod bilan himoya qilishni o'rganyapman.</span></p>
+    </div>
+    <div class="statement" aria-label="Summary">
+      <div class="seal" aria-hidden="true">安</div>
+      <h2 data-i="st.title">Qisqa hisobot</h2>
+      <dl style="margin:0">
+        <div class="row"><dt data-i="st.born">Tug'ilgan</dt><dd data-i="st.bornv">2006 · Toshkent</dd></div>
+        <div class="row"><dt data-i="st.course">Kurs</dt><dd>III</dd></div>
+        <div class="row"><dt data-i="st.code">Dasturlash</dt><dd>Python · C++</dd></div>
+        <div class="row"><dt data-i="st.langs">Tillar</dt><dd>UZ · EN · RU · 中文</dd></div>
+        <div class="row"><dt data-i="st.pubs">Ilmiy maqolalar</dt><dd>4</dd></div>
+        <div class="row total"><dt data-i="st.total">Jami aktiv</dt><dd data-i="st.totalv">o'sishda ↗</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <section id="about">
+    <div class="sec-head"><span class="han" aria-hidden="true">关于</span><h2 data-i="s1">Men haqimda</h2></div>
+    <div>
+      <h3 data-i="about.h">Iqtisodiyot, matematika va kod kesishgan joyda</h3>
+      <p data-i="about.p1">Men Jamoat xavfsizligi universitetida iqtisodiy xavfsizlik yo'nalishida tahsil olaman. Meni iqtisodiy jarayonlardagi xavflarni raqamlar orqali ko'rish va ularni oldindan aniqlash qiziqtiradi.</p>
+      <p data-i="about.p2">Parallel ravishda School 21 dasturlash maktabining asosiy ta'lim bosqichida o'qiyapman: u yerda C va C++ da loyihalar qilib, mustaqil va jamoada ishlashni o'rganaman. Python esa ma'lumotlarni tahlil qilishdagi asosiy vositam.</p>
+      <div class="facts">
+        <div class="fact"><small data-i="f1">Universitet</small><strong data-i="f1v">Iqtisodiy xavfsizlik</strong></div>
+        <div class="fact"><small data-i="f2">Dasturlash</small><strong data-i="f2v">School 21 · asosiy ta'lim</strong></div>
+        <div class="fact"><small data-i="f3">Kuchli tomon</small><strong data-i="f3v">Matematika</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="sec-head"><span class="han" aria-hidden="true">技能</span><h2 data-i="s2">Ko'nikmalar</h2></div>
+    <div>
+      <h3 data-i="skills.h">Aktivlar balansi</h3>
+      <div style="overflow-x:auto">
+        <table class="ledger">
+          <thead><tr><th data-i="t.asset">Aktiv</th><th data-i="t.level">Daraja</th><th data-i="t.value">Qiymat</th></tr></thead>
+          <tbody>
+            <tr><td>Python<span data-i="sk.py">Tahlil, avtomatlashtirish</span></td><td><div class="meter"><i style="--v:80%"></i></div></td><td class="pct">80%</td></tr>
+            <tr><td data-i-html="sk.mathrow">Matematika<span>Statistika, mantiq, modellar</span></td><td><div class="meter"><i style="--v:85%"></i></div></td><td class="pct">85%</td></tr>
+            <tr><td>C++<span data-i="sk.cpp">Qisman · School 21 da o'rganyapman</span></td><td><div class="meter"><i style="--v:45%"></i></div></td><td class="pct">45%</td></tr>
+            <tr><td data-i-html="sk.econrow">Iqtisodiy tahlil<span>Xavflarni baholash, tadqiqot</span></td><td><div class="meter"><i style="--v:70%"></i></div></td><td class="pct">70%</td></tr>
+            <tr><td data-i-html="sk.writerow">Ilmiy yozish<span>4 ta nashr etilgan maqola</span></td><td><div class="meter"><i style="--v:75%"></i></div></td><td class="pct">75%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="languages">
+    <div class="sec-head"><span class="han" aria-hidden="true">语言</span><h2 data-i="s3">Tillar</h2></div>
+    <div class="langs-grid">
+      <div class="lang"><span class="glyph">O'z</span><b data-i="l.uz">O'zbek tili</b><small data-i="l.uzv">Ona tili</small></div>
+      <div class="lang"><span class="glyph">En</span><b data-i="l.en">Ingliz tili</b><small data-i="l.good">Yaxshi daraja</small></div>
+      <div class="lang"><span class="glyph">Ру</span><b data-i="l.ru">Rus tili</b><small data-i="l.good2">Yaxshi daraja</small></div>
+      <div class="lang"><span class="glyph zh">中文</span><b data-i="l.zh">Xitoy tili</b><small data-i="l.zhv">O'rganyapman</small>
+        <div class="hsk" aria-label="HSK 2 / 6"><i class="on">1</i><i class="on">2</i><i>3</i><i>4</i><i>5</i><i>6</i></div>
+        <span class="hsk-cap">HSK 2 / 6</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="articles">
+    <div class="sec-head"><span class="han" aria-hidden="true">文章</span><h2 data-i="s4">Maqolalar</h2></div>
+    <div>
+      <h3 data-i="art.h">Investitsiyalar: 4 ta ilmiy maqola</h3>
+      <div class="articles">
+        <article class="art">
+          <span class="no">2026</span>
+          <div>
+            <h4>Artificial Intelligence in the Economy: Productivity, Investment, Labor-Market Transformation, and Policy Priorities</h4>
+            <p>Vol. 12, No. 7 · July 2026 · pp. 813–827</p>
+          </div>
+          <a class="tag" href="813-827%20(1).pdf" target="_blank" rel="noopener">PDF ↗</a>
+        </article>
+        <article class="art pending"><span class="no">№ 2</span><div><h4 data-i="art.soon">Maqola nomi tez orada qo'shiladi</h4></div><span></span></article>
+        <article class="art pending"><span class="no">№ 3</span><div><h4 data-i="art.soon2">Maqola nomi tez orada qo'shiladi</h4></div><span></span></article>
+        <article class="art pending"><span class="no">№ 4</span><div><h4 data-i="art.soon3">Maqola nomi tez orada qo'shiladi</h4></div><span></span></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="sec-head"><span class="han" aria-hidden="true">联系</span><h2 data-i="s5">Aloqa</h2></div>
+    <div>
+      <h3 data-i="c.h">Hamkorlik yoki savol bo'lsa, yozing</h3>
+      <div class="contacts">
+        <a class="c" href="https://t.me/qod1r_10" target="_blank" rel="noopener"><div><small>Telegram</small><strong>@qod1r_10</strong></div><span class="arr">↗</span></a>
+        <a class="c" href="https://instagram.com/qod1r_10" target="_blank" rel="noopener"><div><small>Instagram</small><strong>@qod1r_10</strong></div><span class="arr">↗</span></a>
+        <a class="c" href="https://github.com/qod1r-10" target="_blank" rel="noopener"><div><small>GitHub</small><strong>qod1r-10</strong></div><span class="arr">↗</span></a>
+        <div class="c"><div><small>Email</small><strong id="email">jxuish@gmail.com</strong></div><button type="button" class="copy" id="copy-email" data-i="c.copy">Nusxalash</button></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Qodirbek Sobirov</span>
+    <span data-i="foot">Toshkent · 我在学中文</span>
+  </footer>
+</div>
+
+<script>
+const T = {
+  uz: {
+    mark:"Shaxsiy balans", eyebrow:"Iqtisodiy xavfsizlik · 3-kurs talabasi",
+    lede:"Iqtisodiyotni raqamlar bilan tushunaman, <span>uni kod bilan himoya qilishni o'rganyapman.</span>",
+    "st.title":"Qisqa hisobot","st.born":"Tug'ilgan","st.bornv":"2006 · Toshkent","st.course":"Kurs","st.code":"Dasturlash","st.langs":"Tillar","st.pubs":"Ilmiy maqolalar","st.total":"Jami aktiv","st.totalv":"o'sishda ↗",
+    s1:"Men haqimda","about.h":"Iqtisodiyot, matematika va kod kesishgan joyda",
+    "about.p1":"Men Jamoat xavfsizligi universitetida iqtisodiy xavfsizlik yo'nalishida tahsil olaman. Meni iqtisodiy jarayonlardagi xavflarni raqamlar orqali ko'rish va ularni oldindan aniqlash qiziqtiradi.",
+    "about.p2":"Parallel ravishda School 21 dasturlash maktabining asosiy ta'lim bosqichida o'qiyapman: u yerda C va C++ da loyihalar qilib, mustaqil va jamoada ishlashni o'rganaman. Python esa ma'lumotlarni tahlil qilishdagi asosiy vositam.",
+    f1:"Universitet",f1v:"Iqtisodiy xavfsizlik",f2:"Dasturlash",f2v:"School 21 · asosiy ta'lim",f3:"Kuchli tomon",f3v:"Matematika",
+    s2:"Ko'nikmalar","skills.h":"Aktivlar balansi","t.asset":"Aktiv","t.level":"Daraja","t.value":"Qiymat",
+    "sk.py":"Tahlil, avtomatlashtirish","sk.mathrow":"Matematika<span>Statistika, mantiq, modellar</span>","sk.cpp":"Qisman · School 21 da o'rganyapman",
+    "sk.econrow":"Iqtisodiy tahlil<span>Xavflarni baholash, tadqiqot</span>","sk.writerow":"Ilmiy yozish<span>4 ta nashr etilgan maqola</span>",
+    s3:"Tillar","l.uz":"O'zbek tili","l.uzv":"Ona tili","l.en":"Ingliz tili","l.good":"Yaxshi daraja","l.ru":"Rus tili","l.good2":"Yaxshi daraja","l.zh":"Xitoy tili","l.zhv":"O'rganyapman",
+    s4:"Maqolalar","art.h":"Investitsiyalar: 4 ta ilmiy maqola","art.soon":"Maqola nomi tez orada qo'shiladi","art.soon2":"Maqola nomi tez orada qo'shiladi","art.soon3":"Maqola nomi tez orada qo'shiladi",
+    s5:"Aloqa","c.h":"Hamkorlik yoki savol bo'lsa, yozing","c.copy":"Nusxalash","c.copied":"Nusxalandi",foot:"Toshkent · 我在学中文"
+  },
+  ru: {
+    mark:"Личный баланс", eyebrow:"Экономическая безопасность · студент 3 курса",
+    lede:"Понимаю экономику через цифры, <span>учусь защищать её с помощью кода.</span>",
+    "st.title":"Краткий отчёт","st.born":"Родился","st.bornv":"2006 · Ташкент","st.course":"Курс","st.code":"Программирование","st.langs":"Языки","st.pubs":"Научные статьи","st.total":"Итого активы","st.totalv":"в росте ↗",
+    s1:"Обо мне","about.h":"На стыке экономики, математики и кода",
+    "about.p1":"Я учусь в Университете общественной безопасности по направлению «Экономическая безопасность». Меня интересует, как увидеть экономические риски через данные и распознать их заранее.",
+    "about.p2":"Параллельно прохожу основное обучение в школе программирования School 21: делаю проекты на C и C++ и учусь работать самостоятельно и в команде. Python — мой основной инструмент для анализа данных.",
+    f1:"Университет",f1v:"Экономическая безопасность",f2:"Программирование",f2v:"School 21 · основное обучение",f3:"Сильная сторона",f3v:"Математика",
+    s2:"Навыки","skills.h":"Баланс активов","t.asset":"Актив","t.level":"Уровень","t.value":"Оценка",
+    "sk.py":"Анализ, автоматизация","sk.mathrow":"Математика<span>Статистика, логика, модели</span>","sk.cpp":"Частично · изучаю в School 21",
+    "sk.econrow":"Экономический анализ<span>Оценка рисков, исследования</span>","sk.writerow":"Научное письмо<span>4 опубликованные статьи</span>",
+    s3:"Языки","l.uz":"Узбекский","l.uzv":"Родной","l.en":"Английский","l.good":"Хороший уровень","l.ru":"Русский","l.good2":"Хороший уровень","l.zh":"Китайский","l.zhv":"Изучаю",
+    s4:"Статьи","art.h":"Инвестиции: 4 научные статьи","art.soon":"Название статьи скоро появится","art.soon2":"Название статьи скоро появится","art.soon3":"Название статьи скоро появится",
+    s5:"Контакты","c.h":"Есть идея или вопрос — напишите","c.copy":"Копировать","c.copied":"Скопировано",foot:"Ташкент · 我在学中文"
+  },
+  en: {
+    mark:"Personal balance sheet", eyebrow:"Economic security · 3rd-year student",
+    lede:"I read the economy through numbers <span>and I'm learning to protect it with code.</span>",
+    "st.title":"Summary statement","st.born":"Born","st.bornv":"2006 · Tashkent","st.course":"Year","st.code":"Programming","st.langs":"Languages","st.pubs":"Research papers","st.total":"Total assets","st.totalv":"growing ↗",
+    s1:"About","about.h":"Where economics, mathematics and code meet",
+    "about.p1":"I study Economic Security at the University of Public Safety. I'm interested in spotting economic risks through data and identifying them before they happen.",
+    "about.p2":"Alongside university I'm in the core program of School 21, a peer-to-peer coding school, building projects in C and C++ and learning to work both independently and in teams. Python is my main tool for data analysis.",
+    f1:"University",f1v:"Economic Security",f2:"Programming",f2v:"School 21 · core program",f3:"Strength",f3v:"Mathematics",
+    s2:"Skills","skills.h":"Asset ledger","t.asset":"Asset","t.level":"Level","t.value":"Value",
+    "sk.py":"Analysis, automation","sk.mathrow":"Mathematics<span>Statistics, logic, models</span>","sk.cpp":"Partial · learning at School 21",
+    "sk.econrow":"Economic analysis<span>Risk assessment, research</span>","sk.writerow":"Academic writing<span>4 published papers</span>",
+    s3:"Languages","l.uz":"Uzbek","l.uzv":"Native","l.en":"English","l.good":"Good command","l.ru":"Russian","l.good2":"Good command","l.zh":"Chinese","l.zhv":"Learning",
+    s4:"Papers","art.h":"Investments: 4 research papers","art.soon":"Title coming soon","art.soon2":"Title coming soon","art.soon3":"Title coming soon",
+    s5:"Contact","c.h":"Have an idea or a question? Write to me","c.copy":"Copy","c.copied":"Copied",foot:"Tashkent · 我在学中文"
+  }
+};
+let cur = "uz";
+function setLang(l){
+  if(!T[l]) l = "uz";
+  cur = l;
+  document.documentElement.lang = l;
+  document.querySelectorAll("[data-i]").forEach(el => { const v = T[l][el.dataset.i]; if(v!=null) el.innerHTML = v; });
+  document.querySelectorAll("[data-i-html]").forEach(el => { const v = T[l][el.dataset.iHtml]; if(v!=null) el.innerHTML = v; });
+  document.querySelectorAll(".langs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang===l));
+  try{ localStorage.setItem("lang", l); }catch(e){}
+}
+document.querySelectorAll(".langs button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+let saved = null; try{ saved = localStorage.getItem("lang"); }catch(e){}
+if(!saved){ const n = (navigator.language||"").slice(0,2); saved = n==="ru" ? "ru" : n==="en" ? "en" : "uz"; }
+setLang(saved);
+
+document.getElementById("copy-email").addEventListener("click", e => {
+  const btn = e.currentTarget, txt = document.getElementById("email").textContent;
+  const done = () => { btn.textContent = T[cur]["c.copied"]; setTimeout(() => btn.textContent = T[cur]["c.copy"], 1600); };
+  const sel = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("email")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  try{ navigator.clipboard.writeText(txt).then(done, sel); }catch(err){ sel(); }
+});
+</script>
+</body>
+</html>
