@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JXU Virtual Sayohat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;700&display=swap">
+<style>
+/* Layout: full-bleed 360° viewer; glass UI floats over the panorama, route bar along the bottom */
+:root{
+  --night:#070C12; --glass:rgba(10,18,26,.62); --glass-line:rgba(255,255,255,.14);
+  --text:#F2F6F8; --dim:#A9B7BF; --accent:hsl(205 80% 62%); --warn:#F2C14E;
+  --f-head:"Unbounded", "Manrope", system-ui, sans-serif;
+  --f-body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--text);font:400 15px/1.55 var(--f-body);overflow:hidden;touch-action:none}
+#view{position:fixed;inset:0;cursor:grab}
+#view.drag{cursor:grabbing}
+canvas{display:block}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.ui{position:fixed;inset:0;pointer-events:none;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-top:calc(env(safe-area-inset-top, 0px) + 16px);padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 16px);
+  display:flex;flex-direction:column;justify-content:space-between}
+.ui *{pointer-events:none}
+.ui .brand,.ui .tools,.ui .tools *,.ui .panel,.ui .route,.ui .route *{pointer-events:auto}
+
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.brand{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-line);
+  padding:10px 14px;border-radius:12px;display:flex;flex-direction:column;gap:2px}
+.brand b{font:700 14px/1.2 var(--f-head);letter-spacing:.02em}
+.brand span{font-size:12px;color:var(--dim)}
+.tools{display:flex;gap:8px}
+.tool{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-line);
+  border-radius:12px;padding:10px 12px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+.tool[aria-pressed="true"]{background:var(--accent);color:#06121b;border-color:transparent}
+
+.demo-tag{align-self:center;margin-top:10px;background:rgba(242,193,78,.14);color:var(--warn);border:1px solid rgba(242,193,78,.4);
+  font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;pointer-events:none;text-align:center}
+
+.bottom{display:flex;flex-direction:column;gap:12px}
+.panel{max-width:420px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-line);border-left:3px solid var(--accent);border-radius:14px;padding:18px 20px;
+  transition:opacity .5s, transform .6s cubic-bezier(.2,.8,.2,1)}
+.panel.out{opacity:0;transform:translateY(16px)}
+.step{font:500 11px/1 var(--f-head);letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+.panel h2{font:700 clamp(20px, 3vw, 26px)/1.15 var(--f-head);margin:8px 0 8px;text-wrap:balance}
+.panel p{margin:0;color:var(--dim);max-width:46ch}
+.hint{margin-top:12px;font-size:12px;color:var(--dim);display:flex;gap:6px;align-items:center}
+
+.route{align-self:flex-start;max-width:100%;display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.route::-webkit-scrollbar{display:none}
+.stop{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--glass-line);border-radius:999px;padding:7px 12px 7px 8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--dim)}
+.stop i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:700 10px/1 var(--f-head);font-style:normal;background:rgba(255,255,255,.1)}
+.stop[aria-current="step"]{color:var(--text);border-color:var(--accent)}
+.stop[aria-current="step"] i{background:var(--accent);color:#06121b}
+.stop.seen i{background:rgba(255,255,255,.25);color:var(--text)}
+
+/* hotspots */
+.hs-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.hs{position:absolute;left:0;top:0;pointer-events:auto;transform:translate(-50%,-50%);will-change:transform}
+.walk{width:86px;height:86px;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+.walk .ring{width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.85);
+  display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transform:perspective(200px) rotateX(55deg);
+  box-shadow:0 0 0 0 rgba(255,255,255,.5);animation:pulse 2s infinite}
+.walk svg{width:34px;height:34px}
+.walk .lbl{position:absolute;top:84px;white-space:nowrap;font-size:12px;font-weight:700;background:var(--glass);padding:4px 10px;border-radius:999px;border:1px solid var(--glass-line)}
+.walk.back .ring{width:52px;height:52px;opacity:.75}
+.walk.back svg{width:24px;height:24px;transform:rotate(180deg)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.45)}70%{box-shadow:0 0 0 18px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+.info{border:0;background:none;cursor:pointer;padding:0;display:flex;align-items:flex-start;gap:10px}
+.info .dot{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#06121b;display:grid;place-items:center;
+  font:700 18px/1 var(--f-head);box-shadow:0 0 0 6px rgba(255,255,255,.18)}
+.info .card{display:none;text-align:left;width:min(260px, 70vw);background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--glass-line);border-radius:12px;padding:12px 14px}
+.info.open .card{display:block;animation:pop .35s ease-out}
+.info.open .dot{background:var(--text)}
+.info .card b{display:block;font:700 14px/1.3 var(--f-head);margin-bottom:4px}
+.info .card span{font-size:13px;color:var(--dim);line-height:1.5}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.fade{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.0) 0%, rgba(7,12,18,.95) 70%)}
+
+/* intro */
+.intro{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg, rgba(7,12,18,.35), rgba(7,12,18,.85));
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));transition:opacity .8s}
+.intro.gone{opacity:0;pointer-events:none}
+.intro-box{max-width:560px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.intro .eyebrow{font:500 12px/1 var(--f-head);letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+.intro h1{font:700 clamp(30px, 6vw, 56px)/1.05 var(--f-head);margin:0;text-wrap:balance}
+.intro p{margin:0;color:var(--dim);max-width:44ch}
+.start{margin-top:8px;border:0;cursor:pointer;background:var(--text);color:#06121b;font-weight:700;font-size:15px;padding:14px 26px;border-radius:999px;
+  display:inline-flex;gap:10px;align-items:center}
+.start:hover{background:var(--accent)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top, 0px) + 80px);transform:translateX(-50%);background:var(--glass);border:1px solid var(--glass-line);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:10px 16px;border-radius:12px;font-size:13px;max-width:min(420px, 90vw);text-align:center;
+  opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+@media (max-width:640px){
+  .panel{max-width:none;padding:14px 16px}
+  .panel p{font-size:14px}
+  .tool .t-long{display:none}
+  .brand span{display:none}
+}
+@media (prefers-reduced-motion:reduce){.walk .ring{animation:none}.panel{transition:none}}
+</style>
+</head>
+<body>
+
+<div id="view" aria-label="360 daraja panorama"></div>
+<div class="hs-layer" id="hs"></div>
+<div class="fade" id="fade"></div>
+
+<div class="ui">
+  <div>
+    <div class="top">
+      <div class="brand"><b>JXU · 360°</b><span>Jamoat xavfsizligi universiteti</span></div>
+      <div class="tools">
+        <button class="tool" id="btn-auto" type="button" aria-pressed="true">⟳ <span class="t-long">Avto</span></button>
+        <button class="tool" id="btn-gyro" type="button" aria-pressed="false">📱 <span class="t-long">Giroskop</span></button>
+        <button class="tool" id="btn-full" type="button">⛶</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center"><div class="demo-tag">Namuna: haqiqiy 360° rasmlar va ma'lumotlar keyin qo'yiladi</div></div>
+  </div>
+  <div class="bottom">
+    <div class="panel" id="panel">
+      <div class="step" id="p-step">01 / 07</div>
+      <h2 id="p-title">Bosh darvoza</h2>
+      <p id="p-text"></p>
+      <div class="hint">↔ Suring va aylantiring · ◉ Oq doirani bosib yuring</div>
+    </div>
+    <nav class="route" id="route" aria-label="Sayohat yo'li"></nav>
+  </div>
+</div>
+
+<div class="intro" id="intro">
+  <div class="intro-box">
+    <div class="eyebrow">Virtual sayohat</div>
+    <h1>Jamoat xavfsizligi universiteti</h1>
+    <p>Darvozadan boshlab universitet bo'ylab yuring. Har bir joyni 360° aylantirib ko'ring, ma'lumot nuqtalarini bosing.</p>
+    <button class="start" id="start" type="button">Sayohatni boshlash →</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ---------- Sayohat ma'lumotlari ----------
+   img: haqiqiy panorama fayli (jxu/ papkasida). Fayl bo'lmasa, namuna rasm chiziladi.
+   hfov: rasm necha gradusni qamraydi (to'liq 360° panorama uchun 360).
+   yaw: gorizontal burchak (0 = rasm markazi), pitch: vertikal burchak. */
+const SCENES = [
+  { id:"darvoza", name:"Bosh darvoza", kind:"out", hue:205, img:"jxu/01-darvoza.jpg", hfov:360, start:0,
+    text:"Sayohat shu yerdan boshlanadi. Universitet hududiga kirish shu darvoza orqali bo'ladi.",
+    info:[{yaw:-55,pitch:6,t:"Darvoza",d:"Bu yerga darvoza va hudud haqida ma'lumot yoziladi."},{yaw:60,pitch:2,t:"Nazorat punkti",d:"Kirish tartibi haqida qisqa ma'lumot."}],
+    next:{yaw:0}, back:null },
+  { id:"kirish", name:"Asosiy bino kirishi", kind:"out", hue:190, img:"jxu/02-kirish.jpg", hfov:360, start:0,
+    text:"Asosiy o'quv binosiga kirish. Talabalar va mehmonlar shu yerdan ichkariga o'tadi.",
+    info:[{yaw:-40,pitch:12,t:"Asosiy bino",d:"Bino haqida ma'lumot: qavatlar soni, qachon qurilgani."}],
+    next:{yaw:15}, back:{yaw:180} },
+  { id:"hol", name:"Asosiy hol", kind:"in", hue:220, img:"jxu/03-hol.jpg", hfov:360, start:0,
+    text:"Binoning markaziy holi. Bu yerdan auditoriyalar, kutubxona va boshqa bo'limlarga yo'l boshlanadi.",
+    info:[{yaw:50,pitch:4,t:"Ma'lumot stendi",d:"Fakultetlar va yo'nalishlar ro'yxati shu yerda bo'ladi."}],
+    next:{yaw:-20}, back:{yaw:180} },
+  { id:"auditoriya", name:"Auditoriya", kind:"in", hue:255, img:"jxu/04-auditoriya.jpg", hfov:360, start:0,
+    text:"Ma'ruza va seminar mashg'ulotlari o'tadigan o'quv xonasi.",
+    info:[{yaw:-30,pitch:2,t:"O'quv jarayoni",d:"Ta'lim yo'nalishlari va o'qitish usullari haqida."},{yaw:70,pitch:8,t:"Jihozlar",d:"Proyektor, kompyuterlar va boshqa jihozlar haqida."}],
+    next:{yaw:25}, back:{yaw:180} },
+  { id:"kutubxona", name:"Kutubxona", kind:"in", hue:30, img:"jxu/05-kutubxona.jpg", hfov:360, start:0,
+    text:"Talabalar mustaqil o'qishi va tadqiqot qilishi uchun joy.",
+    info:[{yaw:40,pitch:5,t:"Kitob fondi",d:"Kitoblar soni va elektron resurslar haqida."}],
+    next:{yaw:-10}, back:{yaw:180} },
+  { id:"sport", name:"Sport majmuasi", kind:"in", hue:150, img:"jxu/06-sport.jpg", hfov:360, start:0,
+    text:"Jismoniy tayyorgarlik mashg'ulotlari o'tadigan joy.",
+    info:[{yaw:-60,pitch:6,t:"Sport turlari",d:"Qaysi sport turlari bilan shug'ullanish mumkinligi."}],
+    next:{yaw:10}, back:{yaw:180} },
+  { id:"hovli", name:"Universitet hovlisi", kind:"out", hue:165, img:"jxu/07-hovli.jpg", hfov:360, start:0,
+    text:"Sayohat yakuni. Talabalar dam oladigan va tadbirlar o'tadigan ochiq maydon.",
+    info:[{yaw:30,pitch:8,t:"Tadbirlar",d:"Universitetda o'tadigan tadbirlar haqida."}],
+    next:null, back:{yaw:180} }
+];
+
+/* ---------- Namuna panorama chizish ---------- */
+function rng(seed){ return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+function paintPlaceholder(s, i){
+  const W = 2048, H = 1024, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d"), r = rng(i * 97 + 13), h = s.hue, hz = H / 2;
+  if (s.kind === "out"){
+    let sky = g.createLinearGradient(0,0,0,hz); sky.addColorStop(0,`hsl(${h} 55% 28%)`); sky.addColorStop(1,`hsl(${h} 45% 72%)`);
+    g.fillStyle = sky; g.fillRect(0,0,W,hz);
+    let gr = g.createLinearGradient(0,hz,0,H); gr.addColorStop(0,`hsl(${h} 10% 46%)`); gr.addColorStop(1,`hsl(${h} 12% 18%)`);
+    g.fillStyle = gr; g.fillRect(0,hz,W,H-hz);
+    for (let x = 0; x < W;){                       // binolar
+      const bw = 90 + r()*200, bh = 60 + r()*170, l = 30 + r()*20;
+      g.fillStyle = `hsl(${h} 14% ${l}%)`; g.fillRect(x, hz-bh, bw-6, bh);
+      g.fillStyle = `hsla(${h+20} 60% 85% / .55)`;
+      for (let wy = hz-bh+12; wy < hz-14; wy += 20) for (let wx = x+10; wx < x+bw-18; wx += 18) if (r() > .25) g.fillRect(wx, wy, 9, 11);
+      x += bw;
+    }
+    for (let k = 0; k < 26; k++){                  // daraxtlar
+      const tx = r()*W, ty = hz + 4, tr = 14 + r()*22;
+      g.fillStyle = `hsl(${120 + r()*30} 30% ${22 + r()*10}%)`; g.beginPath(); g.arc(tx, ty - tr, tr, 0, Math.PI*2); g.fill();
+    }
+    g.strokeStyle = "rgba(255,255,255,.08)"; g.lineWidth = 2;   // yo'lak
+    for (let k = 1; k < 9; k++){ const y = hz + (k*k)*6; g.beginPath(); g.moveTo(0,y); g.lineTo(W,y); g.stroke(); }
+  } else {
+    let ceil = g.createLinearGradient(0,0,0,hz); ceil.addColorStop(0,`hsl(${h} 18% 12%)`); ceil.addColorStop(1,`hsl(${h} 16% 30%)`);
+    g.fillStyle = ceil; g.fillRect(0,0,W,hz);
+    g.fillStyle = `hsl(${h} 14% 58%)`; g.fillRect(0, hz-190, W, 190);   // devor
+    let fl = g.createLinearGradient(0,hz,0,H); fl.addColorStop(0,`hsl(${h} 12% 40%)`); fl.addColorStop(1,`hsl(${h} 14% 14%)`);
+    g.fillStyle = fl; g.fillRect(0,hz,W,H-hz);
+    for (let x = 0; x < W; x += 128){ g.fillStyle = "rgba(0,0,0,.12)"; g.fillRect(x, hz-190, 3, 190); }
+    for (let k = 0; k < 7; k++){                   // eshiklar / oynalar
+      const dx = 60 + k * (W/7) + r()*60, dw = 70 + r()*40;
+      g.fillStyle = r() > .5 ? `hsl(${h} 20% 22%)` : `hsla(${h+10} 50% 80% / .6)`; g.fillRect(dx, hz-150, dw, 150);
+    }
+    for (let x = 40; x < W; x += 170){ g.fillStyle = "rgba(255,255,240,.85)"; g.fillRect(x, hz-330, 110, 10); } // chiroqlar
+    g.strokeStyle = "rgba(255,255,255,.07)"; g.lineWidth = 2;
+    for (let k = 1; k < 10; k++){ const y = hz + (k*k)*5; g.beginPath(); g.moveTo(0,y); g.lineTo(W,y); g.stroke(); }
+  }
+  g.textAlign = "center";                          // yorliq
+  g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(W/2 - 330, hz - 128, 660, 86);
+  g.fillStyle = "#fff"; g.font = "700 38px Unbounded, Manrope, sans-serif"; g.fillText(s.name.toUpperCase(), W/2, hz - 84);
+  g.font = "600 17px Manrope, sans-serif"; g.fillStyle = "#F2C14E"; g.fillText("NAMUNA · haqiqiy 360° rasm shu yerga qo'yiladi", W/2, hz - 56);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+  return { tex:t, hfov:360, vfov:180 };
+}
+
+/* ---------- Three.js ---------- */
+const view = document.getElementById("view");
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+view.appendChild(renderer.domElement);
+const scene3 = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 1, 1100);
+const mesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+scene3.add(mesh);
+
+const D = Math.PI / 180;
+let lon = 0, lat = 0, fov = 75, cur = 0, busy = false, auto = true, lastTouch = 0, limits = { hfov:360, vfov:180 };
+const cache = {};
+
+function dir(yaw, pitch){ const p = Math.PI + yaw*D, t = pitch*D; return new THREE.Vector3(Math.cos(p)*Math.cos(t), Math.sin(t), Math.sin(p)*Math.cos(t)); }
+
+function loadScene(i){
+  return new Promise(res => {
+    if (cache[i]) return res(cache[i]);
+    const s = SCENES[i], done = v => { cache[i] = v; res(v); };
+    if (!s.img) return done(paintPlaceholder(s, i));
+    new THREE.TextureLoader().load(s.img, t => {
+      t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+      const hf = s.hfov || 360, aspect = t.image.width / t.image.height;
+      done({ tex:t, hfov:hf, vfov:Math.min(180, hf / aspect) });
+    }, undefined, () => done(paintPlaceholder(s, i)));
+  });
+}
+function applyScene(d){
+  mesh.geometry.dispose();
+  const g = new THREE.SphereGeometry(500, 96, 48, Math.PI - d.hfov*D/2, d.hfov*D, Math.PI/2 - d.vfov*D/2, d.vfov*D);
+  g.scale(-1, 1, 1);
+  mesh.geometry = g; mesh.material.map = d.tex; mesh.material.needsUpdate = true;
+  limits = d;
+}
+
+/* ---------- Nuqtalar (hotspots) ---------- */
+const hsLayer = document.getElementById("hs");
+let spots = [];
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+function buildSpots(i){
+  hsLayer.innerHTML = ""; spots = [];
+  const s = SCENES[i];
+  const add = (el, yaw, pitch) => { hsLayer.appendChild(el); spots.push({ el, v:dir(yaw, pitch).multiplyScalar(400) }); };
+  if (s.next){
+    const b = document.createElement("button"); b.type = "button"; b.className = "hs walk";
+    b.innerHTML = `<span class="ring">${ARROW}</span><span class="lbl">${SCENES[i+1].name} →</span>`;
+    b.setAttribute("aria-label", "Keyingi joy: " + SCENES[i+1].name);
+    b.onclick = e => { e.stopPropagation(); go(i+1, s.next.yaw, -18); };
+    add(b, s.next.yaw, -18);
+  }
+  if (s.back){
+    const b = document.createElement("button"); b.type = "button"; b.className = "hs walk back";
+    b.innerHTML = `<span class="ring">${ARROW}</span><span class="lbl">← ${SCENES[i-1].name}</span>`;
+    b.setAttribute("aria-label", "Orqaga: " + SCENES[i-1].name);
+    b.onclick = e => { e.stopPropagation(); go(i-1, s.back.yaw, -22); };
+    add(b, s.back.yaw, -22);
+  }
+  s.info.forEach(n => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "hs info";
+    b.innerHTML = `<span class="dot">i</span><span class="card"><b>${n.t}</b><span>${n.d}</span></span>`;
+    b.onclick = e => { e.stopPropagation(); const o = b.classList.contains("open"); document.querySelectorAll(".info.open").forEach(x => x.classList.remove("open")); if (!o) b.classList.add("open"); };
+    add(b, n.yaw, n.pitch);
+  });
+}
+const tmp = new THREE.Vector3(), fwd = new THREE.Vector3();
+function placeSpots(){
+  const w = innerWidth, h = innerHeight; camera.getWorldDirection(fwd);
+  for (const s of spots){
+    tmp.copy(s.v);
+    const visible = !busy && tmp.clone().normalize().dot(fwd) > 0.15;
+    tmp.project(camera);
+    const x = (tmp.x + 1) / 2 * w, y = (1 - tmp.y) / 2 * h;
+    if (!visible || x < -150 || x > w + 150 || y < -150 || y > h + 150){ s.el.style.display = "none"; continue; }
+    s.el.style.display = "";
+    s.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+  }
+}
+
+/* ---------- Panel va yo'l ---------- */
+const panel = document.getElementById("panel"), route = document.getElementById("route");
+SCENES.forEach((s, i) => {
+  const b = document.createElement("button"); b.type = "button"; b.className = "stop";
+  b.innerHTML = `<i>${i+1}</i>${s.name}`;
+  b.onclick = () => { if (i !== cur) go(i, lon, lat); };
+  route.appendChild(b);
+});
+function updatePanel(i, show){
+  const s = SCENES[i];
+  document.documentElement.style.setProperty("--accent", `hsl(${s.hue} 80% 64%)`);
+  document.getElementById("p-step").textContent = `${String(i+1).padStart(2,"0")} / ${String(SCENES.length).padStart(2,"0")}`;
+  document.getElementById("p-title").textContent = s.name;
+  document.getElementById("p-text").textContent = s.text;
+  [...route.children].forEach((b, k) => { b.toggleAttribute("aria-current", k === i); if (k === i) b.setAttribute("aria-current","step"); b.classList.toggle("seen", k < i); });
+  route.children[i].scrollIntoView({ block:"nearest", inline:"center", behavior:"smooth" });
+  panel.classList.toggle("out", !show);
+}
+
+/* ---------- Yurish animatsiyasi ---------- */
+const fade = document.getElementById("fade");
+const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+function tween(ms, fn){ return new Promise(r => { const t0 = performance.now(); (function f(now){ const k = Math.min(1, (now - t0) / ms); fn(ease(k)); k < 1 ? requestAnimationFrame(f) : r(); })(t0); }); }
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+async function go(i, yaw, pitch){
+  if (busy || i < 0 || i >= SCENES.length) return;
+  busy = true; panel.classList.add("out");
+  const next = loadScene(i);
+  if (!reduce){
+    const l0 = lon, dl = ((yaw - lon) % 360 + 540) % 360 - 180, a0 = lat, f0 = fov;
+    await tween(550, k => { lon = l0 + dl*k; lat = a0 + (pitch*0.4 - a0)*k; });          // burilish
+    await tween(700, k => { fov = f0 + (28 - f0)*k; fade.style.opacity = k; });            // oldinga yurish
+  }
+  const d = await next; applyScene(d); cur = i; buildSpots(i);
+  lon = SCENES[i].start; lat = 0; fov = reduce ? 75 : 100;
+  updatePanel(i, false);
+  if (!reduce) await tween(800, k => { fov = 100 - 25*k; fade.style.opacity = 1 - k; });
+  fade.style.opacity = 0; busy = false; setTimeout(() => panel.classList.remove("out"), 60);
+}
+
+/* ---------- Boshqaruv ---------- */
+let drag = null;
+view.addEventListener("pointerdown", e => { drag = { x:e.clientX, y:e.clientY, lon, lat }; view.classList.add("drag"); view.setPointerCapture(e.pointerId); lastTouch = performance.now(); document.querySelectorAll(".info.open").forEach(x => x.classList.remove("open")); });
+view.addEventListener("pointermove", e => { if (!drag || busy) return; const k = 0.12 * fov / 75; lon = drag.lon - (e.clientX - drag.x) * k; lat = drag.lat + (e.clientY - drag.y) * k; lastTouch = performance.now(); });
+const endDrag = () => { drag = null; view.classList.remove("drag"); };
+view.addEventListener("pointerup", endDrag); view.addEventListener("pointercancel", endDrag);
+view.addEventListener("wheel", e => { e.preventDefault(); if (!busy) fov = Math.max(35, Math.min(95, fov + e.deltaY * 0.05)); }, { passive:false });
+addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") lon -= 5; if (e.key === "ArrowRight") lon += 5;
+  if (e.key === "ArrowUp" && SCENES[cur].next) go(cur+1, SCENES[cur].next.yaw, -18);
+  if (e.key === "ArrowDown" && SCENES[cur].back) go(cur-1, SCENES[cur].back.yaw, -22);
+});
+
+const toastEl = document.getElementById("toast");
+function toast(t){ toastEl.textContent = t; toastEl.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => toastEl.classList.remove("show"), 3200); }
+
+const btnAuto = document.getElementById("btn-auto");
+btnAuto.onclick = () => { auto = !auto; btnAuto.setAttribute("aria-pressed", auto); };
+
+let gyro = null;
+const btnGyro = document.getElementById("btn-gyro");
+function onOrient(e){ if (e.alpha == null) return; if (!gyro.base) gyro.base = { a:e.alpha, l:lon }; lon = gyro.base.l - (e.alpha - gyro.base.a); lat = Math.max(-80, Math.min(80, (e.beta ?? 90) - 90)); lastTouch = performance.now(); }
+btnGyro.onclick = async () => {
+  if (gyro){ removeEventListener("deviceorientation", onOrient); gyro = null; btnGyro.setAttribute("aria-pressed","false"); return; }
+  try{
+    if (typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission){
+      const p = await DeviceOrientationEvent.requestPermission(); if (p !== "granted") throw 0;
+    }
+    gyro = {}; addEventListener("deviceorientation", onOrient); btnGyro.setAttribute("aria-pressed","true");
+    setTimeout(() => { if (gyro && !gyro.base){ toast("Giroskop bu yerda ishlamadi. U telefonda, saytning o'zida ochilganda ishlaydi."); removeEventListener("deviceorientation", onOrient); gyro = null; btnGyro.setAttribute("aria-pressed","false"); } }, 1500);
+  }catch(err){ toast("Giroskopga ruxsat berilmadi. Telefonni burib ko'rish saytning o'zida ishlaydi."); }
+};
+document.getElementById("btn-full").onclick = () => {
+  const el = document.documentElement;
+  try{ (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen()).catch(() => toast("To'liq ekran bu yerda ishlamaydi.")); }catch(e){ toast("To'liq ekran bu yerda ishlamaydi."); }
+};
+
+const intro = document.getElementById("intro");
+document.getElementById("start").onclick = () => { intro.classList.add("gone"); panel.classList.remove("out"); };
+
+/* ---------- Asosiy sikl ---------- */
+function resize(){ renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+function loop(){
+  requestAnimationFrame(loop);
+  if (auto && !drag && !busy && !gyro && performance.now() - lastTouch > 2500 && !reduce) lon += 0.035;
+  const vmax = Math.max(0, limits.vfov/2 - fov/2 * 0.9);
+  lat = Math.max(-Math.min(85, vmax), Math.min(Math.min(85, vmax), lat));
+  if (limits.hfov < 360){ const hmax = Math.max(0, limits.hfov/2 - fov*camera.aspect/2*0.9); lon = Math.max(-hmax, Math.min(hmax, lon)); }
+  camera.fov = fov; camera.updateProjectionMatrix();
+  camera.lookAt(dir(lon, lat));
+  renderer.render(scene3, camera);
+  placeSpots();
+}
+loadScene(0).then(d => { applyScene(d); buildSpots(0); updatePanel(0, false); loop(); });
+loadScene(1);
+</script>
+</body>
+</html>
