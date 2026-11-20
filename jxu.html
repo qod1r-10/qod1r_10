@@ -18,7 +18,7 @@
   color-scheme:dark;
 }
 html,body{height:100%}
-body{margin:0;background:var(--night);color:var(--text);font:400 15px/1.55 var(--f-body);overflow:hidden;touch-action:none}
+body{margin:0;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;background:var(--night);color:var(--text);font:400 15px/1.55 var(--f-body);overflow:hidden;touch-action:none}
 #view{position:fixed;inset:0;cursor:grab}
 #view.drag{cursor:grabbing}
 canvas{display:block}
@@ -85,6 +85,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .info.open .dot{background:var(--text)}
 .info .card b{display:block;font:700 14px/1.3 var(--f-head);margin-bottom:4px}
 .info .card span{font-size:13px;color:var(--dim);line-height:1.5}
+.note{width:min(240px, 62vw);background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--glass-line);border-top:3px solid var(--accent);border-radius:12px;padding:12px 14px;pointer-events:none;
+  animation:fadein .6s ease-out both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.note b{display:block;font:700 14px/1.3 var(--f-head);margin-bottom:4px}
+.note span{font-size:13px;color:var(--dim);line-height:1.5}
 @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 .fade{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.0) 0%, rgba(7,12,18,.95) 70%)}
@@ -137,7 +143,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       <div class="step" id="p-step">01 / 07</div>
       <h2 id="p-title">Bosh darvoza</h2>
       <p id="p-text"></p>
-      <div class="hint">↔ Suring va aylantiring · ◉ Oq doirani bosib yuring</div>
+      <div class="hint">↔ Suring · 2 marta bosing: oldinga · 3 marta: orqaga</div>
     </div>
     <nav class="route" id="route" aria-label="Sayohat yo'li"></nav>
   </div>
@@ -147,7 +153,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   <div class="intro-box">
     <div class="eyebrow">Virtual sayohat</div>
     <h1>Jamoat xavfsizligi universiteti</h1>
-    <p>Darvozadan boshlab universitet bo'ylab yuring. Har bir joyni 360° aylantirib ko'ring, ma'lumot nuqtalarini bosing.</p>
+    <p>Darvozadan boshlab universitet bo'ylab yuring. Ekranni 2 marta bossangiz oldinga, 3 marta bossangiz orqaga o'tasiz. Atrofga qarang: ma'lumotlar har tomonda.</p>
     <button class="start" id="start" type="button">Sayohatni boshlash →</button>
   </div>
 </div>
@@ -162,31 +168,31 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 const SCENES = [
   { id:"darvoza", name:"Bosh darvoza", kind:"out", hue:205, img:"jxu/01-darvoza.jpg", hfov:360, start:0,
     text:"Sayohat shu yerdan boshlanadi. Universitet hududiga kirish shu darvoza orqali bo'ladi.",
-    info:[{yaw:-55,pitch:6,t:"Darvoza",d:"Bu yerga darvoza va hudud haqida ma'lumot yoziladi."},{yaw:60,pitch:2,t:"Nazorat punkti",d:"Kirish tartibi haqida qisqa ma'lumot."}],
+    info:[{yaw:32,pitch:-4,t:"Darvoza",d:"Universitet hududiga asosiy kirish joyi."},{yaw:120,pitch:4,t:"Nazorat punkti",d:"Kirish tartibi haqida ma'lumot shu yerga yoziladi."},{yaw:-120,pitch:4,t:"Hudud",d:"Universitet hududi va binolar joylashuvi haqida."},{yaw:-32,pitch:-4,t:"Yo'nalish",d:"Oldinga yuring: asosiy bino kirishi."}],
     next:{yaw:0}, back:null },
   { id:"kirish", name:"Asosiy bino kirishi", kind:"out", hue:190, img:"jxu/02-kirish.jpg", hfov:360, start:0,
     text:"Asosiy o'quv binosiga kirish. Talabalar va mehmonlar shu yerdan ichkariga o'tadi.",
-    info:[{yaw:-40,pitch:12,t:"Asosiy bino",d:"Bino haqida ma'lumot: qavatlar soni, qachon qurilgani."}],
+    info:[{yaw:32,pitch:-4,t:"Asosiy bino",d:"Bino haqida: qavatlar soni, qurilgan yili."},{yaw:120,pitch:4,t:"Bayroq maydoni",d:"Bu joy haqida ma'lumot qo'shiladi."},{yaw:-120,pitch:4,t:"Mehmonlar uchun",d:"Qabul tartibi va ish vaqti haqida."},{yaw:-32,pitch:-4,t:"Tarix",d:"Universitet tarixi haqida qisqa ma'lumot."}],
     next:{yaw:15}, back:{yaw:180} },
   { id:"hol", name:"Asosiy hol", kind:"in", hue:220, img:"jxu/03-hol.jpg", hfov:360, start:0,
     text:"Binoning markaziy holi. Bu yerdan auditoriyalar, kutubxona va boshqa bo'limlarga yo'l boshlanadi.",
-    info:[{yaw:50,pitch:4,t:"Ma'lumot stendi",d:"Fakultetlar va yo'nalishlar ro'yxati shu yerda bo'ladi."}],
+    info:[{yaw:32,pitch:-4,t:"Ma'lumot stendi",d:"Fakultetlar va yo'nalishlar ro'yxati."},{yaw:120,pitch:4,t:"Qavatlar",d:"Qaysi qavatda nima joylashgani."},{yaw:-120,pitch:4,t:"Yutuqlar",d:"Universitet yutuqlari va mukofotlari."},{yaw:-32,pitch:-4,t:"Talabalar hayoti",d:"To'garaklar va tadbirlar haqida."}],
     next:{yaw:-20}, back:{yaw:180} },
   { id:"auditoriya", name:"Auditoriya", kind:"in", hue:255, img:"jxu/04-auditoriya.jpg", hfov:360, start:0,
     text:"Ma'ruza va seminar mashg'ulotlari o'tadigan o'quv xonasi.",
-    info:[{yaw:-30,pitch:2,t:"O'quv jarayoni",d:"Ta'lim yo'nalishlari va o'qitish usullari haqida."},{yaw:70,pitch:8,t:"Jihozlar",d:"Proyektor, kompyuterlar va boshqa jihozlar haqida."}],
+    info:[{yaw:32,pitch:-4,t:"O'quv jarayoni",d:"Ta'lim yo'nalishlari va o'qitish usullari."},{yaw:120,pitch:4,t:"Jihozlar",d:"Proyektor, kompyuterlar va boshqa jihozlar."},{yaw:-120,pitch:4,t:"O'qituvchilar",d:"Professor-o'qituvchilar tarkibi haqida."},{yaw:-32,pitch:-4,t:"Dars jadvali",d:"Mashg'ulotlar qanday tashkil etilishi."}],
     next:{yaw:25}, back:{yaw:180} },
   { id:"kutubxona", name:"Kutubxona", kind:"in", hue:30, img:"jxu/05-kutubxona.jpg", hfov:360, start:0,
     text:"Talabalar mustaqil o'qishi va tadqiqot qilishi uchun joy.",
-    info:[{yaw:40,pitch:5,t:"Kitob fondi",d:"Kitoblar soni va elektron resurslar haqida."}],
+    info:[{yaw:32,pitch:-4,t:"Kitob fondi",d:"Kitoblar soni va elektron resurslar."},{yaw:120,pitch:4,t:"O'qish zali",d:"Mustaqil ta'lim uchun joylar soni."},{yaw:-120,pitch:4,t:"Elektron kutubxona",d:"Onlayn bazalardan foydalanish tartibi."},{yaw:-32,pitch:-4,t:"Ish vaqti",d:"Kutubxonaning ish vaqti."}],
     next:{yaw:-10}, back:{yaw:180} },
   { id:"sport", name:"Sport majmuasi", kind:"in", hue:150, img:"jxu/06-sport.jpg", hfov:360, start:0,
     text:"Jismoniy tayyorgarlik mashg'ulotlari o'tadigan joy.",
-    info:[{yaw:-60,pitch:6,t:"Sport turlari",d:"Qaysi sport turlari bilan shug'ullanish mumkinligi."}],
+    info:[{yaw:32,pitch:-4,t:"Sport turlari",d:"Qaysi sport turlari bilan shug'ullanish mumkin."},{yaw:120,pitch:4,t:"Jismoniy tayyorgarlik",d:"Mashg'ulotlar qanday o'tishi haqida."},{yaw:-120,pitch:4,t:"Musobaqalar",d:"Talabalar ishtirok etgan musobaqalar."},{yaw:-32,pitch:-4,t:"Jihozlar",d:"Sport zali jihozlari haqida."}],
     next:{yaw:10}, back:{yaw:180} },
   { id:"hovli", name:"Universitet hovlisi", kind:"out", hue:165, img:"jxu/07-hovli.jpg", hfov:360, start:0,
     text:"Sayohat yakuni. Talabalar dam oladigan va tadbirlar o'tadigan ochiq maydon.",
-    info:[{yaw:30,pitch:8,t:"Tadbirlar",d:"Universitetda o'tadigan tadbirlar haqida."}],
+    info:[{yaw:32,pitch:-4,t:"Tadbirlar",d:"Universitetda o'tadigan tadbirlar."},{yaw:120,pitch:4,t:"Dam olish",d:"Talabalar dam oladigan joylar."},{yaw:-120,pitch:4,t:"Bitiruvchilar",d:"Bitiruvchilar qayerlarda ishlashi."},{yaw:-32,pitch:-4,t:"Sayohat yakuni",d:"Rahmat! Ikki marta bosib boshiga qayting."}],
     next:null, back:{yaw:180} }
 ];
 
@@ -296,9 +302,8 @@ function buildSpots(i){
     add(b, s.back.yaw, -22);
   }
   s.info.forEach(n => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "hs info";
-    b.innerHTML = `<span class="dot">i</span><span class="card"><b>${n.t}</b><span>${n.d}</span></span>`;
-    b.onclick = e => { e.stopPropagation(); const o = b.classList.contains("open"); document.querySelectorAll(".info.open").forEach(x => x.classList.remove("open")); if (!o) b.classList.add("open"); };
+    const b = document.createElement("div"); b.className = "hs note";
+    b.innerHTML = `<b>${n.t}</b><span>${n.d}</span>`;
     add(b, n.yaw, n.pitch);
   });
 }
@@ -358,10 +363,18 @@ async function go(i, yaw, pitch){
 
 /* ---------- Boshqaruv ---------- */
 let drag = null;
-view.addEventListener("pointerdown", e => { drag = { x:e.clientX, y:e.clientY, lon, lat }; view.classList.add("drag"); view.setPointerCapture(e.pointerId); lastTouch = performance.now(); document.querySelectorAll(".info.open").forEach(x => x.classList.remove("open")); });
+view.addEventListener("pointerdown", e => { drag = { x:e.clientX, y:e.clientY, lon, lat }; view.classList.add("drag"); view.setPointerCapture(e.pointerId); lastTouch = performance.now(); });
 view.addEventListener("pointermove", e => { if (!drag || busy) return; const k = 0.12 * fov / 75; lon = drag.lon - (e.clientX - drag.x) * k; lat = drag.lat + (e.clientY - drag.y) * k; lastTouch = performance.now(); });
 const endDrag = () => { drag = null; view.classList.remove("drag"); };
-view.addEventListener("pointerup", endDrag); view.addEventListener("pointercancel", endDrag);
+let taps = 0, tapTimer = null;
+function forward(){ const s = SCENES[cur]; if (s.next) go(cur+1, s.next.yaw, -18); else go(0, lon, lat); }
+function backward(){ const s = SCENES[cur]; if (s.back) go(cur-1, s.back.yaw, -22); else toast("Bu birinchi joy, orqaga yo'l yo'q."); }
+view.addEventListener("pointerup", e => {
+  const moved = drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8;
+  endDrag(); if (moved || busy) return;
+  taps++; clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { if (taps === 2) forward(); else if (taps >= 3) backward(); taps = 0; }, 380);
+}); view.addEventListener("pointercancel", endDrag);
 view.addEventListener("wheel", e => { e.preventDefault(); if (!busy) fov = Math.max(35, Math.min(95, fov + e.deltaY * 0.05)); }, { passive:false });
 addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") lon -= 5; if (e.key === "ArrowRight") lon += 5;
