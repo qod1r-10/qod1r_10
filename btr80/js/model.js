@@ -1,0 +1,402 @@
+// BTR-80 ning soddalashtirilgan (sxematik) 3D modeli.
+// O'qlar: x — uzunlik bo'ylab (old tomon +x), y — yuqoriga, z — eni bo'ylab.
+// Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
+import * as THREE from 'three';
+
+const C = {
+  armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
+  steel: 0x8c8e86, darkSteel: 0x3b3d39, engine: 0x8b4a2e, gear: 0x5d6b78,
+  shaft: 0xa3a39a, tank: 0x9a8740, seat: 0x6e5236, glass: 0x22404f,
+  radio: 0x3f4d3c, lamp: 0xfff1c2, fvu: 0x6f8193, battery: 0x2b2e35, radiator: 0x8a8f95,
+};
+
+function mat(color, opts = {}) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.18, ...opts });
+}
+
+function box(w, h, d, color, opts) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, opts)); }
+function cyl(rt, rb, h, color, seg = 18, opts) { return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(color, opts)); }
+
+const Y = new THREE.Vector3(0, 1, 0);
+function cylBetween(a, b, r, color, seg = 12) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
+  const dir = B.clone().sub(A);
+  const m = cyl(r, r, dir.length(), color, seg);
+  m.position.copy(A).add(B).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(Y, dir.normalize());
+  return m;
+}
+
+// Kesimlar bo'ylab korpus sirtini "loft" qilish
+function prof(bY, bW, wY, wW, rY, rW) {
+  return [[bY, -bW], [wY, -wW], [rY, -rW], [rY, rW], [wY, wW], [bY, bW]];
+}
+function loft(stations) {
+  const pos = [];
+  const v = (x, p) => [x, p[0], p[1]];
+  const tri = (a, b, c) => pos.push(...a, ...b, ...c);
+  const m = stations[0].p.length;
+  for (let i = 0; i < stations.length - 1; i++) {
+    const s0 = stations[i], s1 = stations[i + 1];
+    for (let j = 0; j < m; j++) {
+      const k = (j + 1) % m;
+      const a = v(s0.x, s0.p[j]), b = v(s0.x, s0.p[k]), c = v(s1.x, s1.p[k]), d = v(s1.x, s1.p[j]);
+      tri(a, b, c); tri(a, c, d);
+    }
+  }
+  for (const s of [stations[0], stations[stations.length - 1]]) {
+    const cy = s.p.reduce((t, p) => t + p[0], 0) / m;
+    const ctr = [s.x, cy, 0];
+    for (let j = 0; j < m; j++) tri(ctr, v(s.x, s.p[j]), v(s.x, s.p[(j + 1) % m]));
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+// Sirt bo'ylab qiya joylashgan yupqa plastinka (lyuk, eshik va h.k.)
+function onSlopeX(mesh, x0, y0, x1, y1, offset = 0.025) {
+  // x-y tekisligida qiya sirt (old/orqa listlar)
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+  const nx = -dy / len, ny = dx / len; // tashqi normal
+  mesh.rotation.z = Math.atan2(dy, dx);
+  mesh.position.x = (x0 + x1) / 2 + nx * offset;
+  mesh.position.y = (y0 + y1) / 2 + ny * offset;
+  return mesh;
+}
+
+export const AXLES_X = [2.115, 0.765, -0.765, -2.115];
+
+export function buildBTR80() {
+  const root = new THREE.Group();
+  root.name = 'BTR-80';
+
+  const tag = (part, obj) => { obj.traverse(o => { if (o.isMesh) { o.userData.part = part; o.castShadow = true; o.receiveShadow = true; } }); return obj; };
+  const add = (part, obj, parent = root) => { tag(part, obj); parent.add(obj); return obj; };
+
+  /* ---------- KORPUS ---------- */
+  const hullGeo = loft([
+    { x: 3.85, p: prof(0.95, 0.85, 1.05, 1.2, 1.15, 0.95) },
+    { x: 3.3, p: prof(0.55, 1.0, 1.1, 1.42, 1.6, 1.05) },
+    { x: 2.4, p: prof(0.5, 1.0, 1.1, 1.42, 2.0, 1.0) },
+    { x: -3.3, p: prof(0.5, 1.0, 1.1, 1.42, 2.0, 1.0) },
+    { x: -3.8, p: prof(0.75, 0.95, 1.15, 1.38, 1.9, 0.95) },
+  ]);
+  const hull = new THREE.Mesh(hullGeo, mat(C.armor, { side: THREE.DoubleSide, flatShading: true }));
+  add('hull', hull);
+  // korpus qovurg'alari (yon ustidagi to'siq planka)
+  for (const s of [-1, 1]) {
+    const rail = box(6.9, 0.05, 0.08, C.armorDark);
+    rail.position.set(-0.3, 1.12, s * 1.44);
+    add('hull', rail);
+  }
+
+  // Haydovchi va komandir lyuklari (tom, minora oldida)
+  for (const s of [-1, 1]) {
+    const h = new THREE.Group();
+    const lid = box(0.55, 0.06, 0.55, C.armorDark); h.add(lid);
+    const hinge = cyl(0.03, 0.03, 0.5, C.darkSteel, 8); hinge.rotation.x = Math.PI / 2; hinge.position.set(-0.27, 0.03, 0); h.add(hinge);
+    const handle = box(0.04, 0.04, 0.2, C.darkSteel); handle.position.set(0.18, 0.05, 0); h.add(handle);
+    h.position.set(2.08, 2.03, s * 0.47);
+    add('hatch_front', h);
+  }
+  // Desant lyuklari
+  for (const x of [-0.55, -1.35]) for (const s of [-1, 1]) {
+    const h = new THREE.Group();
+    const lid = box(0.62, 0.05, 0.6, C.armorDark); h.add(lid);
+    const rim = box(0.68, 0.025, 0.66, C.darkSteel); rim.position.y = -0.03; h.add(rim);
+    h.position.set(x, 2.03, s * 0.5);
+    add('hatch_roof', h);
+  }
+
+  // Yon eshiklar (2- va 3-ko'prik orasida)
+  for (const s of [-1, 1]) {
+    const upAng = Math.atan2(0.42, 0.9); // yuqori yon list qiyaligi
+    const upper = box(0.62, 0.72, 0.05, C.armorDark);
+    upper.position.set(0, 1.55, s * 1.235);
+    upper.rotation.x = -s * upAng;
+    add('side_doors', upper);
+    const lowAng = Math.atan2(0.42, 0.6); // pastki yon list
+    const lower = box(0.42, 0.56, 0.05, C.armorDark);
+    lower.position.set(0, 0.84, s * 1.23);
+    lower.rotation.x = s * lowAng;
+    add('side_doors', lower);
+    const handle = box(0.16, 0.04, 0.04, C.darkSteel);
+    handle.position.set(0.15, 1.45, s * 1.3);
+    add('side_doors', handle);
+  }
+
+  // Kuzatish oynalari (old qiya list) va yon priborlar
+  for (const s of [-1, 1]) {
+    const glass = box(0.62, 0.035, 0.5, C.glass, { metalness: 0.5, roughness: 0.2 });
+    onSlopeX(glass, 3.3, 1.6, 2.4, 2.0, 0.02);
+    glass.position.z = s * 0.47;
+    add('vision', glass);
+    const cover = box(0.66, 0.04, 0.06, C.armorDark);
+    onSlopeX(cover, 3.3, 1.6, 2.4, 2.0, 0.05);
+    cover.position.z = s * 0.47 + s * 0.27;
+    add('vision', cover);
+    for (const x of [1.65, -0.15, -0.95, -1.75]) {
+      const peri = box(0.16, 0.1, 0.07, C.glass, { metalness: 0.4, roughness: 0.3 });
+      peri.position.set(x, 1.82, s * 1.11);
+      peri.rotation.x = -s * Math.atan2(0.42, 0.9);
+      add('vision', peri);
+    }
+  }
+
+  /* ---------- QUROLLANISH ---------- */
+  const TX = 1.0;
+  const turret = new THREE.Group();
+  const tBody = cyl(0.5, 0.74, 0.5, C.armor, 10, { flatShading: true }); tBody.position.y = 0.25; turret.add(tBody);
+  const tRing = cyl(0.78, 0.8, 0.06, C.armorDark, 24); tRing.position.y = 0.0; turret.add(tRing);
+  const tTop = cyl(0.42, 0.5, 0.04, C.armorDark, 10); tTop.position.y = 0.52; turret.add(tTop);
+  const mantlet = box(0.32, 0.3, 0.42, C.armorDark); mantlet.position.set(0.6, 0.3, 0); turret.add(mantlet);
+  turret.position.set(TX, 2.0, 0);
+  add('turret', turret);
+
+  const kpvt = new THREE.Group();
+  const recv = box(0.9, 0.16, 0.16, C.darkSteel); recv.position.set(0.25, 0, 0); kpvt.add(recv);
+  const barrel = cyl(0.05, 0.05, 2.0, C.darkSteel, 14, { metalness: 0.6, roughness: 0.4 }); barrel.rotation.z = Math.PI / 2; barrel.position.x = 1.6; kpvt.add(barrel);
+  const shroud = cyl(0.08, 0.08, 0.9, C.darkSteel, 14, { metalness: 0.5, roughness: 0.45 }); shroud.rotation.z = Math.PI / 2; shroud.position.x = 1.1; kpvt.add(shroud);
+  const muzzle = cyl(0.075, 0.075, 0.18, C.darkSteel, 14); muzzle.rotation.z = Math.PI / 2; muzzle.position.x = 2.62; kpvt.add(muzzle);
+  kpvt.position.set(TX + 0.4, 2.32, 0.07);
+  add('kpvt', kpvt);
+
+  const pkt = new THREE.Group();
+  const pRecv = box(0.5, 0.09, 0.08, C.darkSteel); pRecv.position.x = 0.15; pkt.add(pRecv);
+  const pBar = cyl(0.022, 0.022, 0.7, C.darkSteel, 10, { metalness: 0.6 }); pBar.rotation.z = Math.PI / 2; pBar.position.x = 0.7; pkt.add(pBar);
+  pkt.position.set(TX + 0.5, 2.3, -0.16);
+  add('pkt', pkt);
+
+  const sight = new THREE.Group();
+  const sBody = box(0.2, 0.22, 0.16, C.darkSteel); sight.add(sBody);
+  const sHead = box(0.12, 0.1, 0.18, C.glass, { metalness: 0.5, roughness: 0.2 }); sHead.position.set(0.06, 0.15, 0); sight.add(sHead);
+  const sHood = box(0.16, 0.04, 0.22, C.armorDark); sHood.position.set(0.04, 0.22, 0); sight.add(sHood);
+  sight.position.set(TX + 0.18, 2.58, 0.22);
+  add('sight', sight);
+
+  const smoke = new THREE.Group();
+  for (let i = 0; i < 6; i++) {
+    const zz = -0.42 + i * 0.168;
+    const tube = cyl(0.045, 0.045, 0.24, C.armorDark, 10);
+    tube.position.set(0, 0, zz);
+    tube.rotation.z = Math.PI * 0.22; // orqaga-yuqoriga qiya
+    tube.rotation.x = zz * 0.6;
+    smoke.add(tube);
+  }
+  const smokeBar = box(0.08, 0.06, 0.95, C.darkSteel); smokeBar.position.set(0.06, -0.08, 0); smoke.add(smokeBar);
+  smoke.position.set(TX - 0.62, 2.42, 0);
+  add('smoke', smoke);
+
+  /* ---------- YURISH QISMI ---------- */
+  const tyreProfile = [[0.28, -0.19], [0.47, -0.19], [0.53, -0.17], [0.56, -0.11], [0.56, 0.11], [0.53, 0.17], [0.47, 0.19], [0.28, 0.19]]
+    .map(([r, y]) => new THREE.Vector2(r, y));
+  const tyreGeo = new THREE.LatheGeometry(tyreProfile, 32);
+  for (const x of AXLES_X) for (const s of [-1, 1]) {
+    const w = new THREE.Group();
+    const tyre = new THREE.Mesh(tyreGeo, mat(C.rubber, { roughness: 0.95, metalness: 0, side: THREE.DoubleSide }));
+    tyre.rotation.x = Math.PI / 2; w.add(tyre);
+    const hub = cyl(0.29, 0.29, 0.34, C.hub, 20); hub.rotation.x = Math.PI / 2; w.add(hub);
+    const cap = cyl(0.12, 0.14, 0.42, C.darkSteel, 12); cap.rotation.x = Math.PI / 2; w.add(cap);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const bolt = cyl(0.022, 0.022, 0.39, C.steel, 6); bolt.rotation.x = Math.PI / 2;
+      bolt.position.set(Math.cos(a) * 0.2, Math.sin(a) * 0.2, 0); w.add(bolt);
+    }
+    w.position.set(x, 0.56, s * 1.22);
+    add('wheels', w);
+  }
+
+  for (const x of AXLES_X) {
+    const axle = cylBetween([x, 0.56, -1.08], [x, 0.56, 1.08], 0.075, C.darkSteel);
+    add('axles', axle);
+    const diff = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(C.darkSteel));
+    diff.scale.set(1.2, 0.9, 1); diff.position.set(x, 0.58, 0);
+    add('axles', diff);
+    for (const s of [-1, 1]) {
+      const red = cyl(0.13, 0.13, 0.16, C.darkSteel, 14); red.rotation.x = Math.PI / 2;
+      red.position.set(x, 0.56, s * 0.98);
+      add('axles', red);
+      // osma: torsion richag va amortizator
+      const arm = cylBetween([x - 0.35, 0.62, s * 0.62], [x, 0.58, s * 0.95], 0.045, C.steel, 8);
+      add('suspension', arm);
+      const torsion = cylBetween([x - 0.35, 0.62, s * 0.62], [x - 1.0, 0.62, s * 0.62], 0.03, C.steel, 8);
+      add('suspension', torsion);
+      const shock = cylBetween([x + 0.05, 0.66, s * 0.92], [x + 0.22, 1.15, s * 0.82], 0.05, C.gear, 10);
+      add('suspension', shock);
+      const spring = cylBetween([x + 0.1, 0.8, s * 0.89], [x + 0.18, 1.03, s * 0.85], 0.075, C.engine, 10);
+      add('suspension', spring);
+    }
+  }
+
+  /* ---------- DVIGATEL-TRANSMISSIYA ---------- */
+  const eng = new THREE.Group();
+  const block = box(1.1, 0.5, 0.62, C.engine); block.position.y = 0; eng.add(block);
+  for (const s of [-1, 1]) {
+    const head = box(1.02, 0.18, 0.32, C.engine);
+    head.position.set(0, 0.36, s * 0.27); head.rotation.x = s * 0.6; eng.add(head);
+    const cover = box(1.0, 0.05, 0.26, C.darkSteel);
+    cover.position.set(0, 0.47, s * 0.34); cover.rotation.x = s * 0.6; eng.add(cover);
+    const manifold = cylBetween([-0.5, 0.15, s * 0.47], [0.5, 0.15, s * 0.47], 0.05, C.steel, 8);
+    eng.add(manifold);
+  }
+  const turbo = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.06, 10, 18), mat(C.steel, { metalness: 0.6 }));
+  turbo.position.set(-0.62, 0.3, 0); turbo.rotation.y = Math.PI / 2; eng.add(turbo);
+  const filter = cyl(0.14, 0.14, 0.5, C.darkSteel, 16); filter.rotation.x = Math.PI / 2; filter.position.set(-0.3, 0.58, 0); eng.add(filter);
+  const pulley = cyl(0.14, 0.14, 0.06, C.darkSteel, 18); pulley.rotation.z = Math.PI / 2; pulley.position.set(-0.58, -0.05, 0); eng.add(pulley);
+  eng.position.set(-2.85, 0.95, 0);
+  add('engine', eng);
+
+  const gb = new THREE.Group();
+  const clutch = cyl(0.3, 0.26, 0.28, C.gear, 18); clutch.rotation.z = Math.PI / 2; clutch.position.x = -0.14; gb.add(clutch);
+  const gbox = box(0.48, 0.42, 0.42, C.gear); gbox.position.x = 0.24; gb.add(gbox);
+  const lever = cylBetween([0.3, 0.2, 0], [0.38, 0.45, 0], 0.02, C.darkSteel, 6); gb.add(lever);
+  gb.position.set(-2.12, 0.88, 0);
+  add('gearbox', gb);
+
+  const tc = new THREE.Group();
+  const tcBody = box(0.42, 0.34, 0.5, C.gear); tc.add(tcBody);
+  const tcPto = cyl(0.08, 0.08, 0.2, C.darkSteel, 10); tcPto.rotation.z = Math.PI / 2; tcPto.position.set(-0.3, -0.05, 0.12); tc.add(tcPto);
+  tc.position.set(-0.05, 0.78, 0);
+  add('transfer', tc);
+
+  add('shafts', cylBetween([-1.88, 0.86, 0], [0.16, 0.8, 0], 0.045, C.shaft, 10));
+  for (const x of AXLES_X) {
+    const from = x > 0 ? [0.16, 0.74, 0.08] : [-0.26, 0.74, -0.08];
+    add('shafts', cylBetween(from, [x + (x > 0 ? -0.2 : 0.2), 0.6, 0], 0.04, C.shaft, 10));
+  }
+  // Suv to'piga val
+  add('shafts', cylBetween([-0.4, 0.72, 0.12], [-3.3, 0.82, 0.12], 0.03, C.shaft, 8));
+
+  for (const s of [-1, 1]) {
+    const tank = box(0.36, 0.95, 0.5, C.tank);
+    tank.position.set(-1.8, 1.32, s * 0.72);
+    add('fuel', tank);
+    const capT = cyl(0.06, 0.06, 0.06, C.darkSteel, 10); capT.position.set(-1.8, 1.82, s * 0.72);
+    add('fuel', capT);
+  }
+
+  const rad = new THREE.Group();
+  const core = box(1.0, 0.14, 1.5, C.radiator, { metalness: 0.4, roughness: 0.5 }); rad.add(core);
+  for (const s of [-1, 1]) {
+    const fan = cyl(0.28, 0.28, 0.06, C.darkSteel, 20); fan.position.set(0, -0.12, s * 0.38); rad.add(fan);
+  }
+  rad.position.set(-2.85, 1.78, 0);
+  add('radiator', rad);
+  // tomdagi jalyuzlar (radiatorga tegishli)
+  for (let i = 0; i < 7; i++) {
+    const louver = box(0.07, 0.03, 1.5, C.armorDark);
+    louver.position.set(-2.4 - i * 0.14, 2.02, 0);
+    add('radiator', louver);
+  }
+
+  /* ---------- SUZISH ---------- */
+  const wj = new THREE.Group();
+  const wjHouse = cyl(0.22, 0.26, 0.6, C.darkSteel, 18); wjHouse.rotation.z = Math.PI / 2; wjHouse.position.x = 0.05; wj.add(wjHouse);
+  const wjNozzle = cyl(0.17, 0.2, 0.2, C.steel, 18, { metalness: 0.5 }); wjNozzle.rotation.z = Math.PI / 2; wjNozzle.position.x = -0.32; wj.add(wjNozzle);
+  const wjFlap = box(0.04, 0.5, 0.52, C.armorDark); wjFlap.position.x = -0.44; wj.add(wjFlap);
+  wj.position.set(-3.42, 0.85, 0);
+  add('waterjet', wj);
+
+  const tv = new THREE.Group();
+  const plate = box(0.62, 0.035, 2.0, C.armorDark); tv.add(plate);
+  for (const zz of [-0.7, 0, 0.7]) { const rib = box(0.56, 0.05, 0.04, C.armor); rib.position.set(0, 0.03, zz); tv.add(rib); }
+  onSlopeX(tv, 3.3, 0.55, 3.85, 0.95, -0.05);
+  add('trimvane', tv);
+
+  /* ---------- BOSHQARUV BO'LIMI ---------- */
+  function seat(back = 0.5) {
+    const g = new THREE.Group();
+    const base = box(0.44, 0.1, 0.44, C.seat); g.add(base);
+    const bk = box(0.08, back, 0.44, C.seat); bk.position.set(-0.2, back / 2, 0); g.add(bk);
+    const leg = cyl(0.03, 0.03, 0.4, C.darkSteel, 8); leg.position.y = -0.24; g.add(leg);
+    return g;
+  }
+  const drv = new THREE.Group();
+  const dSeat = seat(); dSeat.position.set(0, 0, 0); drv.add(dSeat);
+  const col = cylBetween([0.62, 0.05, 0], [0.38, 0.38, 0], 0.03, C.darkSteel, 8); drv.add(col);
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), mat(C.darkSteel));
+  wheel.position.set(0.38, 0.4, 0);
+  wheel.rotation.set(0.55, Math.PI / 2, 0, 'YXZ'); drv.add(wheel);
+  const dash = box(0.18, 0.25, 0.7, C.darkSteel); dash.position.set(0.78, 0.35, 0.08); drv.add(dash);
+  for (let i = 0; i < 3; i++) { const g = cyl(0.04, 0.04, 0.02, C.lamp, 12, { emissive: 0x332200 }); g.rotation.z = Math.PI / 2; g.position.set(0.68, 0.42, -0.15 + i * 0.15); drv.add(g); }
+  for (const zz of [-0.12, 0.06, 0.18]) { const ped = box(0.04, 0.12, 0.07, C.darkSteel); ped.position.set(0.7, -0.15, zz); ped.rotation.z = 0.4; drv.add(ped); }
+  drv.position.set(2.3, 0.95, -0.47);
+  add('driver', drv);
+
+  const cmd = new THREE.Group();
+  const cSeat = seat(); cmd.add(cSeat);
+  const cPanel = box(0.18, 0.22, 0.5, C.darkSteel); cPanel.position.set(0.78, 0.35, 0); cmd.add(cPanel);
+  cmd.position.set(2.3, 0.95, 0.47);
+  add('commander', cmd);
+
+  const gun = new THREE.Group();
+  const gSeat = seat(0.35); gun.add(gSeat);
+  const strap = cylBetween([0, 0.05, 0], [0, 0.85, 0], 0.025, C.darkSteel, 6); strap.position.x = -0.05; gun.add(strap);
+  gun.position.set(TX - 0.1, 1.15, 0);
+  add('gunner', gun);
+
+  /* ---------- DESANT BO'LIMI ---------- */
+  const seats = new THREE.Group();
+  const bench = box(2.2, 0.1, 0.9, C.seat); seats.add(bench);
+  const backrest = box(2.2, 0.55, 0.08, C.seat); backrest.position.y = 0.32; seats.add(backrest);
+  for (const xx of [-0.95, 0, 0.95]) for (const zz of [-0.36, 0.36]) { const leg = box(0.06, 0.4, 0.06, C.darkSteel); leg.position.set(xx, -0.25, zz); seats.add(leg); }
+  for (const s of [-1, 1]) {
+    const side = box(0.5, 0.08, 0.38, C.seat); side.position.set(1.35, 0.0, s * 0.6); seats.add(side);
+  }
+  seats.position.set(-0.62, 0.95, 0);
+  add('troop_seats', seats);
+
+  for (const s of [-1, 1]) for (const x of [-1.5, -0.95, 0.55, 1.6]) {
+    const port = new THREE.Group();
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.025, 8, 16), mat(C.darkSteel));
+    port.add(ring);
+    const plug = cyl(0.06, 0.06, 0.03, C.armorDark, 14); plug.rotation.x = Math.PI / 2; port.add(plug);
+    port.position.set(x, 1.48, s * 1.25);
+    port.rotation.x = -s * Math.atan2(0.42, 0.9);
+    add('firing_ports', port);
+  }
+
+  /* ---------- ELEKTR VA ALOQA ---------- */
+  const radio = new THREE.Group();
+  const rBody = box(0.36, 0.3, 0.3, C.radio); radio.add(rBody);
+  const rFront = box(0.02, 0.22, 0.24, C.darkSteel); rFront.position.x = 0.19; radio.add(rFront);
+  for (let i = 0; i < 3; i++) { const knob = cyl(0.025, 0.025, 0.04, C.steel, 10); knob.rotation.z = Math.PI / 2; knob.position.set(0.21, 0.05, -0.08 + i * 0.08); radio.add(knob); }
+  radio.position.set(1.85, 1.5, 0.78);
+  add('radio', radio);
+
+  const ant = new THREE.Group();
+  const aBase = cyl(0.07, 0.09, 0.12, C.darkSteel, 12); ant.add(aBase);
+  const aRod = cyl(0.008, 0.015, 1.9, C.darkSteel, 6); aRod.position.y = 1.0; ant.add(aRod);
+  ant.position.set(-0.1, 2.06, 0.82);
+  add('antenna', ant);
+
+  for (const s of [-1, 1]) {
+    const lamp = new THREE.Group();
+    const housing = cyl(0.1, 0.1, 0.14, C.darkSteel, 16); housing.rotation.z = Math.PI / 2; lamp.add(housing);
+    const lens = cyl(0.085, 0.085, 0.02, C.lamp, 16, { emissive: 0x6b5a20, roughness: 0.2 }); lens.rotation.z = Math.PI / 2; lens.position.x = 0.08; lamp.add(lens);
+    const guard = box(0.04, 0.24, 0.04, C.darkSteel); guard.position.set(0.12, 0, 0); lamp.add(guard);
+    lamp.position.set(3.45, 1.5, s * 0.98);
+    add('lights', lamp);
+    const ir = cyl(0.06, 0.06, 0.1, 0x5a1010, 12, { emissive: 0x200000 }); ir.rotation.z = Math.PI / 2;
+    ir.position.set(3.38, 1.66, s * 0.78);
+    add('lights', ir);
+  }
+
+  for (const zz of [-0.92, -0.62]) {
+    const bat = box(0.5, 0.26, 0.26, C.battery);
+    bat.position.set(1.55, 0.78, zz);
+    add('battery', bat);
+    for (const dz of [-0.07, 0.07]) { const term = cyl(0.02, 0.02, 0.04, 0xb33a2a, 8); term.position.set(1.55 + dz * 2, 0.93, zz); add('battery', term); }
+  }
+
+  const fvu = new THREE.Group();
+  const fBody = box(0.4, 0.4, 0.34, C.fvu); fvu.add(fBody);
+  const fCyl = cyl(0.13, 0.13, 0.3, C.fvu, 16); fCyl.position.set(0, 0.32, 0); fvu.add(fCyl);
+  const fDuct = cylBetween([0, 0.45, 0], [0.05, 0.95, 0.15], 0.05, C.steel, 8); fvu.add(fDuct);
+  fvu.position.set(1.55, 0.88, 0.78);
+  add('fvu', fvu);
+
+  return root;
+}

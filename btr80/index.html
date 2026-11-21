@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE:START -->
+<title>BTR-80 tuzilishi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="emblem" aria-hidden="true">HAT</div>
+    <div class="top-text">
+      <p class="dept">Harbiy avtotransport va avtomobil tayyorgarligi kafedrasi</p>
+      <h1>BTR-80 zirhli transportyorining tuzilishi</h1>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="viewer" id="viewer" aria-label="BTR-80 ning 3D modeli">
+      <div class="loading" id="loading">Model yuklanmoqda…</div>
+      <div class="tools">
+        <button class="tool" id="btn-reset" type="button" disabled>Umumiy ko'rinish</button>
+        <button class="tool" id="btn-xray" type="button" aria-pressed="false">Rentgen</button>
+        <button class="tool" id="btn-rotate" type="button" aria-pressed="false">Aylantirish</button>
+      </div>
+      <div class="tag" id="tag" hidden></div>
+      <div class="tip" id="tip" hidden></div>
+      <p class="legend">Sichqoncha: aylantirish · g'ildirakcha: yaqinlashtirish · o'ng tugma: surish · Esc: qaytish</p>
+    </section>
+
+    <aside class="panel" aria-label="BTR-80 qismlari">
+      <nav class="crumbs" id="crumbs" aria-label="Joriy tanlov"></nav>
+      <div class="info" id="info" aria-live="polite"></div>
+      <h2 class="list-title">Asosiy qismlar</h2>
+      <ul class="cats" id="cats"></ul>
+      <p class="foot">Model o'quv maqsadida soddalashtirilgan: qismlarning joylashuvi va nisbatlari taxminiy.</p>
+    </aside>
+  </main>
+</div>
+<script type="module" src="js/main.js"></script>
+<!-- PAGE:END -->
+</body>
+</html>
