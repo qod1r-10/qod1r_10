@@ -5,13 +5,16 @@ import * as THREE from 'three';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
-  steel: 0x8c8e86, darkSteel: 0x3b3d39, engine: 0x8b4a2e, gear: 0x5d6b78,
-  shaft: 0xa3a39a, tank: 0x9a8740, seat: 0x6e5236, glass: 0x22404f,
-  radio: 0x3f4d3c, lamp: 0xfff1c2, fvu: 0x6f8193, battery: 0x2b2e35, radiator: 0x8a8f95,
+  steel: 0xb4b7b2, darkSteel: 0x45484a, engine: 0x6d7175, gear: 0x8a9096,
+  shaft: 0xd2d5d8, tank: 0x8f7d3c, seat: 0x6e5236, glass: 0x22404f,
+  radio: 0x3f4d3c, lamp: 0xfff1c2, fvu: 0x7d8a96, battery: 0x2b2e35, radiator: 0x9aa0a6,
 };
+// Metall detallar yaltiroq, bo'yalgan va yumshoq detallar xira
+const MATTE = new Set([0x5a6640, 0x46502f, 0x1d1e1b, 0x4c5534, 0x8f7d3c, 0x6e5236, 0x3f4d3c, 0x2b2e35, 0x7d8a96]);
 
 function mat(color, opts = {}) {
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.18, ...opts });
+  const metal = !MATTE.has(color);
+  return new THREE.MeshStandardMaterial({ color, roughness: metal ? 0.34 : 0.75, metalness: metal ? 0.85 : 0.12, ...opts });
 }
 
 function box(w, h, d, color, opts) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, opts)); }
@@ -71,7 +74,7 @@ export const AXLES_X = [2.115, 0.765, -0.765, -2.115];
 // Haqiqiy 3D modelda (models/btr80.glb) bor tashqi qismlar
 const REAL_PARTS = new Set(['hull', 'hatch_front', 'hatch_roof', 'side_doors', 'vision', 'turret', 'kpvt', 'pkt', 'sight', 'smoke',
   'wheels', 'suspension', 'trimvane', 'lights', 'antenna']);
-const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
+export const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
 
 // exterior=false: faqat ichki qismlar (tashqi ko'rinish haqiqiy modeldan olinadi)
 export function buildBTR80({ exterior = true } = {}) {
@@ -257,7 +260,7 @@ export function buildBTR80({ exterior = true } = {}) {
   const turbo = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.06, 10, 18), mat(C.steel, { metalness: 0.6 }));
   turbo.position.set(-0.62, 0.3, 0); turbo.rotation.y = Math.PI / 2; eng.add(turbo);
   const filter = cyl(0.14, 0.14, 0.5, C.darkSteel, 16); filter.rotation.x = Math.PI / 2; filter.position.set(-0.3, 0.58, 0); eng.add(filter);
-  const pulley = cyl(0.14, 0.14, 0.06, C.darkSteel, 18); pulley.rotation.z = Math.PI / 2; pulley.position.set(-0.58, -0.05, 0); eng.add(pulley);
+  const pulley = cyl(0.14, 0.14, 0.06, C.darkSteel, 18); pulley.name = 'pulley'; pulley.rotation.z = Math.PI / 2; pulley.position.set(-0.58, -0.05, 0); eng.add(pulley);
   eng.position.set(-2.85, 0.95, 0);
   add('engine', eng);
 
@@ -293,7 +296,7 @@ export function buildBTR80({ exterior = true } = {}) {
   const rad = new THREE.Group();
   const core = box(1.0, 0.14, 1.5, C.radiator, { metalness: 0.4, roughness: 0.5 }); rad.add(core);
   for (const s of [-1, 1]) {
-    const fan = cyl(0.28, 0.28, 0.06, C.darkSteel, 20); fan.position.set(0, -0.12, s * 0.38); rad.add(fan);
+    const fan = cyl(0.28, 0.28, 0.06, C.darkSteel, 20); fan.name = 'fan'; fan.position.set(0, -0.12, s * 0.38); rad.add(fan);
   }
   rad.position.set(-2.85, 1.78, 0);
   add('radiator', rad);

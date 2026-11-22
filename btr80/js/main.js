@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildBTR80 } from './model.js';
+import { buildBTR80, AXLES_X, REAL_AXLES_X } from './model.js';
+import { createDrive, FLOW_PARTS, FLOW_STEPS } from './drive.js';
+import { createCutaway } from './cutaway.js';
 import { VEHICLE, CATEGORIES } from './parts.js';
 
 const $ = (s) => document.querySelector(s);
@@ -148,12 +150,17 @@ model.traverse((o) => {
   meshesByPart.get(id).push(o);
 });
 
+const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid });
+
+const cut = createCutaway({ renderer, meshes });
+
 /* ---------- Holat ---------- */
 const state = { cat: null, part: null, open: null, xray: false };
 
 function focusIds() {
   if (state.part) return new Set([state.part]);
   if (state.cat) return new Set(CAT.get(state.cat).parts.map((p) => p.id));
+  if (drive.state.flow) return FLOW_PARTS;
   return null;
 }
 
@@ -235,6 +242,10 @@ function render() {
   } else if (state.cat) {
     const cat = CAT.get(state.cat);
     info.innerHTML = `<p class="eyebrow">Asosiy qism · ${cat.parts.length} ta ichki qism</p><h2>${esc(cat.name)}</h2><p>${esc(cat.desc)}</p><p class="hint">Ichki qismlardan birini tanlang: uning BTR ichidagi joyi ko'rsatiladi.</p>`;
+  } else if (drive.state.on || drive.state.flow) {
+    info.innerHTML = `<p class="eyebrow">Yurgizish rejimi</p><h2>Kuch qanday uzatiladi</h2>
+      <p>Dvigateldan chiqqan aylanish sakkizala g'ildirakka shu zanjir orqali yetib boradi. "Kuch oqimi" tugmasini bosing: yo'l modelda ko'rinadi.</p>
+      <ol class="flow">${FLOW_STEPS.map(([n, d]) => `<li><b>${esc(n)}</b><span>${esc(d)}</span></li>`).join('')}</ol>`;
   } else {
     info.innerHTML = `<p class="eyebrow">Taktik-texnik ma'lumotlar</p><h2>${esc(VEHICLE.full)}</h2><p>${esc(VEHICLE.desc)}</p>${specsHTML(VEHICLE.specs)}`;
   }
@@ -276,6 +287,38 @@ $('#btn-rotate').addEventListener('click', (e) => {
   e.currentTarget.setAttribute('aria-pressed', controls.autoRotate);
 });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape') resetView(); });
+
+$('#btn-drive').addEventListener('click', (e) => {
+  const on = !drive.state.on;
+  drive.setOn(on);
+  e.currentTarget.setAttribute('aria-pressed', on);
+  $('#hud').hidden = !on;
+  $('#pad').hidden = !on;
+  viewer.classList.toggle('is-driving', on);
+  if (on) {
+    controls.autoRotate = false;
+    $('#btn-rotate').setAttribute('aria-pressed', 'false');
+    if (!state.cat) flyTo(new THREE.Vector3(-6.5, 4.6, -9.5), HOME.target.clone());
+  } else if (grid) {
+    grid.position.set(0, 0.001, 0);
+    grid.rotation.y = 0;
+  }
+  render();
+});
+$('#btn-cut').addEventListener('click', (e) => {
+  const on = !cut.state.on;
+  cut.set(on);
+  e.currentTarget.setAttribute('aria-pressed', on);
+  if (on && !state.cat) flyTo(new THREE.Vector3(8.4, 3.4, 2.2), new THREE.Vector3(0, 1.1, -0.2), 1400);
+});
+$('#btn-flow').addEventListener('click', (e) => {
+  const on = !drive.state.flow;
+  drive.setFlow(on);
+  e.currentTarget.setAttribute('aria-pressed', on);
+  if (on) { state.cat = null; state.part = null; }
+  applyMeshStates();
+  render();
+});
 
 /* ---------- 3D da bosish va ko'rsatish ---------- */
 const ray = new THREE.Raycaster();
@@ -344,6 +387,9 @@ function frame() {
     controls.target.lerpVectors(fly.t0, fly.t1, e);
     if (k >= 1) fly = null;
   }
+  drive.state.hideWorld = !!(state.part || state.cat);
+  drive.update(dt);
+  cut.update(dt, reduceMotion);
   controls.update();
 
   const pulse = reduceMotion ? 0.45 : 0.38 + 0.22 * Math.sin(t * 3.4);
