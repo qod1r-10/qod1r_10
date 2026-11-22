@@ -2,6 +2,7 @@
 // O'qlar: x — uzunlik bo'ylab (old tomon +x), y — yuqoriga, z — eni bo'ylab.
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
+import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -79,6 +80,13 @@ export const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
 // exterior=false: faqat ichki qismlar (tashqi ko'rinish haqiqiy modeldan olinadi)
 export function buildBTR80({ exterior = true } = {}) {
   const AX = exterior ? AXLES_X : REAL_AXLES_X;
+  const mechs = [];
+  const addMech = (m, pos) => {
+    m.root.position.set(...pos);
+    m.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    root.add(m.root);
+    mechs.push(m);
+  };
   const root = new THREE.Group();
   root.name = 'BTR-80';
 
@@ -227,9 +235,7 @@ export function buildBTR80({ exterior = true } = {}) {
   for (const x of AX) {
     const axle = cylBetween([x, 0.56, -1.08], [x, 0.56, 1.08], 0.075, C.darkSteel);
     add('axles', axle);
-    const diff = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(C.darkSteel));
-    diff.scale.set(1.2, 0.9, 1); diff.position.set(x, 0.58, 0);
-    add('axles', diff);
+    addMech(buildDiff(), [x, 0.58, 0]);
     for (const s of [-1, 1]) {
       const red = cyl(0.13, 0.13, 0.16, C.darkSteel, 14); red.rotation.x = Math.PI / 2;
       red.position.set(x, 0.56, s * 0.98);
@@ -247,35 +253,10 @@ export function buildBTR80({ exterior = true } = {}) {
   }
 
   /* ---------- DVIGATEL-TRANSMISSIYA ---------- */
-  const eng = new THREE.Group();
-  const block = box(1.1, 0.5, 0.62, C.engine); block.position.y = 0; eng.add(block);
-  for (const s of [-1, 1]) {
-    const head = box(1.02, 0.18, 0.32, C.engine);
-    head.position.set(0, 0.36, s * 0.27); head.rotation.x = s * 0.6; eng.add(head);
-    const cover = box(1.0, 0.05, 0.26, C.darkSteel);
-    cover.position.set(0, 0.47, s * 0.34); cover.rotation.x = s * 0.6; eng.add(cover);
-    const manifold = cylBetween([-0.5, 0.15, s * 0.47], [0.5, 0.15, s * 0.47], 0.05, C.steel, 8);
-    eng.add(manifold);
-  }
-  const turbo = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.06, 10, 18), mat(C.steel, { metalness: 0.6 }));
-  turbo.position.set(-0.62, 0.3, 0); turbo.rotation.y = Math.PI / 2; eng.add(turbo);
-  const filter = cyl(0.14, 0.14, 0.5, C.darkSteel, 16); filter.rotation.x = Math.PI / 2; filter.position.set(-0.3, 0.58, 0); eng.add(filter);
-  const pulley = cyl(0.14, 0.14, 0.06, C.darkSteel, 18); pulley.name = 'pulley'; pulley.rotation.z = Math.PI / 2; pulley.position.set(-0.58, -0.05, 0); eng.add(pulley);
-  eng.position.set(-2.85, 0.95, 0);
-  add('engine', eng);
-
-  const gb = new THREE.Group();
-  const clutch = cyl(0.3, 0.26, 0.28, C.gear, 18); clutch.rotation.z = Math.PI / 2; clutch.position.x = -0.14; gb.add(clutch);
-  const gbox = box(0.48, 0.42, 0.42, C.gear); gbox.position.x = 0.24; gb.add(gbox);
-  const lever = cylBetween([0.3, 0.2, 0], [0.38, 0.45, 0], 0.02, C.darkSteel, 6); gb.add(lever);
-  gb.position.set(-2.12, 0.88, 0);
-  add('gearbox', gb);
-
-  const tc = new THREE.Group();
-  const tcBody = box(0.42, 0.34, 0.5, C.gear); tc.add(tcBody);
-  const tcPto = cyl(0.08, 0.08, 0.2, C.darkSteel, 10); tcPto.rotation.z = Math.PI / 2; tcPto.position.set(-0.3, -0.05, 0.12); tc.add(tcPto);
-  tc.position.set(-0.05, 0.78, 0);
-  add('transfer', tc);
+  // Batafsil mexanizmlar (mech.js): dvigatel, uzatmalar qutisi, taqsimlash qutisi
+  addMech(buildEngine(), [-2.85, 0.95, 0]);
+  addMech(buildGearbox(), [-2.12, 0.88, 0]);
+  addMech(buildTransfer(), [-0.05, 0.78, 0]);
 
   add('shafts', cylBetween([-1.88, 0.86, 0], [0.16, 0.8, 0], 0.045, C.shaft, 10));
   for (const x of AX) {
@@ -414,5 +395,6 @@ export function buildBTR80({ exterior = true } = {}) {
   fvu.position.set(1.55, 0.88, 0.78);
   add('fvu', fvu);
 
+  root.userData.mechs = mechs;
   return root;
 }

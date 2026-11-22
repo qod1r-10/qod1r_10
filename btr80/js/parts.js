@@ -47,8 +47,10 @@ export const CATEGORIES = [
     desc: "Korpusning orqa qismida joylashgan. Dvigatel, uning tizimlari va kuchni g'ildiraklarga uzatuvchi agregatlardan iborat.",
     parts: [
       { id: 'engine', name: 'KamAZ-7403 dvigateli', desc: "8 silindrli, V-simon, to'rt taktli, turbonaddivli, suyuqlik bilan sovutiladigan dizel dvigatel.", specs: [['Quvvat', '260 o.k.'], ['Silindrlar', '8 (V8)'], ['Ish hajmi', '10,85 l']] },
+      { id: 'crank', name: 'Krivoship-shatun mexanizmi', desc: "Porshenning ilgarilama-qaytma harakatini tirsakli valning aylanma harakatiga aylantiradi. Qo'zg'aluvchan qismlari: porshen, porshen halqalari va barmog'i, shatun, tirsakli val, maxovik. Qo'zg'almas qismlari: silindrlar bloki, karter, silindr kallagi.", specs: [['Silindrlar', '8, V-simon 90°'], ['Diametr × porshen yo\'li', '120 × 120 mm']] },
+      { id: 'valvetrain', name: 'Gaz taqsimlash mexanizmi', desc: "Silindrlarga havo kiritish va ishlatilgan gazlarni chiqarish uchun klapanlarni o'z vaqtida ochib-yopadi. Taqsimlash vali harakatni tirsakli valdan oladi va undan 2 marta sekin aylanadi.", specs: [['Klapanlar', 'kirituvchi va chiqaruvchi, 16 ta'], ['Taqsimlash vali', 'tirsakli valdan 2 marta sekin']] },
       { id: 'radiator', name: 'Sovutish tizimi', desc: "Dvigatel bo'limi tomidagi jalyuzlar ostidagi radiatorlar va ventilyatorlar dvigatelni sovutadi. Tizim suyuqlik nasosi, termostat, parrak, radiator va quvurlardan iborat; me'yoriy harorat 85–95 °C.", specs: [['Sovutish suyuqligi', '48 l antifriz'], ['Moylash tizimi', '28 l moy']] },
-      { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
+      { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan. Sinxronizatorlar uzatmalarni shovqinsiz ulaydi; yurgizish rejimida ulangan juftlik yorishadi.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
       { id: 'transfer', name: 'Taqsimlash qutisi', desc: "Burovchi momentni oldingi va orqa ko'priklar o'rtasida taqsimlaydi. Ikki diapazonli, differensialni blokirovka qilish mumkin. Suv to'pi uchun quvvat olish qurilmasi shu yerda." },
       { id: 'shafts', name: 'Kardan uzatmalari', desc: "Taqsimlash qutisidan to'rtta ko'prikning bosh uzatmalariga burovchi momentni uzatuvchi vallar." },
       { id: 'fuel', name: "Yonilg'i baklari", desc: "Desant bo'limi bilan dvigatel bo'limi orasidagi to'siq yonida joylashgan baklar.", specs: [['Umumiy hajm', '≈300 l']] },
@@ -60,7 +62,7 @@ export const CATEGORIES = [
     desc: "8×8 g'ildirak formulasi. Bitta yoki ikkita g'ildirak ishdan chiqsa ham mashina harakatni davom ettira oladi.",
     parts: [
       { id: 'wheels', name: "G'ildiraklar (8 ta)", desc: "O'q tekkanda ham ishlay oladigan KI-80 shinalari. Markazlashtirilgan shina bosimini boshqarish tizimi bosimni yurish paytida o'zgartirish imkonini beradi.", specs: [["Shina o'lchami", '13.00-18'], ['Boshqariladigan', "1- va 2-ko'prik"]] },
-      { id: 'axles', name: "Ko'priklar (4 ta)", desc: "Har bir ko'prikda bosh uzatma va differensial bor. Moment g'ildiraklarga g'ildirak reduktorlari orqali beriladi." },
+      { id: 'axles', name: "Ko'priklar (4 ta)", desc: "Har bir ko'prikda bosh uzatma (yetaklovchi shesternya va yetaklanuvchi tishli g'ildirak) hamda differensial bor. Differensial burilishda chap va o'ng g'ildiraklarning har xil tezlikda aylanishiga imkon beradi. Moment g'ildiraklarga g'ildirak reduktorlari orqali beriladi." },
       { id: 'suspension', name: 'Osma', desc: "Mustaqil torsionli osma, gidravlik amortizatorlar bilan. Notekis yo'lda ravon harakatni ta'minlaydi." },
     ],
   },

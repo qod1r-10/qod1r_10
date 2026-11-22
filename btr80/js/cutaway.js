@@ -12,7 +12,7 @@ export function createCutaway({ renderer, meshes }) {
     color: 0xc0211b, roughness: 0.55, metalness: 0.1, side: THREE.BackSide,
     clippingPlanes: [plane], transparent: true,
   });
-  const targets = meshes.filter((m) => CUT_PARTS.has(m.userData.part) && !m.userData.ghost && m.geometry.attributes.uv);
+  const targets = meshes.filter((m) => (CUT_PARTS.has(m.userData.part) || m.userData.casing) && !m.userData.ghost && m.geometry.attributes.uv);
   const caps = targets.map((m) => {
     const c = new THREE.Mesh(m.geometry, capMat);
     c.visible = false;

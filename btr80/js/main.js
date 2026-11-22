@@ -186,7 +186,7 @@ function flyToMeshes(list) {
   const size = b.getSize(new THREE.Vector3()).length();
   const fov = THREE.MathUtils.degToRad(camera.fov);
   const aspectFix = Math.max(1, 1.2 / camera.aspect);
-  const dist = Math.max(4.6, (size * 0.75 / Math.tan(fov / 2)) * aspectFix);
+  const dist = Math.max(2.6, (size * 0.75 / Math.tan(fov / 2)) * aspectFix);
   const dir = camera.position.clone().sub(controls.target).normalize();
   if (dir.y < 0.3) { dir.y = 0.4; dir.normalize(); }
   flyTo(center.clone().addScaledVector(dir, dist), center);
@@ -311,6 +311,10 @@ $('#btn-cut').addEventListener('click', (e) => {
   e.currentTarget.setAttribute('aria-pressed', on);
   if (on && !state.cat) flyTo(new THREE.Vector3(8.4, 3.4, 2.2), new THREE.Vector3(0, 1.1, -0.2), 1400);
 });
+$('#btn-slow').addEventListener('click', (e) => {
+  drive.state.slow = !drive.state.slow;
+  e.currentTarget.setAttribute('aria-pressed', drive.state.slow);
+});
 $('#btn-flow').addEventListener('click', (e) => {
   const on = !drive.state.flow;
   drive.setFlow(on);
@@ -388,6 +392,7 @@ function frame() {
     if (k >= 1) fly = null;
   }
   drive.state.hideWorld = !!(state.part || state.cat);
+  drive.state.idle = cut.state.on;
   drive.update(dt);
   cut.update(dt, reduceMotion);
   controls.update();

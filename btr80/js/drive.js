@@ -8,7 +8,7 @@ const VREV = -8 / KMH;
 const GEARS = [[0, 12], [12, 24], [24, 40], [40, 58], [58, 80]]; // km/soat oraliqlari
 const WHEEL_R = 0.6;
 
-export const FLOW_PARTS = new Set(['engine', 'gearbox', 'transfer', 'shafts', 'axles', 'wheels']);
+export const FLOW_PARTS = new Set(['crank', 'valvetrain', 'gearbox', 'transfer', 'shafts', 'axles', 'wheels']);
 
 export const FLOW_STEPS = [
   ['Dvigatel', "KamAZ-7403 yonilg'i yonishidan hosil bo'lgan issiqlik energiyasini tirsakli valning aylanishiga aylantiradi."],
@@ -22,7 +22,7 @@ export const FLOW_STEPS = [
 
 export function createDrive(ctx) {
   const { scene, real, interior, axles, getGrid } = ctx;
-  const S = { on: false, flow: false, v: 0, heading: 0, steer: 0, turret: 0, px: 0, pz: 0, rpm: 800, gear: 'N', t: 0 };
+  const S = { on: false, idle: false, slow: false, crank: 0, wheelAng: 0, flow: false, v: 0, heading: 0, steer: 0, turret: 0, px: 0, pz: 0, rpm: 800, gear: 'N', t: 0 };
   const keys = new Set();
 
   /* --- harakatlanuvchi qismlar --- */
@@ -59,9 +59,7 @@ export function createDrive(ctx) {
     if (o.name === 'fan') spinners.push({ o, k: 0, fan: true });
     if (o.name === 'pulley') spinners.push({ o, k: 0, fan: true });
   });
-  const engGroups = new Set();
-  interior.traverse((o) => { if (o.isMesh && o.userData.part === 'engine' && o.parent !== interior) engGroups.add(o.parent); });
-  engGroups.forEach((o) => shakers.push({ o, y: o.position.y }));
+  const mechs = interior.userData.mechs || [];
 
   /* --- yer belgilari --- */
   const world = new THREE.Group();
@@ -186,16 +184,22 @@ export function createDrive(ctx) {
       S.gear = String(g + 1);
       S.rpm = 1000 + Math.min(1, (a - lo) / (hi - lo)) * 1600;
     }
-    const engineSpin = S.on ? S.rpm / 60 * Math.PI * 2 * 0.05 : 0;
+    const running = S.on || S.idle;
+    const slow = S.slow ? 0.25 : 1;
+    const engineSpin = running ? S.rpm / 60 * Math.PI * 2 * 0.1 * slow : 0;
+    S.crank += engineSpin * dt;
 
     // g'ildiraklar
     const wr = S.v / WHEEL_R * dt;
+    S.wheelAng += wr;
+    const gNo = /^[1-5]$/.test(S.gear) ? +S.gear : 0;
+    for (const m of mechs) m.update(S.crank, S.wheelAng, gNo);
     for (const w of wheels) {
       w.mesh.rotation.x += wr;
       w.mesh.rotation.y = w.axle === 0 ? S.steer : w.axle === 1 ? S.steer * 0.55 : 0;
     }
     for (const s of spinners) {
-      s.o.rotateY(s.fan ? engineSpin * dt * 4 : wr * s.k);
+      s.o.rotateY(s.fan ? engineSpin * dt * 2 : wr * s.k);
     }
     // korpus tebranishi
     const bob = S.on ? Math.sin(S.t * 9) * 0.004 * Math.min(1, a / 30) + Math.sin(S.t * 2.3) * 0.006 * Math.min(1, a / 50) : 0;
