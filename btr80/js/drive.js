@@ -22,13 +22,14 @@ export const FLOW_STEPS = [
 
 export function createDrive(ctx) {
   const { scene, real, interior, axles, getGrid } = ctx;
-  const S = { on: false, idle: false, slow: false, crank: 0, wheelAng: 0, flow: false, v: 0, heading: 0, steer: 0, turret: 0, px: 0, pz: 0, rpm: 800, gear: 'N', t: 0 };
+  const S = { elev: 0, on: false, idle: false, slow: false, crank: 0, wheelAng: 0, flow: false, v: 0, heading: 0, steer: 0, turret: 0, px: 0, pz: 0, rpm: 800, gear: 'N', t: 0 };
   const keys = new Set();
 
   /* --- harakatlanuvchi qismlar --- */
   const wheels = [];
   const body = [];
-  let turretPivot = null;
+  let turretPivot = null, gunPivot = null;
+  const GUN_REST = Math.atan2(0.52, 1.08);
   if (real) {
     turretPivot = new THREE.Group();
     turretPivot.position.set(0, 0, 0.97);
@@ -45,6 +46,15 @@ export function createDrive(ctx) {
       } else {
         body.push({ o, y: o.position.y });
       }
+    });
+    // Qurol beshigi: KPVT va PKT o'q (tsapfa) atrofida ko'tariladi/tushadi.
+    // Modelda stvol 25.7° ko'tarilgan holda; GUN_REST uni gorizontal holatga keltiradi.
+    gunPivot = new THREE.Group();
+    gunPivot.position.set(0, 2.2, 1.36 - 0.97);
+    turretPivot.add(gunPivot);
+    turretPivot.updateMatrixWorld(true);
+    [...turretPivot.children].forEach((o) => {
+      if (o.isMesh && /^(kpvt|pkt)__/.test(o.name)) gunPivot.attach(o);
     });
     body.push({ o: turretPivot, y: turretPivot.position.y });
   }
@@ -119,7 +129,7 @@ export function createDrive(ctx) {
 
   /* --- boshqaruv --- */
   const typing = (e) => /input|textarea|select/i.test(e.target.tagName);
-  const MAP = { KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', KeyQ: 'tl', KeyE: 'tr', Space: 'brake' };
+  const MAP = { KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', KeyQ: 'tl', KeyE: 'tr', KeyR: 'gu', KeyF: 'gd', Space: 'brake' };
   window.addEventListener('keydown', (e) => {
     if (!S.on || typing(e) || !MAP[e.code]) return;
     keys.add(MAP[e.code]);
@@ -171,6 +181,8 @@ export function createDrive(ctx) {
 
       const tr = (keys.has('tl') ? 1 : 0) - (keys.has('tr') ? 1 : 0);
       S.turret += tr * dt * 0.9;
+      const el = (keys.has('gu') ? 1 : 0) - (keys.has('gd') ? 1 : 0);
+      S.elev = Math.min(60, Math.max(-4, S.elev + el * dt * 25)); // 1PZ-2: −4° … +60°
     }
 
     // uzatma va aylanishlar
@@ -207,6 +219,7 @@ export function createDrive(ctx) {
     const shake = S.on ? Math.sin(S.t * S.rpm / 60 * 6.28) * 0.004 : 0;
     for (const s of shakers) s.o.position.y = s.y + shake;
     if (turretPivot) turretPivot.rotation.y = S.turret;
+    if (gunPivot) gunPivot.rotation.x = GUN_REST - S.elev * Math.PI / 180;
 
     // yer harakati
     world.visible = S.on && !S.hideWorld;

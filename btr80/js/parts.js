@@ -109,13 +109,13 @@ export const CATEGORIES = [
 ];
 
 // Kafedra ma'ruzalaridan olingan rasmlar: [fayl, sarlavha, belgilar, manba]
-const M31 = "3.1-ma'ruza «Dvigatellarning umumiy tuzilishi va ishlashi»";
-const M41 = "4.1-ma'ruza «Sovitish tizimining umumiy tuzilishi va ishlashi»";
-const M61 = "6.1-ma'ruza «Ta'minlash tizimining umumiy tuzilishi va ishlashi»";
-const M71 = "7.1-mavzu «Elektr energiyasining manbalari va iste'molchilari»";
-const M82 = "8.2, 8.3-mavzu «Transmissiyaning vazifasi va umumiy tuzilishi»";
+const M31 = "Ma'ruza: «Dvigatellarning umumiy tuzilishi va ishlashi»";
+const M41 = "Ma'ruza: «Sovitish tizimining umumiy tuzilishi va ishlashi»";
+const M61 = "Ma'ruza: «Ta'minlash tizimining umumiy tuzilishi va ishlashi»";
+const M71 = "Ma'ruza: «Elektr energiyasining manbalari va iste'molchilari»";
+const M82 = "Ma'ruza: «Transmissiyaning vazifasi va umumiy tuzilishi»";
 export const FIGS = {
-  _vehicle: [['btr80_umumiy.jpg', "BTR-80 zirhli transportyorining umumiy ko'rinishi", '', "1.1-ma'ruza «Jangovar mashinalar va avtomobillarning umumiy tuzilishi»"]],
+  _vehicle: [['btr80_umumiy.jpg', "BTR-80 zirhli transportyorining umumiy ko'rinishi", '', "Ma'ruza: «Jangovar mashinalar va avtomobillarning umumiy tuzilishi»"]],
   _flow: [['transmissiya_btr80.jpg', 'BTR-80 zirhli mashina transmissiyasi sxemasi', "1-chig'ir reduktori; 2-chig'ir yuritmasining old kardan vali; 3-g'ildirak reduktori yuritmasining kardan vali; 4-g'ildirak reduktori; 5-chig'ir yuritmasining orqa kardan vali; 6-uchinchi ko'prik yuritmasi kardan vali; 7-oraliq kardan vali; 8-suv otgich harakatlantirgich yuritmasining old kardan vali; 9-oraliq tayanch; 10-uzatmalar qutisi; 11-suv otgich yuritmasining orqa kardan vali; 12-ilashish muftasi; 13-suv otgich harakatlantirgichi reduktori; 14-taroqsimon vint vali; 15-dvigatel; 16-taroqsimon vint; 17-to'rtinchi ko'prik; 18-to'rtinchi ko'prik yuritmasining orqa kardan vali; 19-oraliq tayanch; 20-uchinchi ko'prik; 21-to'rtinchi ko'prik yuritmasining old kardan vali; 22-taqsimlash qutisi; 23-ikkinchi ko'prik yuritmasining kardan vali; 24-ikkinchi ko'prik; 25-birinchi ko'prik yuritmasining orqa kardan vali; 26-oraliq tayanch; 27-birinchi ko'prik yuritmasining old kardan vali; 28-birinchi ko'prik.", 'Tarqatma material, transmissiya']],
   engine: [['dvigatel_tuzilishi.jpg', "To'rt taktli dvigatelning tuzilishi", "1-silindrlar blokining qistirmasi; 2-gaz taqsimlash valining yuritmasi; 3-silindr gilzasi; 4-taqsimlash vali; 5-gidrokompensator; 6-silindrlar kallagi; 7-klapanlar; 8-porshen; 9-porshen xalqalari; 10-shatun; 11-maxovik; 12-tirsakli val; 13-sovitish suyuqligi; 14-moy nasosi; 15-silindrlar bloki; 16-porshen barmog'i.", M31]],
   crank: [

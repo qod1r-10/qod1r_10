@@ -279,7 +279,6 @@ function render() {
           <span class="dot" aria-hidden="true"></span>${esc(p.name)}</button></li>`).join('')}</ul>` : '';
     return `<li class="cat${active ? ' is-active' : ''}${open ? ' is-open' : ''}">
       <button class="cat-btn" data-cat="${cat.id}" aria-expanded="${open}" aria-controls="parts-${cat.id}">
-        <span class="num">${String(i + 1).padStart(2, '0')}</span>
         <span class="cat-name">${esc(cat.name)}</span>
         <span class="count">${cat.parts.length}</span>
         <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
