@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { buildBTR80, AXLES_X, REAL_AXLES_X } from './model.js';
 import { createDrive, FLOW_PARTS, FLOW_STEPS } from './drive.js';
 import { createCutaway } from './cutaway.js';
-import { VEHICLE, CATEGORIES } from './parts.js';
+import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 
 const $ = (s) => document.querySelector(s);
 const viewer = $('#viewer');
@@ -194,6 +194,7 @@ function flyToMeshes(list) {
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /* ---------- Tanlash ---------- */
+const reduceMotionPref = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function selectCategory(id, { toggle = true } = {}) {
   const same = state.cat === id && !state.part;
   if (same && toggle) { state.open = state.open === id ? null : id; }
@@ -204,6 +205,7 @@ function selectCategory(id, { toggle = true } = {}) {
   render();
 }
 function selectPart(id, fromModel = false) {
+  if (!fromModel && window.matchMedia('(min-width: 861px)').matches) $('.panel').scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' });
   const info = PART.get(id);
   if (!info) return;
   state.part = id; state.cat = info.cat.id; state.open = info.cat.id;
@@ -229,6 +231,25 @@ function specsHTML(specs) {
   return `<dl class="specs">${specs.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
 }
 
+function figsHTML(key) {
+  const list = FIGS[key];
+  if (!list || !list.length) return '';
+  return `<div class="figs"><p class="eyebrow">Ma'ruzadan rasmlar</p>${list.map(([src, title, legend, source], i) => `
+    <figure class="fig">
+      <button class="fig-img" type="button" data-fig="${key}|${i}" aria-label="Kattalashtirish: ${esc(title)}"><img src="img/${src}" alt="${esc(title)}" loading="lazy"></button>
+      <figcaption><b>${esc(title)}</b>${legend ? `<details><summary>Belgilar</summary><p>${esc(legend)}</p></details>` : ''}<span class="src">${esc(source)}</span></figcaption>
+    </figure>`).join('')}</div>`;
+}
+
+function openFig(key, i) {
+  const [src, title, legend, source] = FIGS[key][i];
+  const box = $('#lightbox');
+  box.innerHTML = `<div class="lb-inner"><img src="img/${src}" alt="${esc(title)}"><div class="lb-cap"><b>${esc(title)}</b>${legend ? `<p>${esc(legend)}</p>` : ''}<span class="src">${esc(source)}</span></div><button class="lb-close" type="button" aria-label="Yopish">✕</button></div>`;
+  box.hidden = false;
+  box.querySelector('.lb-close').focus();
+}
+$('#lightbox').addEventListener('click', (e) => { if (e.target.id === 'lightbox' || e.target.closest('.lb-close')) $('#lightbox').hidden = true; });
+
 function render() {
   const info = $('#info');
   const crumbs = [`<button class="crumb" data-act="home">${VEHICLE.name}</button>`];
@@ -238,16 +259,16 @@ function render() {
 
   if (state.part) {
     const { part, cat } = PART.get(state.part);
-    info.innerHTML = `<p class="eyebrow">${esc(cat.name)}</p><h2>${esc(part.name)}</h2><p>${esc(part.desc)}</p>${specsHTML(part.specs)}`;
+    info.innerHTML = `<p class="eyebrow">${esc(cat.name)}</p><h2>${esc(part.name)}</h2><p>${esc(part.desc)}</p>${specsHTML(part.specs)}${figsHTML(part.id)}`;
   } else if (state.cat) {
     const cat = CAT.get(state.cat);
     info.innerHTML = `<p class="eyebrow">Asosiy qism · ${cat.parts.length} ta ichki qism</p><h2>${esc(cat.name)}</h2><p>${esc(cat.desc)}</p><p class="hint">Ichki qismlardan birini tanlang: uning BTR ichidagi joyi ko'rsatiladi.</p>`;
   } else if (drive.state.on || drive.state.flow) {
     info.innerHTML = `<p class="eyebrow">Yurgizish rejimi</p><h2>Kuch qanday uzatiladi</h2>
       <p>Dvigateldan chiqqan aylanish sakkizala g'ildirakka shu zanjir orqali yetib boradi. "Kuch oqimi" tugmasini bosing: yo'l modelda ko'rinadi.</p>
-      <ol class="flow">${FLOW_STEPS.map(([n, d]) => `<li><b>${esc(n)}</b><span>${esc(d)}</span></li>`).join('')}</ol>`;
+      <ol class="flow">${FLOW_STEPS.map(([n, d]) => `<li><b>${esc(n)}</b><span>${esc(d)}</span></li>`).join('')}</ol>${figsHTML('_flow')}`;
   } else {
-    info.innerHTML = `<p class="eyebrow">Taktik-texnik ma'lumotlar</p><h2>${esc(VEHICLE.full)}</h2><p>${esc(VEHICLE.desc)}</p>${specsHTML(VEHICLE.specs)}`;
+    info.innerHTML = `<p class="eyebrow">Taktik-texnik ma'lumotlar</p><h2>${esc(VEHICLE.full)}</h2><p>${esc(VEHICLE.desc)}</p>${specsHTML(VEHICLE.specs)}${figsHTML('_vehicle')}`;
   }
 
   $('#cats').innerHTML = CATEGORIES.map((cat, i) => {
@@ -275,6 +296,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.part) selectPart(t.dataset.part);
   else if (t.dataset.catCrumb) selectCategory(t.dataset.catCrumb, { toggle: false });
   else if (t.dataset.act === 'home') resetView();
+  else if (t.dataset.fig) { const [k, i] = t.dataset.fig.split('|'); openFig(k, +i); }
 });
 $('#btn-reset').addEventListener('click', resetView);
 $('#btn-xray').addEventListener('click', (e) => {
@@ -286,7 +308,11 @@ $('#btn-rotate').addEventListener('click', (e) => {
   controls.autoRotate = !controls.autoRotate;
   e.currentTarget.setAttribute('aria-pressed', controls.autoRotate);
 });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') resetView(); });
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!$('#lightbox').hidden) { $('#lightbox').hidden = true; return; }
+  resetView();
+});
 
 $('#btn-drive').addEventListener('click', (e) => {
   const on = !drive.state.on;

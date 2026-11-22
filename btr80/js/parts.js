@@ -49,10 +49,10 @@ export const CATEGORIES = [
       { id: 'engine', name: 'KamAZ-7403 dvigateli', desc: "8 silindrli, V-simon, to'rt taktli, turbonaddivli, suyuqlik bilan sovutiladigan dizel dvigatel.", specs: [['Quvvat', '260 o.k.'], ['Silindrlar', '8 (V8)'], ['Ish hajmi', '10,85 l']] },
       { id: 'crank', name: 'Krivoship-shatun mexanizmi', desc: "Porshenning ilgarilama-qaytma harakatini tirsakli valning aylanma harakatiga aylantiradi. Qo'zg'aluvchan qismlari: porshen, porshen halqalari va barmog'i, shatun, tirsakli val, maxovik. Qo'zg'almas qismlari: silindrlar bloki, karter, silindr kallagi.", specs: [['Silindrlar', '8, V-simon 90°'], ['Diametr × porshen yo\'li', '120 × 120 mm']] },
       { id: 'valvetrain', name: 'Gaz taqsimlash mexanizmi', desc: "Silindrlarga havo kiritish va ishlatilgan gazlarni chiqarish uchun klapanlarni o'z vaqtida ochib-yopadi. Taqsimlash vali harakatni tirsakli valdan oladi va undan 2 marta sekin aylanadi.", specs: [['Klapanlar', 'kirituvchi va chiqaruvchi, 16 ta'], ['Taqsimlash vali', 'tirsakli valdan 2 marta sekin']] },
-      { id: 'radiator', name: 'Sovutish tizimi', desc: "Dvigatel bo'limi tomidagi jalyuzlar ostidagi radiatorlar va ventilyatorlar dvigatelni sovutadi. Tizim suyuqlik nasosi, termostat, parrak, radiator va quvurlardan iborat; me'yoriy harorat 85–95 °C.", specs: [['Sovutish suyuqligi', '48 l antifriz'], ['Moylash tizimi', '28 l moy']] },
-      { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan. Sinxronizatorlar uzatmalarni shovqinsiz ulaydi; yurgizish rejimida ulangan juftlik yorishadi.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
+      { id: 'radiator', name: 'Sovutish tizimi', desc: "Dvigatel bo'limi tomidagi jalyuzlar ostida radiator, gidromufta orqali yuritiladigan ventilyator, kengaytiruvchi bakcha, moy radiatorlari va issiqlik almashtirgichlar joylashgan. Ular dvigatelning optimal issiqlik rejimini saqlaydi. Tizim suyuqlik nasosi, termostat, parrak, radiator va quvurlardan iborat; me'yoriy harorat 85–95 °C.", specs: [['Sovutish suyuqligi', '48 l antifriz'], ['Moylash tizimi', '28 l moy']] },
+      { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan. Barcha uzatmalarda shesternyalar doimiy ilashishda, 2–5-uzatmalarda sinxronizatorlar bor: ular uzatmalarni shovqinsiz ulaydi; yurgizish rejimida ulangan juftlik yorishadi.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
       { id: 'transfer', name: 'Taqsimlash qutisi', desc: "Burovchi momentni oldingi va orqa ko'priklar o'rtasida taqsimlaydi. Ikki diapazonli, differensialni blokirovka qilish mumkin. Suv to'pi uchun quvvat olish qurilmasi shu yerda." },
-      { id: 'shafts', name: 'Kardan uzatmalari', desc: "Taqsimlash qutisidan to'rtta ko'prikning bosh uzatmalariga burovchi momentni uzatuvchi vallar." },
+      { id: 'shafts', name: 'Kardan uzatmalari', desc: "Taqsimlash qutisidan to'rtta ko'prikka, chig'ir reduktoriga va suv otgich harakatlantirgichiga burovchi momentni uzatuvchi vallar. Uzun vallar oraliq tayanchlarga o'rnatilgan, sharnirlarda krestovinalar bor." },
       { id: 'fuel', name: "Yonilg'i baklari", desc: "Desant bo'limi bilan dvigatel bo'limi orasidagi to'siq yonida joylashgan baklar.", specs: [['Umumiy hajm', '≈300 l']] },
     ],
   },
@@ -71,7 +71,7 @@ export const CATEGORIES = [
     name: 'Suzish uskunalari',
     desc: "BTR-80 suv to'siqlarini oldindan tayyorgarliksiz suzib o'ta oladi.",
     parts: [
-      { id: 'waterjet', name: "Suv to'pi (vodomyot)", desc: "Korpus orqasidagi suv-reaktiv harakatlantirgich. Suvda harakatlanish va burilish uchun ishlatiladi. Chiqish teshigi qopqoq bilan yopiladi.", specs: [['Suvdagi tezlik', '9–10 km/soat']] },
+      { id: 'waterjet', name: "Suv otgich harakatlantirgichi", desc: "Korpus orqasidagi suv-reaktiv harakatlantirgich. Suvda harakatlanish va burilish uchun ishlatiladi. Chiqish teshigi qopqoq bilan yopiladi.", specs: [['Suvdagi tezlik', '9–10 km/soat']] },
       { id: 'trimvane', name: "To'lqin qaytargich shit", desc: "Suvga kirishdan oldin oldinga ochiladi va to'lqin korpusning old qismini bosib ketishiga yo'l qo'ymaydi." },
     ],
   },
@@ -107,3 +107,41 @@ export const CATEGORIES = [
     ],
   },
 ];
+
+// Kafedra ma'ruzalaridan olingan rasmlar: [fayl, sarlavha, belgilar, manba]
+const M31 = "3.1-ma'ruza «Dvigatellarning umumiy tuzilishi va ishlashi»";
+const M41 = "4.1-ma'ruza «Sovitish tizimining umumiy tuzilishi va ishlashi»";
+const M61 = "6.1-ma'ruza «Ta'minlash tizimining umumiy tuzilishi va ishlashi»";
+const M71 = "7.1-mavzu «Elektr energiyasining manbalari va iste'molchilari»";
+const M82 = "8.2, 8.3-mavzu «Transmissiyaning vazifasi va umumiy tuzilishi»";
+export const FIGS = {
+  _vehicle: [['btr80_umumiy.jpg', "BTR-80 zirhli transportyorining umumiy ko'rinishi", '', "1.1-ma'ruza «Jangovar mashinalar va avtomobillarning umumiy tuzilishi»"]],
+  _flow: [['transmissiya_btr80.jpg', 'BTR-80 zirhli mashina transmissiyasi sxemasi', "1-chig'ir reduktori; 2-chig'ir yuritmasining old kardan vali; 3-g'ildirak reduktori yuritmasining kardan vali; 4-g'ildirak reduktori; 5-chig'ir yuritmasining orqa kardan vali; 6-uchinchi ko'prik yuritmasi kardan vali; 7-oraliq kardan vali; 8-suv otgich harakatlantirgich yuritmasining old kardan vali; 9-oraliq tayanch; 10-uzatmalar qutisi; 11-suv otgich yuritmasining orqa kardan vali; 12-ilashish muftasi; 13-suv otgich harakatlantirgichi reduktori; 14-taroqsimon vint vali; 15-dvigatel; 16-taroqsimon vint; 17-to'rtinchi ko'prik; 18-to'rtinchi ko'prik yuritmasining orqa kardan vali; 19-oraliq tayanch; 20-uchinchi ko'prik; 21-to'rtinchi ko'prik yuritmasining old kardan vali; 22-taqsimlash qutisi; 23-ikkinchi ko'prik yuritmasining kardan vali; 24-ikkinchi ko'prik; 25-birinchi ko'prik yuritmasining orqa kardan vali; 26-oraliq tayanch; 27-birinchi ko'prik yuritmasining old kardan vali; 28-birinchi ko'prik.", 'Tarqatma material, transmissiya']],
+  engine: [['dvigatel_tuzilishi.jpg', "To'rt taktli dvigatelning tuzilishi", "1-silindrlar blokining qistirmasi; 2-gaz taqsimlash valining yuritmasi; 3-silindr gilzasi; 4-taqsimlash vali; 5-gidrokompensator; 6-silindrlar kallagi; 7-klapanlar; 8-porshen; 9-porshen xalqalari; 10-shatun; 11-maxovik; 12-tirsakli val; 13-sovitish suyuqligi; 14-moy nasosi; 15-silindrlar bloki; 16-porshen barmog'i.", M31]],
+  crank: [
+    ['kshm.jpg', 'Krivoship-shatunli mexanizm sxemasi', "1-silindr; 2-maxovik; 3-shatun podshipnigi; 4-tirsakli val; 5-tirsak (krivoship); 6-o'zak podshipnik; 7-shatun.", M31],
+    ['tirsakli_val.jpg', 'Tirsakli val va maxovik', "1-shatun bo'yinchasi; 2-tirsak (krivoship); 3-o'zak bo'yinchasi; 4-maxovik.", M31],
+  ],
+  valvetrain: [['gtm.jpg', 'KSHM va klapanlari yuqorida joylashgan GTM sxemasi', "1-taqsimlash vali shesternyasi; 2-taqsimlash vali; 3-turtkich; 4-shtanga; 5-rostlovchi vint; 6-koromislo; 7-koromislo o'qi; 8-prujina; 9-klapan; 10-yo'naltiruvchi vtulka; 11-porshen; 12-shatun; 13-maxovik; 14-tirsakli val; 15-tirsakli valdan taqsimlash valiga harakat uzatuvchi shesternyalar.", M31]],
+  radiator: [['sovutish_btr80.jpg', 'BTR-80 jangovar mashinasining sovitish tizimi sxemasi', "1-ventilyator kojuxi; 2-kojux qamragichi; 3-radiatorning quyish bo'g'izi; 4-kengaytiruvchi bakchaning quyish bo'g'izi; 5-kengaytiruvchi bakcha; 6-gidromufta; 7-gidromuftaning yetaklanuvchi vali; 8-radiatorga suv uzatuvchi shlang; 9-ventilyator yuritmasining muftasi; 10-moy radiatori; 11-radiator; 12-ventilyator kojuxi yo'naltirgichi; 13-radiatorni mahkamlash xomuti; 14-ventilyator; 15 va 16-ventilyator va radiatorning tayanchlari; 17-radiatordan suv uzatuvchi shlang; 18-kengaytiruvchi bakchani mahkamlash xomuti; 19-to'kish kranini boshqarish tortqisi; 20-gidromuftani qo'shish dastagi; 21-suyuqlikni suv nasosiga uzatuvchi patrubok; 22-suv issiqlik almashtirgichi; 23-issiqlik almashtirgichga uzatuvchi patrubok; 24-to'kish shlangi; 25-issiqlik almashtirgichdan uzatuvchi patrubok; 26-moy issiqlik almashtirgichi; 27-yuqori chap moy radiatoriga uzatuvchi shlang.", M41]],
+  fuel: [['yonilgi_baklari.jpg', "Yonilg'i baklari va yonilg'i quvurlari", '', M61]],
+  gearbox: [
+    ['ilashish_btr80.jpg', 'BTR-80 jangovar mashinasining ilashish muftasi', "1-yetaklanuvchi disk; 2-o'rta yetakchi disk; 3-o'rnatuvchi vtulka; 4-siquvchi disk; 5-itaruvchi richag vilkasi; 6-itaruvchi richag; 7-tirak xalqa prujinasi; 8-muftani moylash shlangi; 9-prujina sirtmog'i; 10-tirak podshipnik; 11-prujina; 12-uzish muftasi; 13-uzish vilkasi; 14-tirak xalqa; 15-vilka valigi; 16 va 23-bosuvchi prujinalar; 17-kojux; 18-teploizolyatsion shayba; 19-kojuxni mahkamlash bolti; 20-karter; 21-maxovik; 22-friksion qoplama; 24-uzatmalar qutisining birlamchi vali; 25-dempfer diski; 26-dempfer prujinasi; 27-dempfer xalqasi; 28-richagli mexanizm.", M82],
+    ['uzatmalar_btr80.jpg', 'BTR-80 mashinasining uzatmalar qutisi', "Barcha uzatmalarda doimiy ilashishdagi shesternyalar, 2-, 3-, 4- va 5-uzatmalarda sinxronizatorlar. Asosiy belgilar: 16-orqa harakat shesternyalar bloki; 30-ikkilamchi val; 42-oraliq val; 43-uzatmalar qutisi karteri; 46-ilashish muftasi karteri; 50-birlamchi val; 51-moy sathini ko'rsatkich; 55-magnitli tiqin.", M82],
+    ['sinxronizator.jpg', 'Inersion sinxronizator', "a-tuzilmasi; b-detallari; 1-yetaklovchi val shesternyasi; 2-blokirovkalovchi konusli xalqa; 3-mufta; 4-vilka; 5-prujinali xalqa; 6-uzatma shesternyasi; 7-polzun; 8-gupchak; 9-gupchakning bo'ylama ariqchasi; 10-UQ ning ikkilamchi vali; 11-blokirovka xalqasining chetidagi ariqchalar.", M82],
+  ],
+  transfer: [['taqsimlash.jpg', 'Taqsimlash qutisi', "1-yetakchi val; 2-yetaklanuvchi shesternya; 3-to'g'ri va pasaytiruvchi uzatmani ulash vilkasi; 4-orqa ko'prikka keltirish vali; 6-spidometrning yetakchi shesternyasi; 7-spidometrning yetaklanuvchi shesternyasi; 19-oldingi ko'prikni ulash vilkasi; 21-oldingi ko'prikni ulash dastagi; 22-to'g'ri va pasaytiruvchi uzatmani ulash dastagi; 39-oldingi ko'prikni ulash shesternyasi; 43-oldingi ko'prikka keltirish vali; 56-oraliq val.", M82]],
+  shafts: [
+    ['transmissiya_btr80.jpg', 'BTR-80 zirhli mashina transmissiyasi sxemasi', "2, 5-chig'ir yuritmasining kardan vallari; 3-g'ildirak reduktori yuritmasining kardan vali; 6-uchinchi ko'prik yuritmasi kardan vali; 7-oraliq kardan vali; 8, 11-suv otgich harakatlantirgich yuritmasining kardan vallari; 18, 21-to'rtinchi ko'prik yuritmasining kardan vallari; 23-ikkinchi ko'prik yuritmasining kardan vali; 25, 27-birinchi ko'prik yuritmasining kardan vallari.", 'Tarqatma material, transmissiya'],
+    ['kardan.jpg', 'Yuk avtomobilining asosiy va oraliq kardan vallari', "1-oraliq kardan val; 2-qaytaruvchi halqa; 3-rezina salnik; 4-asosiy kardan val; 5-flanets; 6-salnik; 7-vilka; 8 va 13-moydon; 9-gardish; 10-rezina yostiq; 11 va 12-qaytargich shayba; 14-krestovina; 15-saqlagich klapan.", M82],
+  ],
+  axles: [
+    ['koprik_btr80.jpg', 'BTR-80 yetakchi ko\'prigi (qirqim)', '', M82],
+    ['differensial.jpg', 'Asosiy uzatma va differensial', "1-yarim o'q; 2-yetaklovchi shesternya; 3-yetaklanuvchi shesternya; 4-yarim o'q shesternyasi; 5-satellit.", M82],
+  ],
+  battery: [
+    ['akkumulyator.jpg', 'Akkumulyatorlar batareyasi', "1-musbat klemma; 2-manfiy klemma; 3-quyish bo'g'izi tiqini; 4-qopqoq; 5-quyish bo'g'izi; 6-elementlararo birikma; 7-separator; 8-korpus; 9-manfiy plastina; 10-musbat plastina.", M71],
+    ['generator.jpg', "37.3701 o'zgaruvchan tok generatori", "Generator mexanik energiyani elektr energiyaga aylantiradi va harakatni tasma orqali tirsakli valdan oladi.", M71],
+  ],
+  lights: [['fara.jpg', 'Elektr fara va lampochkalar', "1-nur tarqatgich; 2-lampochka; 3-korpus; 4-patron; 5-simlar; 6-qaytargich; 7-bir kontaktli lampochka; 8-ikki kontaktli lampochka.", M71]],
+};
