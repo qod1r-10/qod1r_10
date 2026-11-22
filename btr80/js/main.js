@@ -137,8 +137,7 @@ model.add(interior);
 scene.add(model);
 const meshes = [];
 const meshesByPart = new Map();
-model.traverse((o) => {
-  if (!o.isMesh) return;
+function registerMesh(o) {
   o.material = o.material.clone();
   o.material.envMapIntensity = 0.7;
   o.userData.baseEmissive = o.material.emissive.clone();
@@ -148,9 +147,11 @@ model.traverse((o) => {
   const id = o.userData.part;
   if (!meshesByPart.has(id)) meshesByPart.set(id, []);
   meshesByPart.get(id).push(o);
-});
+}
+model.traverse((o) => { if (o.isMesh) registerMesh(o); });
 
-const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid });
+const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid, shadowGround: ground });
+drive.extra.forEach(registerMesh);
 
 const cut = createCutaway({ renderer, meshes });
 
@@ -324,9 +325,6 @@ $('#btn-drive').addEventListener('click', (e) => {
     controls.autoRotate = false;
     $('#btn-rotate').setAttribute('aria-pressed', 'false');
     if (!state.cat) flyTo(new THREE.Vector3(-6.5, 4.6, -9.5), HOME.target.clone());
-  } else if (grid) {
-    grid.position.set(0, 0.001, 0);
-    grid.rotation.y = 0;
   }
   render();
 });

@@ -1,6 +1,7 @@
 // Yurgizish rejimi: harakat, rul, minora va kuch uzatilishini ko'rsatish.
 // Mashina joyida turadi, yer (to'r va belgilar) uning ostidan harakatlanadi.
 import * as THREE from 'three';
+import { buildKPVT, buildPKT } from './weapons.js';
 
 const KMH = 3.6;
 const VMAX = 80 / KMH;            // m/s
@@ -21,7 +22,7 @@ export const FLOW_STEPS = [
 ];
 
 export function createDrive(ctx) {
-  const { scene, real, interior, axles, getGrid } = ctx;
+  const { scene, real, interior, axles, getGrid, shadowGround } = ctx;
   const S = { elev: 0, on: false, idle: false, slow: false, crank: 0, wheelAng: 0, flow: false, v: 0, heading: 0, steer: 0, turret: 0, px: 0, pz: 0, rpm: 800, gear: 'N', t: 0 };
   const keys = new Set();
 
@@ -29,6 +30,7 @@ export function createDrive(ctx) {
   const wheels = [];
   const body = [];
   let turretPivot = null, gunPivot = null;
+  const extra = [];
   const GUN_REST = Math.atan2(0.52, 1.08);
   if (real) {
     turretPivot = new THREE.Group();
@@ -56,6 +58,12 @@ export function createDrive(ctx) {
     [...turretPivot.children].forEach((o) => {
       if (o.isMesh && /^(kpvt|pkt)__/.test(o.name)) gunPivot.attach(o);
     });
+    // Pulemyotlarning minora ichidagi qismlari (beshik bilan birga harakatlanadi)
+    const rig = new THREE.Group();
+    rig.rotation.x = -GUN_REST;
+    rig.add(buildKPVT(), buildPKT());
+    gunPivot.add(rig);
+    rig.traverse((o) => { if (o.isMesh) extra.push(o); });
     body.push({ o: turretPivot, y: turretPivot.position.y });
   }
   body.push({ o: interior, y: interior.position.y });
@@ -71,30 +79,57 @@ export function createDrive(ctx) {
   });
   const mechs = interior.userData.mechs || [];
 
-  /* --- yer belgilari --- */
-  const world = new THREE.Group();
+  /* --- yer (dala) --- */
+  // Mashina joyida turadi; yer teksturasi uning ostidan suriladi.
+  const TILE = 6; // bitta tekstura bo'lagi, metr
+  function groundTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const g = c.getContext('2d');
+    g.fillStyle = '#86775a'; g.fillRect(0, 0, 512, 512);
+    let seed = 11;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const blot = (n, rMin, rMax, colors, alpha) => {
+      for (let i = 0; i < n; i++) {
+        const x = rnd() * 512, y = rnd() * 512, r = rMin + rnd() * (rMax - rMin);
+        g.globalAlpha = alpha * (0.5 + rnd() * 0.5);
+        g.fillStyle = colors[Math.floor(rnd() * colors.length)];
+        for (const dx of [-512, 0, 512]) for (const dy of [-512, 0, 512]) { g.beginPath(); g.ellipse(x + dx, y + dy, r, r * (0.6 + rnd() * 0.5), rnd() * 3, 0, 7); g.fill(); }
+      }
+    };
+    blot(60, 30, 90, ['#7b6d50', '#94845f', '#6f6a46', '#8f7c58'], 0.35);   // tuproq dog'lari
+    blot(90, 6, 22, ['#6b6b40', '#76703f', '#5f6238'], 0.45);               // quruq o't
+    blot(700, 0.8, 2.5, ['#5a503c', '#a89a78', '#4d4535', '#b3a684'], 0.8); // mayda toshlar
+    g.globalAlpha = 1;
+    const img = g.getImageData(0, 0, 512, 512), d = img.data;
+    for (let i = 0; i < d.length; i += 4) { const n = (rnd() - 0.5) * 22; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
+  }
+  function fadeTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(128, 128, 30, 128, 128, 128);
+    gr.addColorStop(0, '#fff'); gr.addColorStop(0.55, '#fff'); gr.addColorStop(1, '#000');
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(c);
+  }
+  const SIZE = 90;
+  const groundMap = groundTexture();
+  groundMap.repeat.set(SIZE / TILE, SIZE / TILE);
+  const world = new THREE.Mesh(
+    new THREE.PlaneGeometry(SIZE, SIZE),
+    new THREE.MeshStandardMaterial({ map: groundMap, alphaMap: fadeTexture(), transparent: true, depthWrite: false, roughness: 0.97, metalness: 0 }),
+  );
+  world.rotation.x = -Math.PI / 2;
+  world.position.y = -0.005;
+  world.receiveShadow = true;
+  world.renderOrder = -1;
   world.visible = false;
   scene.add(world);
-  const TILE = 36;
-  const markers = [];
-  const postGeo = new THREE.CylinderGeometry(0.06, 0.08, 1.1, 8);
-  const bushGeo = new THREE.IcosahedronGeometry(0.7, 0);
-  const postMat = new THREE.MeshStandardMaterial({ color: 0xd8d2c0, roughness: 0.8 });
-  const bushMat = new THREE.MeshStandardMaterial({ color: 0x55663a, roughness: 1, flatShading: true });
-  let seed = 7;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < 26; i++) {
-    const bush = i % 3 !== 0;
-    const m = new THREE.Mesh(bush ? bushGeo : postGeo, bush ? bushMat : postMat);
-    m.castShadow = true;
-    let x, z;
-    do { x = (rnd() - 0.5) * TILE; z = (rnd() - 0.5) * TILE; } while (Math.abs(x) < 6 && Math.abs(z) < 9);
-    m.userData.wx = x; m.userData.wz = z;
-    m.position.y = bush ? 0.35 : 0.55;
-    if (bush) m.scale.setScalar(0.45 + rnd() * 0.6);
-    world.add(m);
-    markers.push(m);
-  }
 
   /* --- kuch oqimi zarralari --- */
   const flow = new THREE.Group();
@@ -222,21 +257,13 @@ export function createDrive(ctx) {
     if (gunPivot) gunPivot.rotation.x = GUN_REST - S.elev * Math.PI / 180;
 
     // yer harakati
-    world.visible = S.on && !S.hideWorld;
+    world.visible = S.on;
+    const grid = getGrid();
+    if (grid) grid.visible = !S.on;
+    if (shadowGround) shadowGround.visible = !S.on;
     if (S.on) {
-      world.rotation.y = -S.heading;
-      for (const m of markers) {
-        const wrap = (v) => ((v % TILE) + TILE * 1.5) % TILE - TILE / 2;
-        m.position.x = wrap(m.userData.wx - S.px);
-        m.position.z = wrap(m.userData.wz - S.pz);
-      }
-      const grid = getGrid();
-      if (grid) {
-        const ox = -(((S.px % 1) + 1) % 1), oz = -(((S.pz % 1) + 1) % 1);
-        const h = -S.heading, c = Math.cos(h), s = Math.sin(h);
-        grid.rotation.y = h;
-        grid.position.set(ox * c + oz * s, grid.position.y, -ox * s + oz * c);
-      }
+      world.rotation.z = -S.heading; // yotqizilgan tekislikning z o'qi vertikal o'qqa to'g'ri keladi
+      groundMap.offset.set(S.px / TILE, -S.pz / TILE);
     }
 
     // kuch oqimi
@@ -255,5 +282,5 @@ export function createDrive(ctx) {
     }
   }
 
-  return { state: S, setOn, setFlow, update };
+  return { state: S, setOn, setFlow, update, extra };
 }
