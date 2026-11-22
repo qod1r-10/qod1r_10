@@ -47,7 +47,7 @@ export const CATEGORIES = [
     desc: "Korpusning orqa qismida joylashgan. Dvigatel, uning tizimlari va kuchni g'ildiraklarga uzatuvchi agregatlardan iborat.",
     parts: [
       { id: 'engine', name: 'KamAZ-7403 dvigateli', desc: "8 silindrli, V-simon, to'rt taktli, turbonaddivli, suyuqlik bilan sovutiladigan dizel dvigatel.", specs: [['Quvvat', '260 o.k.'], ['Silindrlar', '8 (V8)'], ['Ish hajmi', '10,85 l']] },
-      { id: 'radiator', name: 'Sovutish tizimi', desc: "Dvigatel bo'limi tomidagi jalyuzlar ostidagi radiatorlar va ventilyatorlar dvigatelni sovutadi." },
+      { id: 'radiator', name: 'Sovutish tizimi', desc: "Dvigatel bo'limi tomidagi jalyuzlar ostidagi radiatorlar va ventilyatorlar dvigatelni sovutadi. Tizim suyuqlik nasosi, termostat, parrak, radiator va quvurlardan iborat; me'yoriy harorat 85–95 °C.", specs: [['Sovutish suyuqligi', '48 l antifriz'], ['Moylash tizimi', '28 l moy']] },
       { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
       { id: 'transfer', name: 'Taqsimlash qutisi', desc: "Burovchi momentni oldingi va orqa ko'priklar o'rtasida taqsimlaydi. Ikki diapazonli, differensialni blokirovka qilish mumkin. Suv to'pi uchun quvvat olish qurilmasi shu yerda." },
       { id: 'shafts', name: 'Kardan uzatmalari', desc: "Taqsimlash qutisidan to'rtta ko'prikning bosh uzatmalariga burovchi momentni uzatuvchi vallar." },
