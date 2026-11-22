@@ -84,6 +84,16 @@ new MutationObserver(applyTheme).observe(document.documentElement, { attributes:
 
 /* ---------- Model ---------- */
 // Tashqi ko'rinish: haqiqiy teksturali model (models/btr80.glb). Ichki qismlar: model.js dagi sxematik detallar.
+// models/btr80.glb; u bo'lmasa (ba'zi hostinglar .glb bermaydi) base64 JSON nusxasi
+async function loadGLB() {
+  const r = await fetch('models/btr80.glb');
+  if (r.ok && (r.headers.get('content-type') || '').indexOf('html') < 0) return r.arrayBuffer();
+  const j = await (await fetch('models/btr80.glb.json')).json();
+  const bin = atob(j.data), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
 async function loadRealModel() {
   const tl = new THREE.TextureLoader();
   const tex = (f, color = true) => new Promise((res, rej) => tl.load('models/' + f, (t) => {
@@ -92,7 +102,7 @@ async function loadRealModel() {
     res(t);
   }, undefined, rej));
   const [gltf, mbC, mbMR, dtC, dtMR, liC, whC] = await Promise.all([
-    new GLTFLoader().loadAsync('models/btr80.glb'),
+    loadGLB().then((buf) => new GLTFLoader().parseAsync(buf, '')),
     tex('metalbase_color.jpg'), tex('metalbase_mr.jpg', false), tex('details_color.jpg'), tex('details_mr.jpg', false),
     tex('lights_color.jpg'), tex('wheels_color.jpg'),
   ]);
