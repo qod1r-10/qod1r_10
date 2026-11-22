@@ -68,12 +68,25 @@ function onSlopeX(mesh, x0, y0, x1, y1, offset = 0.025) {
 
 export const AXLES_X = [2.115, 0.765, -0.765, -2.115];
 
-export function buildBTR80() {
+// Haqiqiy 3D modelda (models/btr80.glb) bor tashqi qismlar
+const REAL_PARTS = new Set(['hull', 'hatch_front', 'hatch_roof', 'side_doors', 'vision', 'turret', 'kpvt', 'pkt', 'sight', 'smoke',
+  'wheels', 'suspension', 'trimvane', 'lights', 'antenna']);
+const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
+
+// exterior=false: faqat ichki qismlar (tashqi ko'rinish haqiqiy modeldan olinadi)
+export function buildBTR80({ exterior = true } = {}) {
+  const AX = exterior ? AXLES_X : REAL_AXLES_X;
   const root = new THREE.Group();
   root.name = 'BTR-80';
 
   const tag = (part, obj) => { obj.traverse(o => { if (o.isMesh) { o.userData.part = part; o.castShadow = true; o.receiveShadow = true; } }); return obj; };
-  const add = (part, obj, parent = root) => { tag(part, obj); parent.add(obj); return obj; };
+  const add = (part, obj, parent = root) => {
+    tag(part, obj);
+    if (!exterior && REAL_PARTS.has(part)) return obj; // haqiqiy modelda bor
+    if (!exterior && part === 'firing_ports') obj.traverse(o => { o.userData.ghost = true; });
+    if (!exterior && part === 'radiator' && obj.isMesh && obj.position.y > 2) return obj; // tomdagi jalyuzlar
+    parent.add(obj); return obj;
+  };
 
   /* ---------- KORPUS ---------- */
   const hullGeo = loft([
@@ -193,7 +206,7 @@ export function buildBTR80() {
   const tyreProfile = [[0.28, -0.19], [0.47, -0.19], [0.53, -0.17], [0.56, -0.11], [0.56, 0.11], [0.53, 0.17], [0.47, 0.19], [0.28, 0.19]]
     .map(([r, y]) => new THREE.Vector2(r, y));
   const tyreGeo = new THREE.LatheGeometry(tyreProfile, 32);
-  for (const x of AXLES_X) for (const s of [-1, 1]) {
+  for (const x of AX) for (const s of [-1, 1]) {
     const w = new THREE.Group();
     const tyre = new THREE.Mesh(tyreGeo, mat(C.rubber, { roughness: 0.95, metalness: 0, side: THREE.DoubleSide }));
     tyre.rotation.x = Math.PI / 2; w.add(tyre);
@@ -208,7 +221,7 @@ export function buildBTR80() {
     add('wheels', w);
   }
 
-  for (const x of AXLES_X) {
+  for (const x of AX) {
     const axle = cylBetween([x, 0.56, -1.08], [x, 0.56, 1.08], 0.075, C.darkSteel);
     add('axles', axle);
     const diff = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(C.darkSteel));
@@ -262,7 +275,7 @@ export function buildBTR80() {
   add('transfer', tc);
 
   add('shafts', cylBetween([-1.88, 0.86, 0], [0.16, 0.8, 0], 0.045, C.shaft, 10));
-  for (const x of AXLES_X) {
+  for (const x of AX) {
     const from = x > 0 ? [0.16, 0.74, 0.08] : [-0.26, 0.74, -0.08];
     add('shafts', cylBetween(from, [x + (x > 0 ? -0.2 : 0.2), 0.6, 0], 0.04, C.shaft, 10));
   }

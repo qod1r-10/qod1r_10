@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { buildBTR80 } from './model.js';
 import { VEHICLE, CATEGORIES } from './parts.js';
 
@@ -82,7 +83,45 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', app
 new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
 /* ---------- Model ---------- */
-const model = buildBTR80();
+// Tashqi ko'rinish: haqiqiy teksturali model (models/btr80.glb). Ichki qismlar: model.js dagi sxematik detallar.
+async function loadRealModel() {
+  const tl = new THREE.TextureLoader();
+  const tex = (f, color = true) => new Promise((res, rej) => tl.load('models/' + f, (t) => {
+    t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.anisotropy = 4;
+    res(t);
+  }, undefined, rej));
+  const [gltf, mbC, mbMR, dtC, dtMR, liC, whC] = await Promise.all([
+    new GLTFLoader().loadAsync('models/btr80.glb'),
+    tex('metalbase_color.jpg'), tex('metalbase_mr.jpg', false), tex('details_color.jpg'), tex('details_mr.jpg', false),
+    tex('lights_color.jpg'), tex('wheels_color.jpg'),
+  ]);
+  const M = {
+    MetalBase: { map: mbC, metalnessMap: mbMR, roughnessMap: mbMR, metalness: 1, roughness: 1 },
+    Details: { map: dtC, metalnessMap: dtMR, roughnessMap: dtMR, metalness: 1, roughness: 1 },
+    Lights: { map: liC, roughness: 0.5, metalness: 0.2 },
+    Wheels: { map: whC, roughness: 0.92, metalness: 0 },
+  };
+  gltf.scene.traverse((o) => {
+    if (!o.isMesh) return;
+    const [part, matName] = o.name.split('__');
+    o.userData.part = part;
+    o.material = new THREE.MeshStandardMaterial({ name: matName, ...(M[matName] || {}) });
+    o.castShadow = true;
+    o.receiveShadow = true;
+  });
+  return gltf.scene;
+}
+
+let real = null;
+try { real = await loadRealModel(); } catch (e) { console.warn("Haqiqiy model yuklanmadi, sxematik model ko'rsatiladi", e); }
+const model = new THREE.Group();
+const interior = buildBTR80({ exterior: !real });
+if (real) {
+  interior.rotation.y = -Math.PI / 2; // sxematik modelda old tomon +x, haqiqiy modelda +z
+  model.add(real);
+}
+model.add(interior);
 scene.add(model);
 const meshes = [];
 const meshesByPart = new Map();
@@ -114,6 +153,7 @@ function applyMeshStates() {
     const id = m.userData.part;
     if (f) m.userData.state = f.has(id) ? 'focus' : 'dim';
     else m.userData.state = state.xray && ARMOR_PARTS.has(id) ? 'ghost' : 'normal';
+    if (m.userData.ghost && m.userData.state !== 'focus') m.userData.state = 'hidden';
   }
 }
 
@@ -234,7 +274,7 @@ function pick(clientX, clientY) {
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-  const hits = ray.intersectObjects(meshes, false);
+  const hits = ray.intersectObjects(meshes.filter((m) => m.visible), false);
   if (!hits.length) return null;
   const visible = hits.find((h) => h.object.userData.state !== 'dim' && h.object.userData.state !== 'ghost');
   return (visible || hits[0]).object.userData.part;
@@ -281,7 +321,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 const clock = new THREE.Clock();
 const tmpBox = new THREE.Box3();
 const tmpV = new THREE.Vector3();
-const TARGET_OP = { normal: 1, focus: 1, dim: 0.07, ghost: 0.16 };
+const TARGET_OP = { normal: 1, focus: 1, dim: 0.07, ghost: 0.16, hidden: 0 };
 
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);
@@ -309,6 +349,7 @@ function frame() {
     if (u.state === 'focus') mt.emissive.copy(HL).multiplyScalar(pulse);
     else mt.emissive.copy(u.baseEmissive);
     m.castShadow = u.op > 0.5;
+    m.visible = u.op > 0.003;
     m.renderOrder = u.state === 'focus' ? 2 : 0;
   }
 
