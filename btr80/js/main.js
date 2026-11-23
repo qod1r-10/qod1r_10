@@ -7,6 +7,7 @@ import { loadAssets } from './assets.js';
 import { buildBTR80, AXLES_X, REAL_AXLES_X } from './model.js';
 import { createDrive, FLOW_PARTS, FLOW_STEPS } from './drive.js';
 import { createCutaway } from './cutaway.js';
+import { createExplode } from './explode.js';
 import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 
 const $ = (s) => document.querySelector(s);
@@ -162,6 +163,7 @@ drive.extra.forEach(registerMesh);
 for (let i = meshes.length - 1; i >= 0; i--) if (meshes[i].userData.removed) { const m = meshes[i]; meshes.splice(i, 1); const l = meshesByPart.get(m.userData.part); l.splice(l.indexOf(m), 1); }
 
 const cut = createCutaway({ renderer, meshes });
+const explode = createExplode(meshes);
 
 /* ---------- Holat ---------- */
 const state = { cat: null, part: null, open: null, xray: false };
@@ -342,6 +344,15 @@ $('#btn-cut').addEventListener('click', (e) => {
   e.currentTarget.setAttribute('aria-pressed', on);
   if (on && !state.cat) flyTo(new THREE.Vector3(8.4, 3.4, 2.2), new THREE.Vector3(0, 1.1, -0.2), 1400);
 });
+$('#btn-explode').addEventListener('click', (e) => {
+  const on = !explode.state.on;
+  explode.set(on);
+  e.currentTarget.setAttribute('aria-pressed', on);
+  if (!state.cat) {
+    if (on) flyTo(new THREE.Vector3(9.5, 7.2, 11.5), new THREE.Vector3(0, 2.4, 0), 1300);
+    else flyTo(HOME.pos.clone(), HOME.target.clone(), 1300);
+  }
+});
 $('#btn-slow').addEventListener('click', (e) => {
   drive.state.slow = !drive.state.slow;
   e.currentTarget.setAttribute('aria-pressed', drive.state.slow);
@@ -436,8 +447,10 @@ function frame() {
   }
   drive.state.hideWorld = !!(state.part || state.cat);
   drive.state.idle = cut.state.on;
+  explode.undo();
   drive.update(dt);
   cut.update(dt, reduceMotion);
+  explode.apply(dt, reduceMotion);
   controls.update();
 
   const pulse = reduceMotion ? 0.45 : 0.38 + 0.22 * Math.sin(t * 3.4);
