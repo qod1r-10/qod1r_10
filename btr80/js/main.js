@@ -362,15 +362,27 @@ function pick(clientX, clientY) {
   const visible = hits.find((h) => h.object.userData.state !== 'dim' && h.object.userData.state !== 'ghost');
   return (visible || hits[0]).object.userData.part;
 }
-let down = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; fly = null; });
+// Bosish: qisqa va joyidan siljimagan bosish qismni tanlaydi; aylantirish uchun bosish tanlamaydi.
+// Ikki marta tez bosish (yoki ikki marta teginish) umumiy ko'rinishga qaytaradi.
+let down = null, lastTap = null, tapTimer = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now(), touch: e.pointerType !== 'mouse' }; fly = null; });
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!down) return;
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+  const held = performance.now() - down.t;
+  const limit = down.touch ? 12 : 6;
   down = null;
-  if (moved > 6) return;
-  const id = pick(e.clientX, e.clientY);
-  if (id) selectPart(id, true);
+  if (moved > limit || held > 350) { lastTap = null; return; }
+  const now = performance.now();
+  if (lastTap && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 40) {
+    clearTimeout(tapTimer); lastTap = null;
+    resetView();
+    return;
+  }
+  lastTap = { t: now, x: e.clientX, y: e.clientY };
+  const x = e.clientX, y = e.clientY;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { const id = pick(x, y); if (id) selectPart(id, true); }, 260);
 });
 let hoverReq = null;
 renderer.domElement.addEventListener('pointermove', (e) => {
