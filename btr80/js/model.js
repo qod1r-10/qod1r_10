@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { buildDashboard, buildRadio, buildFVU, buildWaterjet } from './details.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling } from './details.js';
 import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
@@ -290,6 +290,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   }
   rad.position.set(-2.85, 1.78, 0);
   add('radiator', rad);
+  add('radiator', buildCooling()); // nasos, termostat, bakcha, moy radiatori, gidromufta, shlanglar
   // tomdagi jalyuzlar (radiatorga tegishli)
   for (let i = 0; i < 7; i++) {
     const louver = box(0.07, 0.03, 1.5, C.armorDark);
@@ -372,7 +373,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   add('troop_seats', seats);
 
   // O't o'chirgichlar: boshqaruv va desant bo'limlarida
-  if (assets.ext) for (const [x, z] of [[2.0, -0.86], [-1.25, 0.86]]) { const e = extModel(assets.ext); e.position.set(x, 0.55, z); add('fire', e); }
+  if (assets.ext) for (const [x, z] of [[1.95, -0.6], [-1.3, 0.42]]) { const e = extModel(assets.ext); e.position.set(x, 0.9, z); add('fire', e); }
 
   for (const s of [-1, 1]) for (const x of [-1.5, -0.95, 0.55, 1.6]) {
     const port = new THREE.Group();

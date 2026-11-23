@@ -120,3 +120,36 @@ export function buildWaterjet() {
   const flap = box(0.03, 0.46, 0.48, M(OLIVE)); flap.position.x = -0.5; g.add(flap);
   return { group: g, impeller: imp };
 }
+
+/* ---------- Sovutish tizimi (radiatordan tashqari qismlar) ----------
+   Mashina koordinatalarida (x — old, y — yuqori, z — o'ng/chap). Dvigatel markazi (-2.85, 0.95, 0),
+   radiator (-2.85, 1.78, 0) dvigatel ustida yotadi. Ma'ruzadagi BTR-80 sovitish tizimi sxemasiga ko'ra:
+   radiator, ventilyator, gidromufta, kengaytiruvchi bakcha, suyuqlik nasosi, termostat, moy radiatori, shlanglar. */
+export function buildCooling() {
+  const g = new THREE.Group();
+  const hoseM = M(0x1c1d1c, { metalness: 0.05, roughness: 0.85 });
+  const pipe = (pts, r = 0.035) => {
+    const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
+    return new THREE.Mesh(new THREE.TubeGeometry(curve, 40, r, 10, false), hoseM);
+  };
+  // suyuqlik nasosi (dvigatel orqa yuzida, -x tomonda) va shkivi
+  const pump = cyl(0.09, 0.09, 0.16, M(0x6b7075), 20); pump.rotation.z = Math.PI / 2; pump.position.set(-3.38, 0.98, 0); g.add(pump);
+  const pulley = cyl(0.1, 0.1, 0.03, M(DARK), 24); pulley.rotation.z = Math.PI / 2; pulley.position.set(-3.48, 0.98, 0); g.add(pulley);
+  // termostat korpusi (dvigatel ustida, orqa tomonda)
+  const thermo = cyl(0.06, 0.06, 0.12, M(0x8c8f93), 16); thermo.position.set(-3.25, 1.42, 0); g.add(thermo);
+  // kengaytiruvchi bakcha
+  const tank = cyl(0.11, 0.11, 0.42, M(0xd7d3c4, { metalness: 0.1, roughness: 0.5, transparent: false }), 20); tank.rotation.x = Math.PI / 2; tank.position.set(-2.3, 1.72, 0.62); g.add(tank);
+  const cap = cyl(0.04, 0.04, 0.05, M(0xb8322a), 12); cap.position.set(-2.3, 1.85, 0.62); g.add(cap);
+  // moy radiatori (chap tomonda)
+  const oil = box(0.5, 0.06, 0.32, M(0x7a7f84, { metalness: 0.6, roughness: 0.4 })); oil.position.set(-2.85, 1.7, -0.86); g.add(oil);
+  for (let i = 0; i < 8; i++) { const f = box(0.5, 0.004, 0.3, M(0x5c6166)); f.position.set(-2.85, 1.675 + i * 0.008, -0.86); g.add(f); }
+  // gidromufta (ventilyator yuritmasi)
+  const fluid = cyl(0.12, 0.12, 0.12, M(0x8a8f95), 24); fluid.rotation.z = Math.PI / 2; fluid.position.set(-3.38, 1.32, 0.0); g.add(fluid);
+  // shlanglar: termostat -> radiator kirishi; radiator chiqishi -> nasos; bakcha -> nasos; moy radiatori
+  g.add(pipe([[-3.25, 1.48, 0], [-3.32, 1.62, 0.25], [-3.3, 1.74, 0.55]]));
+  g.add(pipe([[-2.4, 1.72, -0.6], [-2.5, 1.3, -0.62], [-3.1, 0.95, -0.35], [-3.3, 0.98, -0.05]]));
+  g.add(pipe([[-2.3, 1.6, 0.62], [-2.7, 1.2, 0.45], [-3.3, 1.0, 0.08]], 0.018));
+  g.add(pipe([[-2.6, 1.7, -0.7], [-2.5, 1.2, -0.5], [-2.45, 0.85, -0.32]], 0.022));
+  g.add(pipe([[-3.1, 1.7, -0.7], [-3.2, 1.1, -0.45], [-3.25, 0.8, -0.3]], 0.022));
+  return g;
+}
