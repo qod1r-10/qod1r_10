@@ -82,6 +82,7 @@ export function createDrive(ctx) {
   });
   const mechs = interior.userData.mechs || [];
   const steerSpin = interior.getObjectByName('steerSpin');
+  const dash = interior.userData.dash, impeller = interior.userData.impeller;
 
   /* --- yer (dala) --- */
   // Mashina joyida turadi; yer teksturasi uning ostidan suriladi.
@@ -258,6 +259,8 @@ export function createDrive(ctx) {
     const shake = S.on ? Math.sin(S.t * S.rpm / 60 * 6.28) * 0.004 : 0;
     for (const s of shakers) s.o.position.y = s.y + shake;
     if (turretPivot) turretPivot.rotation.y = S.turret;
+    if (dash) dash.update(a, S.on ? S.rpm : 0, S.on, dt);
+    if (impeller && running) impeller.rotation.x += engineSpin * dt * 0.6; // suv otgich parragi taqsimlash qutisidan harakat oladi
     if (steerSpin) steerSpin.rotation.z = S.steer * 5; // rul chambaragi g'ildiraklar bilan birga buriladi
     if (gunPivot) gunPivot.rotation.x = GUN_REST - S.elev * Math.PI / 180;
 

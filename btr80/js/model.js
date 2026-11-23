@@ -3,6 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet } from './details.js';
 import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel } from './assets.js';
 
 const C = {
@@ -297,11 +298,10 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   }
 
   /* ---------- SUZISH ---------- */
-  const wj = new THREE.Group();
-  const wjHouse = cyl(0.22, 0.26, 0.6, C.darkSteel, 18); wjHouse.rotation.z = Math.PI / 2; wjHouse.position.x = 0.05; wj.add(wjHouse);
-  const wjNozzle = cyl(0.17, 0.2, 0.2, C.steel, 18, { metalness: 0.5 }); wjNozzle.rotation.z = Math.PI / 2; wjNozzle.position.x = -0.32; wj.add(wjNozzle);
-  const wjFlap = box(0.04, 0.5, 0.52, C.armorDark); wjFlap.position.x = -0.44; wj.add(wjFlap);
+  const wjB = buildWaterjet();
+  const wj = wjB.group;
   wj.position.set(-3.42, 0.85, 0);
+  root.userData.impeller = wjB.impeller;
   add('waterjet', wj);
 
   const tv = new THREE.Group();
@@ -329,8 +329,9 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   const steerSpin = new THREE.Group(); steerSpin.name = 'steerSpin'; wheel.add(steerSpin);
   if (assets.steer) steerSpin.add(steerModel(assets.steer));
   else steerSpin.add(new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), mat(C.darkSteel)));
-  const dash = box(0.18, 0.25, 0.7, C.darkSteel); dash.position.set(0.78, 0.35, 0.08); drv.add(dash);
-  for (let i = 0; i < 3; i++) { const g = cyl(0.04, 0.04, 0.02, C.lamp, 12, { emissive: 0x332200 }); g.rotation.z = Math.PI / 2; g.position.set(0.68, 0.42, -0.15 + i * 0.15); drv.add(g); }
+  const dashB = buildDashboard(); // ko'rsatkichlari yurishda jonli o'zgaradi
+  dashB.group.position.set(0.8, 0.36, 0.12); drv.add(dashB.group);
+  root.userData.dash = dashB;
   for (const zz of [-0.12, 0.06, 0.18]) { const ped = box(0.04, 0.12, 0.07, C.darkSteel); ped.position.set(0.7, -0.15, zz); ped.rotation.z = 0.4; drv.add(ped); }
   drv.position.set(2.3, 0.95, -0.47);
   add('driver', drv);
@@ -384,11 +385,8 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   }
 
   /* ---------- ELEKTR VA ALOQA ---------- */
-  const radio = new THREE.Group();
-  const rBody = box(0.36, 0.3, 0.3, C.radio); radio.add(rBody);
-  const rFront = box(0.02, 0.22, 0.24, C.darkSteel); rFront.position.x = 0.19; radio.add(rFront);
-  for (let i = 0; i < 3; i++) { const knob = cyl(0.025, 0.025, 0.04, C.steel, 10); knob.rotation.z = Math.PI / 2; knob.position.set(0.21, 0.05, -0.08 + i * 0.08); radio.add(knob); }
-  radio.position.set(1.85, 1.5, 0.78);
+  const radio = buildRadio();
+  radio.position.set(1.75, 1.58, 0.84);
   add('radio', radio);
 
   const ant = new THREE.Group();
@@ -417,11 +415,8 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
     for (const dz of [-0.07, 0.07]) { const term = cyl(0.02, 0.02, 0.04, 0xb33a2a, 8); term.position.set(1.55 + dz * 2, 0.93, zz); add('battery', term); }
   }
 
-  const fvu = new THREE.Group();
-  const fBody = box(0.4, 0.4, 0.34, C.fvu); fvu.add(fBody);
-  const fCyl = cyl(0.13, 0.13, 0.3, C.fvu, 16); fCyl.position.set(0, 0.32, 0); fvu.add(fCyl);
-  const fDuct = cylBetween([0, 0.45, 0], [0.05, 0.95, 0.15], 0.05, C.steel, 8); fvu.add(fDuct);
-  fvu.position.set(1.55, 0.88, 0.78);
+  const fvu = buildFVU();
+  fvu.position.set(1.28, 0.86, 0.82);
   add('fvu', fvu);
 
   root.userData.mechs = mechs;
