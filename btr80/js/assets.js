@@ -3,12 +3,12 @@
 //  KamAZ 740.3 — ChB corp. (CC BY 4.0) · Ilashish muftasi — Er.Praveen.Kumar (CC BY 4.0)
 //  Uzatmalar qutisi — avredu (CC BY 4.0) · Taqsimlash qutisi NP261 — ypro (CC BY 4.0)
 //  Differensial korpusi — Anoopbg (CC BY 4.0) · Kardan vali — PolyPhantom (CC BY 4.0)
-//  Radiator — Terllok (CC BY 4.0)
+//  Radiator — Terllok (CC BY 4.0) · Akkumulyator — NatharaQuetzl (CC BY 4.0)
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
-const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt'];
+const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery'];
 
 export async function loadAssets(loadBin) {
   const loader = new GLTFLoader();
@@ -123,4 +123,9 @@ export function radiatorModel(scene) {
     g.add(w);
   }
   return paint(g, null, 'radiator');
+}
+
+// Akkumulyator batareyasi (uzunligi ≈0.5 m)
+export function batteryModel(scene) {
+  return paint(wrap(scene, { pivot: [0, 0.35, 0], scale: 0.053 }), null, 'battery');
 }

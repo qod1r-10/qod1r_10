@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { driveshaftBetween, radiatorModel } from './assets.js';
+import { driveshaftBetween, radiatorModel, batteryModel } from './assets.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -390,6 +390,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   }
 
   for (const zz of [-0.92, -0.62]) {
+    if (assets.battery) { const b = batteryModel(assets.battery); b.position.set(1.55, 0.78, zz); add('battery', b); continue; }
     const bat = box(0.5, 0.26, 0.26, C.battery);
     bat.position.set(1.55, 0.78, zz);
     add('battery', bat);
