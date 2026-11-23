@@ -162,7 +162,7 @@ export function extModel(scene) {
 // Yirik kalibrli pulemyot (DShK modeli KPVT o'rnida): lentasi va patron qutisi bilan.
 // Qurol beshigi koordinatalarida: stvol o'qi (x -0.01, y -0.04), +z ga qaragan.
 export function dshkModel(scene, s = 1.0) {
-  const g = wrap(scene, { pivot: [0.16, 0.744, 1.23], scale: s, pos: [-0.01, -0.04, 1.0] });
+  const g = wrap(scene, { pivot: [0.16, 0.744, 1.23], scale: s, pos: [-0.01, -0.04, 1.32] });
   return paint(g, null, 'kpvt');
 }
 

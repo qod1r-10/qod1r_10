@@ -157,6 +157,7 @@ model.traverse((o) => { if (o.isMesh) registerMesh(o); });
 
 const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid, shadowGround: ground, assets });
 drive.extra.forEach(registerMesh);
+for (let i = meshes.length - 1; i >= 0; i--) if (meshes[i].userData.removed) { const m = meshes[i]; meshes.splice(i, 1); const l = meshesByPart.get(m.userData.part); l.splice(l.indexOf(m), 1); }
 
 const cut = createCutaway({ renderer, meshes });
 

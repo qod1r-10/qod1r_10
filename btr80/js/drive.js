@@ -38,8 +38,9 @@ export function createDrive(ctx) {
     turretPivot.position.set(0, 0, 0.97);
     real.add(turretPivot);
     const TURRET = new Set(['turret', 'kpvt', 'pkt', 'sight', 'smoke']);
-    [...real.children].forEach((o) => {
-      if (!o.isMesh) return;
+    real.updateMatrixWorld(true);
+    const realMeshes = []; real.traverse((o) => { if (o.isMesh) realMeshes.push(o); });
+    realMeshes.forEach((o) => {
       const [part, , wi] = o.name.split('__');
       if (part === 'wheels' && wi !== undefined) {
         o.rotation.order = 'YXZ';
@@ -57,7 +58,10 @@ export function createDrive(ctx) {
     turretPivot.add(gunPivot);
     turretPivot.updateMatrixWorld(true);
     [...turretPivot.children].forEach((o) => {
-      if (o.isMesh && /^(kpvt|pkt)__/.test(o.name)) gunPivot.attach(o);
+      if (!o.isMesh || !/^(kpvt|pkt)__/.test(o.name)) return;
+      // Haqiqiy DShK/PKT modeli bo'lsa, BTR modelidagi eski stvol olib tashlanadi (ikki stvol bo'lmasligi uchun)
+      if ((/^kpvt__/.test(o.name) && ctx.assets && ctx.assets.dshk) || (/^pkt__/.test(o.name) && ctx.assets && ctx.assets.pkt)) { o.parent.remove(o); o.userData.removed = true; return; }
+      gunPivot.attach(o);
     });
     // Pulemyotlarning minora ichidagi qismlari (beshik bilan birga harakatlanadi)
     const rig = new THREE.Group();
