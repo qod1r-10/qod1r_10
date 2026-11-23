@@ -3,12 +3,13 @@
 //  KamAZ 740.3 — ChB corp. (CC BY 4.0) · Ilashish muftasi — Er.Praveen.Kumar (CC BY 4.0)
 //  Uzatmalar qutisi — avredu (CC BY 4.0) · Taqsimlash qutisi NP261 — ypro (CC BY 4.0)
 //  Differensial korpusi — Anoopbg (CC BY 4.0) · Kardan vali — PolyPhantom (CC BY 4.0)
-//  Radiator — Terllok (CC BY 4.0) · Akkumulyator — NatharaQuetzl · Rul — NIXO · Kardan sharniri — ravindra.mohan09 (CC BY 4.0)
+//  Radiator — Terllok (CC BY 4.0) · Akkumulyator — NatharaQuetzl · Rul — NIXO · Kardan sharniri — ravindra.mohan09 · O'rindiq — DeWolfePilot · Kanistr — ROY (CC BY 4.0)
+//  O't o'chirgich — Renend Studio (Sketchfab Standard)
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
-const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery', 'steer', 'ujoint'];
+const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery', 'steer', 'ujoint', 'seat', 'tank', 'ext'];
 
 export async function loadAssets(loadBin) {
   const loader = new GLTFLoader();
@@ -143,4 +144,17 @@ export function batteryModel(scene) {
 // Rul chambaragi (diametri ≈0.4 m), yuzasi +z ga qaragan
 export function steerModel(scene) {
   return paint(wrap(scene, { pivot: [0, 3.15, -0.5], scale: 0.065 }), null, 'driver');
+}
+
+// Yuk mashinasi o'rindig'i (asosi y=0 da, yuzi +x ga — mashina oldiga qaraydi)
+export function seatModel(scene, scale = 0.0037, part = 'driver') {
+  return paint(wrap(scene, { pivot: [0, 401.6, 0], scale, rot: [0, Math.PI / 2, 0] }), null, part);
+}
+// Yonilg'i baki o'rniga harbiy kanistr shaklidagi bak (zaytun rangida)
+export function tankModel(scene) {
+  return paint(wrap(scene, { pivot: [0.03, 0, 0.01], scale: 1.9, rot: [0, Math.PI / 2, 0] }), { color: 0x56603a, metalness: 0.3, roughness: 0.6 }, 'fuel');
+}
+// Qo'l o't o'chirgichi (balandligi ≈0.5 m)
+export function extModel(scene) {
+  return paint(wrap(scene, { pivot: [0, -1.81, 0], scale: 0.16 }), null, 'fire');
 }

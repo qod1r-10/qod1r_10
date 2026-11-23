@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { driveshaftBetween, radiatorModel, batteryModel, steerModel } from './assets.js';
+import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel } from './assets.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -271,6 +271,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   add('shafts', cylBetween([-0.4, 0.72, 0.12], [-3.3, 0.82, 0.12], 0.03, C.shaft, 8));
 
   for (const s of [-1, 1]) {
+    if (assets.tank) { const t = tankModel(assets.tank); t.position.set(-1.8, 0.85, s * 0.72); add('fuel', t); continue; }
     const tank = box(0.36, 0.95, 0.5, C.tank);
     tank.position.set(-1.8, 1.32, s * 0.72);
     add('fuel', tank);
@@ -318,7 +319,8 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
     return g;
   }
   const drv = new THREE.Group();
-  const dSeat = seat(); dSeat.position.set(0, 0, 0); drv.add(dSeat);
+  if (assets.seat) { const m = seatModel(assets.seat); m.position.set(-0.05, -0.44, 0); drv.add(m); }
+  else { const dSeat = seat(); dSeat.position.set(0, 0, 0); drv.add(dSeat); }
   const col = cylBetween([0.62, 0.05, 0], [0.38, 0.38, 0], 0.03, C.darkSteel, 8); drv.add(col);
   // Rul chambaragi: haqiqiy model bo'lsa o'sha, bo'lmasa halqa. steerSpin guruhi yurishda rul bilan buriladi.
   const wheel = new THREE.Group();
@@ -334,7 +336,8 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   add('driver', drv);
 
   const cmd = new THREE.Group();
-  const cSeat = seat(); cmd.add(cSeat);
+  if (assets.seat) { const m = seatModel(assets.seat); m.position.set(-0.05, -0.44, 0); cmd.add(m); }
+  else { const cSeat = seat(); cmd.add(cSeat); }
   const cPanel = box(0.18, 0.22, 0.5, C.darkSteel); cPanel.position.set(0.78, 0.35, 0); cmd.add(cPanel);
   cmd.position.set(2.3, 0.95, 0.47);
   add('commander', cmd);
@@ -348,14 +351,27 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   /* ---------- DESANT BO'LIMI ---------- */
   const seats = new THREE.Group();
   const BL = assets.kamaz ? 1.6 : 2.2;
+  if (assets.seat) {
+    // Desantchilar o'rindiqlari: o'rtada orqama-orqa, yon tomonga (ambrazuralarga) qaragan
+    for (const xx of [-0.55, 0, 0.55]) for (const s of [-1, 1]) {
+      const m = seatModel(assets.seat, 0.0031, 'troop_seats');
+      m.rotation.y = s > 0 ? 0 : Math.PI; // modelning old tomoni +z
+      m.position.set(xx, -0.44, s * 0.26);
+      seats.add(m);
+    }
+  } else {
   const bench = box(BL, 0.1, 0.9, C.seat); seats.add(bench);
   const backrest = box(BL, 0.55, 0.08, C.seat); backrest.position.y = 0.32; seats.add(backrest);
   for (const xx of [-BL * 0.43, 0, BL * 0.43]) for (const zz of [-0.36, 0.36]) { const leg = box(0.06, 0.4, 0.06, C.darkSteel); leg.position.set(xx, -0.25, zz); seats.add(leg); }
   for (const s of [-1, 1]) {
     const side = box(0.5, 0.08, 0.38, C.seat); side.position.set(BL / 2 + 0.25, 0.0, s * 0.6); seats.add(side);
   }
+  }
   seats.position.set(assets.kamaz ? -0.3 : -0.62, 0.95, 0);
   add('troop_seats', seats);
+
+  // O't o'chirgichlar: boshqaruv va desant bo'limlarida
+  if (assets.ext) for (const [x, z] of [[2.0, -0.86], [-1.25, 0.86]]) { const e = extModel(assets.ext); e.position.set(x, 0.55, z); add('fire', e); }
 
   for (const s of [-1, 1]) for (const x of [-1.5, -0.95, 0.55, 1.6]) {
     const port = new THREE.Group();
