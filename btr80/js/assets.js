@@ -128,12 +128,12 @@ export function driveshaftBetween(scene, a, b, thick = 0.075, uj = null) {
 }
 
 export function radiatorModel(scene) {
-  const g = new THREE.Group();
-  for (const z of [-0.33, 0.33]) {
-    const w = wrap(scene, { pivot: [0, 806, 2567], scale: 0.0011, rot: [-Math.PI / 2, 0, 0], pos: [0, 0, z] });
-    g.add(w);
-  }
-  return paint(g, null, 'radiator');
+  // Bitta radiator (ikkita ventilyatori bilan) dvigatel bo'limi tomi ostida yotadi: eni mashina bo'ylab ko'ndalang
+  const w = wrap(scene, { pivot: [0, 806, 2567], scale: 0.0016, rot: [-Math.PI / 2, 0, Math.PI / 2] });
+  paint(w, null, 'radiator');
+  // Model teksturasi juda qora — ko'rinishi uchun biroz yorqinlashtiriladi
+  w.traverse((o) => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.color.setScalar(1.8); } });
+  return w;
 }
 
 // Akkumulyator batareyasi (uzunligi ≈0.5 m)

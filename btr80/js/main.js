@@ -52,6 +52,8 @@ camera.position.copy(HOME.pos);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.copy(HOME.target);
 controls.enableDamping = true;
+controls.zoomToCursor = true; // kursor (barmoq) turgan joyga yaqinlashadi
+controls.screenSpacePanning = true;
 controls.dampingFactor = 0.08;
 controls.minDistance = 2.5;
 controls.maxDistance = 26;
@@ -297,7 +299,7 @@ function render() {
       </button>${parts}</li>`;
   }).join('');
 
-  $('#btn-reset').disabled = !state.cat;
+  $('#btn-reset').disabled = false; // har doim ishlaydi: qo'lda aylantirilgan kamerani ham qaytaradi
 }
 
 document.addEventListener('click', (e) => {
