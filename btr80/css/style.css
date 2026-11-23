@@ -77,6 +77,23 @@ button { font: inherit; color: inherit; }
   text-transform: uppercase;
   color: var(--muted);
 }
+.author {
+  margin: 0 0 0 auto;
+  flex: none;
+  text-align: right;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.author-label, .author-group {
+  display: block;
+  font: 500 11px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.author-group { color: var(--accent); }
+.foot b { color: var(--fg); font-weight: 600; }
 .top h1 {
   margin: 0;
   font: 700 22px/1.15 var(--font-display);
@@ -358,6 +375,11 @@ button { font: inherit; color: inherit; }
   .viewer { height: 58vh; min-height: 320px; }
   .panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
   .top h1 { font-size: 19px; }
+  .top { flex-wrap: wrap; row-gap: 6px; }
+  .top-text { flex: 1 1 0; }
+  .author { margin: 0; flex-basis: 100%; text-align: left; padding-left: 52px; }
+  .author-label { display: inline; }
+  .author-group { display: inline; margin-left: 6px; }
   .crumbs, .info, .list-title, .foot { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .cats { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .legend { display: none; }
