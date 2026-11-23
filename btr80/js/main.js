@@ -10,6 +10,8 @@ import { createCutaway } from './cutaway.js';
 import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 
 const $ = (s) => document.querySelector(s);
+// Oflayn (bitta fayl) versiyada fayllar ichki xotiradan olinadi
+const asset = (p) => (window.__asset ? window.__asset(p) : p);
 const viewer = $('#viewer');
 const tagEl = $('#tag');
 const tipEl = $('#tip');
@@ -100,7 +102,7 @@ async function loadGLB(path = 'models/btr80.glb') {
 
 async function loadRealModel() {
   const tl = new THREE.TextureLoader();
-  const tex = (f, color = true) => new Promise((res, rej) => tl.load('models/' + f, (t) => {
+  const tex = (f, color = true) => new Promise((res, rej) => tl.load(asset('models/' + f), (t) => {
     t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
     t.anisotropy = 4;
     res(t);
@@ -243,7 +245,7 @@ function figsHTML(key) {
   if (!list || !list.length) return '';
   return `<div class="figs"><p class="eyebrow">Ma'ruzadan rasmlar</p>${list.map(([src, title, legend, source], i) => `
     <figure class="fig">
-      <button class="fig-img" type="button" data-fig="${key}|${i}" aria-label="Kattalashtirish: ${esc(title)}"><img src="img/${src}" alt="${esc(title)}" loading="lazy"></button>
+      <button class="fig-img" type="button" data-fig="${key}|${i}" aria-label="Kattalashtirish: ${esc(title)}"><img src="${asset('img/' + src)}" alt="${esc(title)}" loading="lazy"></button>
       <figcaption><b>${esc(title)}</b>${legend ? `<details><summary>Belgilar</summary><p>${esc(legend)}</p></details>` : ''}<span class="src">${esc(source)}</span></figcaption>
     </figure>`).join('')}</div>`;
 }
@@ -251,7 +253,7 @@ function figsHTML(key) {
 function openFig(key, i) {
   const [src, title, legend, source] = FIGS[key][i];
   const box = $('#lightbox');
-  box.innerHTML = `<div class="lb-inner"><img src="img/${src}" alt="${esc(title)}"><div class="lb-cap"><b>${esc(title)}</b>${legend ? `<p>${esc(legend)}</p>` : ''}<span class="src">${esc(source)}</span></div><button class="lb-close" type="button" aria-label="Yopish">✕</button></div>`;
+  box.innerHTML = `<div class="lb-inner"><img src="${asset('img/' + src)}" alt="${esc(title)}"><div class="lb-cap"><b>${esc(title)}</b>${legend ? `<p>${esc(legend)}</p>` : ''}<span class="src">${esc(source)}</span></div><button class="lb-close" type="button" aria-label="Yopish">✕</button></div>`;
   box.hidden = false;
   box.querySelector('.lb-close').focus();
 }
