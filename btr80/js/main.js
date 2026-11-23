@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { loadV8 } from './engine3d.js';
+import { loadAssets } from './assets.js';
 import { buildBTR80, AXLES_X, REAL_AXLES_X } from './model.js';
 import { createDrive, FLOW_PARTS, FLOW_STEPS } from './drive.js';
 import { createCutaway } from './cutaway.js';
@@ -131,7 +132,8 @@ try { real = await loadRealModel(); } catch (e) { console.warn("Haqiqiy model yu
 const model = new THREE.Group();
 let v8 = null;
 try { v8 = await loadV8(loadGLB); } catch (e) { console.warn("V8 dvigatel modeli yuklanmadi, sxematik dvigatel ko'rsatiladi", e); }
-const interior = buildBTR80({ exterior: !real, v8 });
+const assets = await loadAssets(loadGLB).catch(() => ({}));
+const interior = buildBTR80({ exterior: !real, v8, assets });
 if (real) {
   interior.rotation.y = -Math.PI / 2; // sxematik modelda old tomon +x, haqiqiy modelda +z
   model.add(real);

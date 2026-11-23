@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+import { kamazCasing } from './assets.js';
 
 export async function loadV8(fetchBuffer) {
   const [buf, meta] = await Promise.all([
@@ -29,7 +30,7 @@ const PART = { crank: 'crank', piston: 'crank', rod: 'crank', cam: 'valvetrain',
 // Model koordinatalari -> dvigatel koordinatalari (dvigatel o'qi +x, tirsakli val o'qi y = -0.16 da)
 const K = 0.0075;
 
-export function buildV8(asset) {
+export function buildV8(asset, kamaz) {
   const { scene, meta } = asset;
   const root = new THREE.Group();
   const inner = new THREE.Group();
@@ -123,7 +124,8 @@ export function buildV8(asset) {
   crankcase.position.set(0, -0.2, 0); casing.push(crankcase);
   const front = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.5), castM(0x5a5e62));
   front.position.set(-0.53, -0.1, 0); casing.push(front);
-  casing.forEach((m) => { m.userData.casing = true; m.userData.part = 'engine'; m.castShadow = true; root.add(m); });
+  if (kamaz) root.add(kamazCasing(kamaz)); // haqiqiy KamAZ-740 korpusi
+  else casing.forEach((m) => { m.userData.casing = true; m.userData.part = 'engine'; m.castShadow = true; root.add(m); });
 
   update(0);
   return { root, update };

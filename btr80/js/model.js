@@ -3,6 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
+import { driveshaftBetween, radiatorModel } from './assets.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -78,7 +79,7 @@ const REAL_PARTS = new Set(['hull', 'hatch_front', 'hatch_roof', 'side_doors', '
 export const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
 
 // exterior=false: faqat ichki qismlar (tashqi ko'rinish haqiqiy modeldan olinadi)
-export function buildBTR80({ exterior = true, v8 = null } = {}) {
+export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   const AX = exterior ? AXLES_X : REAL_AXLES_X;
   const mechs = [];
   const addMech = (m, pos) => {
@@ -235,7 +236,7 @@ export function buildBTR80({ exterior = true, v8 = null } = {}) {
   for (const x of AX) {
     const axle = cylBetween([x, 0.56, -1.08], [x, 0.56, 1.08], 0.075, C.darkSteel);
     add('axles', axle);
-    addMech(buildDiff(), [x, 0.58, 0]);
+    addMech(buildDiff(assets), [x, 0.58, 0]);
     for (const s of [-1, 1]) {
       const red = cyl(0.13, 0.13, 0.16, C.darkSteel, 14); red.rotation.x = Math.PI / 2;
       red.position.set(x, 0.56, s * 0.98);
@@ -254,14 +255,17 @@ export function buildBTR80({ exterior = true, v8 = null } = {}) {
 
   /* ---------- DVIGATEL-TRANSMISSIYA ---------- */
   // Batafsil mexanizmlar (mech.js): dvigatel, uzatmalar qutisi, taqsimlash qutisi
-  addMech(buildEngine(v8), [-2.85, 0.95, 0]);
-  addMech(buildGearbox(), [-2.12, 0.88, 0]);
-  addMech(buildTransfer(), [-0.05, 0.78, 0]);
+  // KamAZ korpusi uzunroq (maxovik karteri bilan), shuning uchun uzatmalar qutisi biroz oldinga suriladi
+  const GBX = assets.kamaz ? -1.82 : -2.12;
+  addMech(buildEngine(v8, assets.kamaz), [-2.85, 0.95, 0]);
+  addMech(buildGearbox(assets), [GBX, 0.88, 0]);
+  addMech(buildTransfer(assets), [-0.05, 0.78, 0]);
 
-  add('shafts', cylBetween([-1.88, 0.86, 0], [0.16, 0.8, 0], 0.045, C.shaft, 10));
+  const shaft = (a, b, r) => (assets.driveshaft ? add('shafts', driveshaftBetween(assets.driveshaft, a, b, r * 1.9)) : add('shafts', cylBetween(a, b, r, C.shaft, 10)));
+  shaft([GBX + (assets.gearbox ? 0.74 : 0.24), 0.86, 0], [0.16, 0.8, 0], 0.045);
   for (const x of AX) {
     const from = x > 0 ? [0.16, 0.74, 0.08] : [-0.26, 0.74, -0.08];
-    add('shafts', cylBetween(from, [x + (x > 0 ? -0.2 : 0.2), 0.6, 0], 0.04, C.shaft, 10));
+    shaft(from, [x + (x > 0 ? -0.2 : 0.2), 0.6, 0], 0.04);
   }
   // Suv to'piga val
   add('shafts', cylBetween([-0.4, 0.72, 0.12], [-3.3, 0.82, 0.12], 0.03, C.shaft, 8));
@@ -275,9 +279,12 @@ export function buildBTR80({ exterior = true, v8 = null } = {}) {
   }
 
   const rad = new THREE.Group();
-  const core = box(1.0, 0.14, 1.5, C.radiator, { metalness: 0.4, roughness: 0.5 }); rad.add(core);
-  for (const s of [-1, 1]) {
-    const fan = cyl(0.28, 0.28, 0.06, C.darkSteel, 20); fan.name = 'fan'; fan.position.set(0, -0.12, s * 0.38); rad.add(fan);
+  if (assets.radiator) rad.add(radiatorModel(assets.radiator));
+  else {
+    const core = box(1.0, 0.14, 1.5, C.radiator, { metalness: 0.4, roughness: 0.5 }); rad.add(core);
+    for (const s of [-1, 1]) {
+      const fan = cyl(0.28, 0.28, 0.06, C.darkSteel, 20); fan.name = 'fan'; fan.position.set(0, -0.12, s * 0.38); rad.add(fan);
+    }
   }
   rad.position.set(-2.85, 1.78, 0);
   add('radiator', rad);
@@ -336,13 +343,14 @@ export function buildBTR80({ exterior = true, v8 = null } = {}) {
 
   /* ---------- DESANT BO'LIMI ---------- */
   const seats = new THREE.Group();
-  const bench = box(2.2, 0.1, 0.9, C.seat); seats.add(bench);
-  const backrest = box(2.2, 0.55, 0.08, C.seat); backrest.position.y = 0.32; seats.add(backrest);
-  for (const xx of [-0.95, 0, 0.95]) for (const zz of [-0.36, 0.36]) { const leg = box(0.06, 0.4, 0.06, C.darkSteel); leg.position.set(xx, -0.25, zz); seats.add(leg); }
+  const BL = assets.kamaz ? 1.6 : 2.2;
+  const bench = box(BL, 0.1, 0.9, C.seat); seats.add(bench);
+  const backrest = box(BL, 0.55, 0.08, C.seat); backrest.position.y = 0.32; seats.add(backrest);
+  for (const xx of [-BL * 0.43, 0, BL * 0.43]) for (const zz of [-0.36, 0.36]) { const leg = box(0.06, 0.4, 0.06, C.darkSteel); leg.position.set(xx, -0.25, zz); seats.add(leg); }
   for (const s of [-1, 1]) {
-    const side = box(0.5, 0.08, 0.38, C.seat); side.position.set(1.35, 0.0, s * 0.6); seats.add(side);
+    const side = box(0.5, 0.08, 0.38, C.seat); side.position.set(BL / 2 + 0.25, 0.0, s * 0.6); seats.add(side);
   }
-  seats.position.set(-0.62, 0.95, 0);
+  seats.position.set(assets.kamaz ? -0.3 : -0.62, 0.95, 0);
   add('troop_seats', seats);
 
   for (const s of [-1, 1]) for (const x of [-1.5, -0.95, 0.55, 1.6]) {

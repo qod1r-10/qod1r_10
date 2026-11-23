@@ -70,8 +70,11 @@ export function createDrive(ctx) {
 
   const spinners = [];
   const shakers = [];
+  const shaftGroups = new Set();
+  interior.traverse((o) => { if (o.userData.spinShaft) { shaftGroups.add(o); spinners.push({ o, k: 3.2 }); } });
+  const inShaftGroup = (o) => { for (let p = o.parent; p; p = p.parent) if (shaftGroups.has(p)) return true; return false; };
   interior.traverse((o) => {
-    if (!o.isMesh) return;
+    if (!o.isMesh || inShaftGroup(o)) return;
     const p = o.userData.part;
     if (p === 'shafts' || (p === 'axles' && o.geometry.type === 'CylinderGeometry' && o.geometry.parameters.height > 1)) spinners.push({ o, k: p === 'shafts' ? 3.2 : 1 });
     if (o.name === 'fan') spinners.push({ o, k: 0, fan: true });

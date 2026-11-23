@@ -3,6 +3,7 @@
 // Korpus detallari userData.casing = true — "Kesim" rejimida ular qirqiladi.
 import * as THREE from 'three';
 import { buildV8 } from './engine3d.js';
+import { clutchModel, gearboxGears, transferHousing, diffHousing } from './assets.js';
 
 const Y = new THREE.Vector3(0, 1, 0);
 const COL = {
@@ -52,8 +53,8 @@ const spin = (g, a) => { g.rotation[g.userData.axis] = a; };
 function casing(m) { m.userData.casing = true; return m; }
 
 /* ================= DVIGATEL (KamAZ-7403, V8 90°) ================= */
-export function buildEngine(v8) {
-  if (v8) return buildV8(v8);
+export function buildEngine(v8, kamaz) {
+  if (v8) return buildV8(v8, kamaz);
   const root = new THREE.Group();
   const block = new THREE.Group(), crankG = new THREE.Group(), valve = new THREE.Group();
   root.add(block, crankG, valve);
@@ -173,7 +174,7 @@ export function buildEngine(v8) {
 }
 
 /* ================= ILASHISH MUFTASI VA UZATMALAR QUTISI ================= */
-export function buildGearbox() {
+export function buildGearbox(A = {}) {
   const root = new THREE.Group();
   const castM = (c) => mat(c, { metalness: 0.55, roughness: 0.55 });
   const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.25, 0.26, 32), castM(COL.cast)); bell.rotation.z = Math.PI / 2; bell.position.x = -0.14; root.add(casing(bell));
@@ -206,7 +207,19 @@ export function buildGearbox() {
   root.traverse((o) => { if (o.isMesh) o.userData.part = 'gearbox'; });
 
   let last = 0;
+  // Haqiqiy modellar: ilashish muftasi va tishli g'ildiraklar
+  let gears3d = null;
+  if (A.clutch) { clutch.clear(); clutch.add(clutchModel(A.clutch)); }
+  if (A.gearbox) {
+    pairs.forEach((p) => { root.remove(p.gm); root.remove(p.gc); });
+    syncs.forEach((x) => root.remove(x)); root.remove(inShaft); root.remove(ctShaft);
+    gears3d = gearboxGears(A.gearbox);
+    root.add(gears3d.group);
+    box.geometry.dispose(); box.geometry = new THREE.BoxGeometry(0.82, 0.44, 0.44); box.position.set(0.33, 0, 0.05);
+    top.position.set(0.33, 0.245, 0.05);
+  }
   function update(crank, wheel, gearNo) {
+    if (gears3d) gears3d.update(crank);
     clutch.rotation.x = crank;
     const ct = -crank * RM[0] / (D - RM[0]);
     for (const p of pairs) {
@@ -230,7 +243,7 @@ export function buildGearbox() {
 }
 
 /* ================= TAQSIMLASH QUTISI ================= */
-export function buildTransfer() {
+export function buildTransfer(A = {}) {
   const root = new THREE.Group();
   const castM = (c) => mat(c, { metalness: 0.55, roughness: 0.55 });
   const box = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.5), castM(COL.cast)); root.add(casing(box));
@@ -239,12 +252,13 @@ export function buildTransfer() {
   const g3 = gear(0.05, 0.04, 'x', COL.brass); g3.position.set(0.1, -0.08, 0.1); root.add(g3);
   const diff = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), mat(COL.steel)); diff.position.set(0.08, -0.08, -0.08); root.add(diff);
   root.traverse((o) => { if (o.isMesh) o.userData.part = 'transfer'; });
+  if (A.transfer) { root.remove(box); root.add(transferHousing(A.transfer)); }
   function update(crank, wheel) { spin(g1, wheel * 4); spin(g2, -wheel * 4); spin(g3, wheel * 6); diff.rotation.x = wheel * 4; }
   return { root, update };
 }
 
 /* ================= KO'PRIK: BOSH UZATMA VA DIFFERENSIAL ================= */
-export function buildDiff() {
+export function buildDiff(A = {}) {
   const root = new THREE.Group();
   const house = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), mat(COL.castDark, { metalness: 0.55, roughness: 0.55 }));
   house.scale.set(1.15, 0.9, 1); root.add(casing(house));
@@ -254,6 +268,7 @@ export function buildDiff() {
   for (const s of [-1, 1]) { const sp = gear(0.035, 0.025, 'y', COL.gearDark); sp.position.y = s * 0.055; cage.add(sp); }
   const side = [-1, 1].map((s) => { const g = gear(0.04, 0.025, 'z', COL.gear); g.position.z = s * 0.04; root.add(g); return g; });
   root.traverse((o) => { if (o.isMesh) o.userData.part = 'axles'; });
+  if (A.diff) { root.remove(house); root.add(diffHousing(A.diff)); }
   function update(crank, wheel) {
     spin(ringG, wheel * 2.5); cage.rotation.z = wheel * 2.5;
     spin(pinion, -wheel * 2.5 * 0.13 / 0.045);
