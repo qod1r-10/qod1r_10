@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { driveshaftBetween, radiatorModel, batteryModel } from './assets.js';
+import { driveshaftBetween, radiatorModel, batteryModel, steerModel } from './assets.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -320,9 +320,13 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   const drv = new THREE.Group();
   const dSeat = seat(); dSeat.position.set(0, 0, 0); drv.add(dSeat);
   const col = cylBetween([0.62, 0.05, 0], [0.38, 0.38, 0], 0.03, C.darkSteel, 8); drv.add(col);
-  const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), mat(C.darkSteel));
+  // Rul chambaragi: haqiqiy model bo'lsa o'sha, bo'lmasa halqa. steerSpin guruhi yurishda rul bilan buriladi.
+  const wheel = new THREE.Group();
   wheel.position.set(0.38, 0.4, 0);
   wheel.rotation.set(0.55, Math.PI / 2, 0, 'YXZ'); drv.add(wheel);
+  const steerSpin = new THREE.Group(); steerSpin.name = 'steerSpin'; wheel.add(steerSpin);
+  if (assets.steer) steerSpin.add(steerModel(assets.steer));
+  else steerSpin.add(new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), mat(C.darkSteel)));
   const dash = box(0.18, 0.25, 0.7, C.darkSteel); dash.position.set(0.78, 0.35, 0.08); drv.add(dash);
   for (let i = 0; i < 3; i++) { const g = cyl(0.04, 0.04, 0.02, C.lamp, 12, { emissive: 0x332200 }); g.rotation.z = Math.PI / 2; g.position.set(0.68, 0.42, -0.15 + i * 0.15); drv.add(g); }
   for (const zz of [-0.12, 0.06, 0.18]) { const ped = box(0.04, 0.12, 0.07, C.darkSteel); ped.position.set(0.7, -0.15, zz); ped.rotation.z = 0.4; drv.add(ped); }

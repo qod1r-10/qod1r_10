@@ -81,6 +81,7 @@ export function createDrive(ctx) {
     if (o.name === 'pulley') spinners.push({ o, k: 0, fan: true });
   });
   const mechs = interior.userData.mechs || [];
+  const steerSpin = interior.getObjectByName('steerSpin');
 
   /* --- yer (dala) --- */
   // Mashina joyida turadi; yer teksturasi uning ostidan suriladi.
@@ -257,6 +258,7 @@ export function createDrive(ctx) {
     const shake = S.on ? Math.sin(S.t * S.rpm / 60 * 6.28) * 0.004 : 0;
     for (const s of shakers) s.o.position.y = s.y + shake;
     if (turretPivot) turretPivot.rotation.y = S.turret;
+    if (steerSpin) steerSpin.rotation.z = S.steer * 5; // rul chambaragi g'ildiraklar bilan birga buriladi
     if (gunPivot) gunPivot.rotation.x = GUN_REST - S.elev * Math.PI / 180;
 
     // yer harakati
