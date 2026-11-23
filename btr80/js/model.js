@@ -78,7 +78,7 @@ const REAL_PARTS = new Set(['hull', 'hatch_front', 'hatch_roof', 'side_doors', '
 export const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
 
 // exterior=false: faqat ichki qismlar (tashqi ko'rinish haqiqiy modeldan olinadi)
-export function buildBTR80({ exterior = true } = {}) {
+export function buildBTR80({ exterior = true, v8 = null } = {}) {
   const AX = exterior ? AXLES_X : REAL_AXLES_X;
   const mechs = [];
   const addMech = (m, pos) => {
@@ -254,7 +254,7 @@ export function buildBTR80({ exterior = true } = {}) {
 
   /* ---------- DVIGATEL-TRANSMISSIYA ---------- */
   // Batafsil mexanizmlar (mech.js): dvigatel, uzatmalar qutisi, taqsimlash qutisi
-  addMech(buildEngine(), [-2.85, 0.95, 0]);
+  addMech(buildEngine(v8), [-2.85, 0.95, 0]);
   addMech(buildGearbox(), [-2.12, 0.88, 0]);
   addMech(buildTransfer(), [-0.05, 0.78, 0]);
 

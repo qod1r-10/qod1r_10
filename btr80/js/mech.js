@@ -2,6 +2,7 @@
 // taqsimlash qutisi, ko'prik differensiali. Har biri update(crank, wheel) bilan harakatlanadi.
 // Korpus detallari userData.casing = true — "Kesim" rejimida ular qirqiladi.
 import * as THREE from 'three';
+import { buildV8 } from './engine3d.js';
 
 const Y = new THREE.Vector3(0, 1, 0);
 const COL = {
@@ -51,7 +52,8 @@ const spin = (g, a) => { g.rotation[g.userData.axis] = a; };
 function casing(m) { m.userData.casing = true; return m; }
 
 /* ================= DVIGATEL (KamAZ-7403, V8 90°) ================= */
-export function buildEngine() {
+export function buildEngine(v8) {
+  if (v8) return buildV8(v8);
   const root = new THREE.Group();
   const block = new THREE.Group(), crankG = new THREE.Group(), valve = new THREE.Group();
   root.add(block, crankG, valve);

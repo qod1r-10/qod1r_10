@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadV8 } from './engine3d.js';
 import { buildBTR80, AXLES_X, REAL_AXLES_X } from './model.js';
 import { createDrive, FLOW_PARTS, FLOW_STEPS } from './drive.js';
 import { createCutaway } from './cutaway.js';
@@ -87,10 +88,10 @@ new MutationObserver(applyTheme).observe(document.documentElement, { attributes:
 /* ---------- Model ---------- */
 // Tashqi ko'rinish: haqiqiy teksturali model (models/btr80.glb). Ichki qismlar: model.js dagi sxematik detallar.
 // models/btr80.glb; u bo'lmasa (ba'zi hostinglar .glb bermaydi) base64 JSON nusxasi
-async function loadGLB() {
-  const r = await fetch('models/btr80.glb');
+async function loadGLB(path = 'models/btr80.glb') {
+  const r = await fetch(path);
   if (r.ok && (r.headers.get('content-type') || '').indexOf('html') < 0) return r.arrayBuffer();
-  const j = await (await fetch('models/btr80.glb.json')).json();
+  const j = await (await fetch(path + '.json')).json();
   const bin = atob(j.data), out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out.buffer;
@@ -128,7 +129,9 @@ async function loadRealModel() {
 let real = null;
 try { real = await loadRealModel(); } catch (e) { console.warn("Haqiqiy model yuklanmadi, sxematik model ko'rsatiladi", e); }
 const model = new THREE.Group();
-const interior = buildBTR80({ exterior: !real });
+let v8 = null;
+try { v8 = await loadV8(loadGLB); } catch (e) { console.warn("V8 dvigatel modeli yuklanmadi, sxematik dvigatel ko'rsatiladi", e); }
+const interior = buildBTR80({ exterior: !real, v8 });
 if (real) {
   interior.rotation.y = -Math.PI / 2; // sxematik modelda old tomon +x, haqiqiy modelda +z
   model.add(real);
