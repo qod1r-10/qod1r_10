@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
-const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator'];
+const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt'];
 
 export async function loadAssets(loadBin) {
   const loader = new GLTFLoader();

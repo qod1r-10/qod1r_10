@@ -92,3 +92,29 @@ export function buildSightBody() {
   g.traverse((o) => { if (o.isMesh) { o.userData.part = 'sight'; o.castShadow = true; } });
   return g;
 }
+
+// Haqiqiy PKT (fotoskaner: «PKT Machinegun photoscan» — MikeRTV, CC BY 4.0), tagligidan ajratib olingan.
+// Skanerda stvol -y tomonga qaragan, taglik +z tomonda; bu yerda stvol +z ga, taglik pastga buriladi.
+export function pktModel(scene) {
+  const u1 = new THREE.Vector3(0.115, 1, 0).normalize(); // dulodan orqaga
+  const u2 = new THREE.Vector3(0, 0, 1);                 // taglik tomoni
+  const u3 = new THREE.Vector3().crossVectors(u1, u2);
+  const v1 = new THREE.Vector3(0, 0, -1), v2 = new THREE.Vector3(0, -1, 0), v3 = new THREE.Vector3().crossVectors(v1, v2);
+  const U = new THREE.Matrix4().makeBasis(u1, u2, u3), V = new THREE.Matrix4().makeBasis(v1, v2, v3);
+  const R = V.multiply(U.transpose());
+  const g = new THREE.Group();
+  const m = scene.clone(true);
+  const muzzle = new THREE.Vector3(0.908, -1.38, -0.30);
+  m.position.copy(muzzle).negate();
+  const rot = new THREE.Group();
+  rot.quaternion.setFromRotationMatrix(R);
+  rot.add(m);
+  g.add(rot);
+  g.position.set(-0.18, -0.04, 0.27);
+  g.traverse((o) => {
+    if (!o.isMesh) return;
+    o.userData.part = 'pkt'; o.castShadow = true;
+    if (o.material) { o.material = o.material.clone(); o.material.metalness = 0.35; o.material.roughness = 0.6; }
+  });
+  return g;
+}

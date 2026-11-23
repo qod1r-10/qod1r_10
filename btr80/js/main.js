@@ -155,7 +155,7 @@ function registerMesh(o) {
 }
 model.traverse((o) => { if (o.isMesh) registerMesh(o); });
 
-const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid, shadowGround: ground });
+const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid, shadowGround: ground, assets });
 drive.extra.forEach(registerMesh);
 
 const cut = createCutaway({ renderer, meshes });
