@@ -2,6 +2,7 @@
 // Mashina joyida turadi, yer (to'r va belgilar) uning ostidan harakatlanadi.
 import * as THREE from 'three';
 import { buildKPVT, buildPKT, pktModel } from './weapons.js';
+import { dshkModel } from './assets.js';
 
 const KMH = 3.6;
 const VMAX = 80 / KMH;            // m/s
@@ -61,7 +62,8 @@ export function createDrive(ctx) {
     // Pulemyotlarning minora ichidagi qismlari (beshik bilan birga harakatlanadi)
     const rig = new THREE.Group();
     rig.rotation.x = -GUN_REST;
-    rig.add(buildKPVT(), ctx.assets && ctx.assets.pkt ? pktModel(ctx.assets.pkt) : buildPKT());
+    const A = ctx.assets || {};
+    rig.add(A.dshk ? dshkModel(A.dshk) : buildKPVT(), A.pkt ? pktModel(A.pkt) : buildPKT());
     gunPivot.add(rig);
     rig.traverse((o) => { if (o.isMesh) extra.push(o); });
     body.push({ o: turretPivot, y: turretPivot.position.y });

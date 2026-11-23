@@ -4,12 +4,12 @@
 //  Uzatmalar qutisi — avredu (CC BY 4.0) · Taqsimlash qutisi NP261 — ypro (CC BY 4.0)
 //  Differensial korpusi — Anoopbg (CC BY 4.0) · Kardan vali — PolyPhantom (CC BY 4.0)
 //  Radiator — Terllok (CC BY 4.0) · Akkumulyator — NatharaQuetzl · Rul — NIXO · Kardan sharniri — ravindra.mohan09 · O'rindiq — DeWolfePilot · Kanistr — ROY (CC BY 4.0)
-//  O't o'chirgich — Renend Studio (Sketchfab Standard)
+//  O't o'chirgich — Renend Studio (Sketchfab Standard) · DShK — Sleepykingzzz · Asboblar — Kryox Shade (CC BY 4.0)
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
-const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery', 'steer', 'ujoint', 'seat', 'tank', 'ext'];
+const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery', 'steer', 'ujoint', 'seat', 'tank', 'ext', 'dshk', 'gauges'];
 
 export async function loadAssets(loadBin) {
   const loader = new GLTFLoader();
@@ -157,4 +157,33 @@ export function tankModel(scene) {
 // Qo'l o't o'chirgichi (balandligi ≈0.5 m)
 export function extModel(scene) {
   return paint(wrap(scene, { pivot: [0, -1.81, 0], scale: 0.16 }), null, 'fire');
+}
+
+// Yirik kalibrli pulemyot (DShK modeli KPVT o'rnida): lentasi va patron qutisi bilan.
+// Qurol beshigi koordinatalarida: stvol o'qi (x -0.01, y -0.04), +z ga qaragan.
+export function dshkModel(scene, s = 1.0) {
+  const g = wrap(scene, { pivot: [0.16, 0.744, 1.23], scale: s, pos: [-0.01, -0.04, 1.0] });
+  return paint(g, null, 'kpvt');
+}
+
+// Eski uslubdagi 4 ta qora asbob (ko'rsatkich) — har biri markazlashtirilgan guruh, yuzi -x ga qaragan
+export function gaugeSet(scene) {
+  const CENTERS = [[-5.1, -0.1], [-7.6, -0.1], [-5.1, -2.3], [-7.6, -2.4]];
+  const src = scene.clone(true); src.updateMatrixWorld(true);
+  const groups = CENTERS.map(() => new THREE.Group());
+  const items = [];
+  src.traverse((o) => { if (o.isMesh) items.push(o); });
+  items.forEach((o) => {
+    const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+    if (Math.max(sz.x, sz.y) > 2.5) return;
+    const k = CENTERS.findIndex(([x, y]) => Math.hypot(c.x - x, c.y - y) < 1.0);
+    if (k < 0) return;
+    const m = o.clone(); m.position.set(0, 0, 0); m.rotation.set(0, 0, 0); m.scale.set(1, 1, 1); m.applyMatrix4(o.matrixWorld);
+    m.position.x -= CENTERS[k][0]; m.position.y -= CENTERS[k][1];
+    groups[k].add(m);
+  });
+  return groups.map((grp) => {
+    const w = new THREE.Group(); w.add(grp); grp.scale.setScalar(0.06); w.rotation.y = Math.PI / 2;
+    return paint(w, null, 'driver');
+  });
 }

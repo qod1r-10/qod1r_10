@@ -34,14 +34,18 @@ function gauge(g, x, y, r, frac, label, unit, maxLabel) {
   g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * r * 0.76, y + Math.sin(a) * r * 0.76); g.stroke();
   g.fillStyle = '#5a5f62'; g.beginPath(); g.arc(x, y, r * 0.1, 0, 7); g.fill();
 }
-export function buildDashboard() {
+export function buildDashboard(realGauges = null) {
   const { tex, redraw } = canvasTex(1024, 360, (g, w, h, kmh = 0, rpm = 800, on = false) => {
     g.fillStyle = '#3d4636'; g.fillRect(0, 0, w, h);
     g.fillStyle = '#323a2c'; g.fillRect(14, 14, w - 28, h - 28);
     gauge(g, 160, 170, 125, kmh / 100, 'km/soat', 'TEZLIK', '100');
     gauge(g, 440, 170, 125, rpm / 3000, 'ayl/daq', '×1000', '3');
     const small = [['°C', 'SUV', on ? 0.6 : 0.2, '120'], ['kgf', 'MOY', on ? 0.45 : 0, '8'], ['V', 'VOLT', on ? 0.7 : 0.62, '32'], ['l', "YONILG'I", 0.75, '1']];
-    small.forEach(([u, l, f, mx], i) => gauge(g, 660 + (i % 2) * 170, 95 + Math.floor(i / 2) * 160, 66, f, u, l, mx));
+    small.forEach(([u, l, f, mx], i) => {
+      const x = 660 + (i % 2) * 170, y = 95 + Math.floor(i / 2) * 160;
+      if (realGauges) { g.fillStyle = '#1b1f18'; g.beginPath(); g.arc(x, y, 70, 0, 7); g.fill(); } // haqiqiy asbob shu joyga o'rnatiladi
+      else gauge(g, x, y, 66, f, u, l, mx);
+    });
     for (let i = 0; i < 6; i++) {
       g.fillStyle = i === 0 && on ? '#4caf50' : i === 3 ? '#c0392b' : '#555';
       g.beginPath(); g.arc(70 + i * 70, 330, 11, 0, 7); g.fill();
@@ -52,6 +56,11 @@ export function buildDashboard() {
   const body = box(0.16, 0.3, 0.86, M(OLIVE)); g.add(body);
   const face = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.29), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.1 }));
   face.rotation.y = -Math.PI / 2; face.position.x = -0.081; g.add(face);
+  if (realGauges) realGauges.slice(0, 4).forEach((rg, i) => {
+    const u = (660 + (i % 2) * 170) / 1024, v = (95 + Math.floor(i / 2) * 160) / 360;
+    rg.position.set(-0.088, 0.145 - 0.29 * v, -0.41 + 0.82 * u);
+    g.add(rg);
+  });
   for (let i = 0; i < 5; i++) { const s = cyl(0.008, 0.008, 0.05, M(STEEL)); s.rotation.z = Math.PI / 2; s.position.set(-0.1, -0.16, -0.3 + i * 0.13); g.add(s); }
   let t = 0;
   return { group: g, update(kmh, rpm, on, dt) { t += dt; if (t > 0.15) { t = 0; redraw(kmh, rpm, on); } } };

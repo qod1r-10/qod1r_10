@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
 import { buildDashboard, buildRadio, buildFVU, buildWaterjet } from './details.js';
-import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel } from './assets.js';
+import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -329,7 +329,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   const steerSpin = new THREE.Group(); steerSpin.name = 'steerSpin'; wheel.add(steerSpin);
   if (assets.steer) steerSpin.add(steerModel(assets.steer));
   else steerSpin.add(new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), mat(C.darkSteel)));
-  const dashB = buildDashboard(); // ko'rsatkichlari yurishda jonli o'zgaradi
+  const dashB = buildDashboard(assets.gauges ? gaugeSet(assets.gauges) : null); // ko'rsatkichlari yurishda jonli o'zgaradi
   dashB.group.position.set(0.8, 0.36, 0.12); drv.add(dashB.group);
   root.userData.dash = dashB;
   for (const zz of [-0.12, 0.06, 0.18]) { const ped = box(0.04, 0.12, 0.07, C.darkSteel); ped.position.set(0.7, -0.15, zz); ped.rotation.z = 0.4; drv.add(ped); }
