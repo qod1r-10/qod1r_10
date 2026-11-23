@@ -3,12 +3,12 @@
 //  KamAZ 740.3 — ChB corp. (CC BY 4.0) · Ilashish muftasi — Er.Praveen.Kumar (CC BY 4.0)
 //  Uzatmalar qutisi — avredu (CC BY 4.0) · Taqsimlash qutisi NP261 — ypro (CC BY 4.0)
 //  Differensial korpusi — Anoopbg (CC BY 4.0) · Kardan vali — PolyPhantom (CC BY 4.0)
-//  Radiator — Terllok (CC BY 4.0) · Akkumulyator — NatharaQuetzl · Rul — NIXO (CC BY 4.0)
+//  Radiator — Terllok (CC BY 4.0) · Akkumulyator — NatharaQuetzl · Rul — NIXO · Kardan sharniri — ravindra.mohan09 (CC BY 4.0)
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
-const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery', 'steer'];
+const NAMES = ['kamaz', 'clutch', 'gearbox', 'transfer', 'diff', 'driveshaft', 'radiator', 'pkt', 'battery', 'steer', 'ujoint'];
 
 export async function loadAssets(loadBin) {
   const loader = new GLTFLoader();
@@ -101,7 +101,7 @@ export function diffHousing(scene) {
 }
 
 // Kardan vali: a dan b gacha cho'zilgan nusxa; guruh o'z o'qi (y) atrofida aylanadi
-export function driveshaftBetween(scene, a, b, thick = 0.075) {
+export function driveshaftBetween(scene, a, b, thick = 0.075, uj = null) {
   const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
   const dir = B.clone().sub(A), len = dir.length();
   const g = new THREE.Group();
@@ -111,6 +111,16 @@ export function driveshaftBetween(scene, a, b, thick = 0.075) {
   inner.rotation.x = -Math.PI / 2;
   inner.scale.set(thick / 1.1, thick / 1.1, len / 7.14);
   g.add(inner);
+  // Ikki uchida krestovinali kardan sharnirlari (val bilan birga aylanadi)
+  if (uj) for (const sgn of [-1, 1]) {
+    const j = uj.clone(true);
+    const w = new THREE.Group();
+    w.add(j);
+    w.rotation.z = Math.PI / 2; // model x o'qi -> val o'qi (y)
+    w.scale.setScalar(thick * 7.5);
+    w.position.y = sgn * (len / 2 - thick * 0.6);
+    g.add(w);
+  }
   g.userData.spinShaft = true;
   paint(g, null, 'shafts');
   return g;

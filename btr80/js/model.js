@@ -261,7 +261,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   addMech(buildGearbox(assets), [GBX, 0.88, 0]);
   addMech(buildTransfer(assets), [-0.05, 0.78, 0]);
 
-  const shaft = (a, b, r) => (assets.driveshaft ? add('shafts', driveshaftBetween(assets.driveshaft, a, b, r * 1.9)) : add('shafts', cylBetween(a, b, r, C.shaft, 10)));
+  const shaft = (a, b, r) => (assets.driveshaft ? add('shafts', driveshaftBetween(assets.driveshaft, a, b, r * 1.9, assets.ujoint)) : add('shafts', cylBetween(a, b, r, C.shaft, 10)));
   shaft([GBX + (assets.gearbox ? 0.74 : 0.24), 0.86, 0], [0.16, 0.8, 0], 0.045);
   for (const x of AX) {
     const from = x > 0 ? [0.16, 0.74, 0.08] : [-0.26, 0.74, -0.08];
