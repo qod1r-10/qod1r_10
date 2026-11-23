@@ -177,6 +177,8 @@ button { font: inherit; color: inherit; }
 
 /* Yurgizish paneli */
 .viewer.is-driving .legend { display: none; }
+/* Yurgizish rejimida ochiq osmon */
+.viewer.is-driving { background: linear-gradient(180deg, #4f8fd6 0%, #8cc0ef 38%, #cfe5f6 62%, #e9e1cf 63%, #d9cfb6 100%); }
 .tool-drive[aria-pressed="true"] { background: var(--hl); border-color: var(--hl); color: #1b1405; }
 .hud {
   position: absolute;

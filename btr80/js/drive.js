@@ -40,16 +40,40 @@ export function createDrive(ctx) {
     const TURRET = new Set(['turret', 'kpvt', 'pkt', 'sight', 'smoke']);
     real.updateMatrixWorld(true);
     const realMeshes = []; real.traverse((o) => { if (o.isMesh) realMeshes.push(o); });
+    const wheelParts = {};
     realMeshes.forEach((o) => {
       const [part, , wi] = o.name.split('__');
       if (part === 'wheels' && wi !== undefined) {
         o.rotation.order = 'YXZ';
-        wheels.push({ mesh: o, axle: Math.floor(+wi / 2) });
+        (wheelParts[wi] = wheelParts[wi] || []).push(o);
       } else if (TURRET.has(part)) {
         turretPivot.attach(o);
       } else {
         body.push({ o, y: o.position.y });
       }
+    });
+    // G'ildiraklar: modeldagi har bir g'ildirak biroz og'ma, shuning uchun uning haqiqiy o'qi
+    // (shinaning eng kichik dispersiya yo'nalishi) hisoblanadi va g'ildirak aynan shu o'q atrofida aylanadi.
+    Object.entries(wheelParts).forEach(([wi, list]) => {
+      const tyre = list.reduce((a, b) => (b.geometry.attributes.position.count > a.geometry.attributes.position.count ? b : a));
+      const P = tyre.geometry.attributes.position, v = new THREE.Vector3(), c = new THREE.Vector3();
+      const pts = [];
+      for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(tyre.matrixWorld); pts.push(v.clone()); c.add(v); }
+      c.divideScalar(pts.length);
+      const m = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      for (const p of pts) { const d = [p.x - c.x, p.y - c.y, p.z - c.z]; for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) m[a * 3 + b] += d[a] * d[b]; }
+      const tr = m[0] + m[4] + m[8];
+      let ax = new THREE.Vector3(1, 0, 0);
+      for (let it = 0; it < 80; it++) { // (tr*I - C) ning eng katta xos vektori = C ning eng kichigi
+        const x = ax.x, y = ax.y, z = ax.z;
+        ax.set(tr * x - (m[0] * x + m[1] * y + m[2] * z), tr * y - (m[3] * x + m[4] * y + m[5] * z), tr * z - (m[6] * x + m[7] * y + m[8] * z)).normalize();
+      }
+      if (ax.x < 0) ax.negate();
+      const steer = new THREE.Group(); steer.position.copy(c); real.add(steer);
+      const spin = new THREE.Group(); spin.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), ax); steer.add(spin);
+      real.updateMatrixWorld(true);
+      list.forEach((o) => spin.attach(o));
+      wheels.push({ steer, spin, axle: Math.floor(+wi / 2) });
     });
     // Qurol beshigi: KPVT va PKT o'q (tsapfa) atrofida ko'tariladi/tushadi.
     // Modelda stvol 25.7° ko'tarilgan holda; GUN_REST uni gorizontal holatga keltiradi.
@@ -253,8 +277,8 @@ export function createDrive(ctx) {
     const gNo = /^[1-5]$/.test(S.gear) ? +S.gear : 0;
     for (const m of mechs) m.update(S.crank, S.wheelAng, gNo);
     for (const w of wheels) {
-      w.mesh.rotation.x += wr;
-      w.mesh.rotation.y = w.axle === 0 ? S.steer : w.axle === 1 ? S.steer * 0.55 : 0;
+      w.spin.rotateX(wr);
+      w.steer.rotation.y = w.axle === 0 ? S.steer : w.axle === 1 ? S.steer * 0.55 : 0;
     }
     for (const s of spinners) {
       s.o.rotateY(s.fan ? engineSpin * dt * 2 : wr * s.k);

@@ -122,7 +122,8 @@ async function loadRealModel() {
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
     const [part, matName] = o.name.split('__');
-    o.userData.part = part;
+    // Modelning tomidagi silindrsimon qutilar avtomatik ajratishda "radiator" deb belgilangan edi — ular korpusga tegishli
+    o.userData.part = part === 'radiator' ? 'hull' : part;
     o.material = new THREE.MeshStandardMaterial({ name: matName, ...(M[matName] || {}) });
     o.castShadow = true;
     o.receiveShadow = true;
