@@ -8,6 +8,7 @@ import { buildBTR80, AXLES_X, REAL_AXLES_X } from './model.js';
 import { createDrive, FLOW_PARTS, FLOW_STEPS } from './drive.js';
 import { createCutaway } from './cutaway.js';
 import { createExplode } from './explode.js';
+import { addSignature, syncSignature } from './signature.js';
 import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 
 const $ = (s) => document.querySelector(s);
@@ -167,6 +168,8 @@ for (let i = meshes.length - 1; i >= 0; i--) if (meshes[i].userData.removed) { c
 
 const cut = createCutaway({ renderer, meshes });
 const explode = createExplode(meshes);
+// Muallif yozuvi korpusning ikki yonida
+const signature = real ? await addSignature(real).catch((e) => { console.warn(e); return []; }) : [];
 
 /* ---------- Holat ---------- */
 const state = { cat: null, part: null, open: null, xray: false };
@@ -488,6 +491,7 @@ function frame() {
     tagEl.hidden = tmpV.z > 1;
   } else tagEl.hidden = true;
 
+  syncSignature(signature);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
