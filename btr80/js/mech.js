@@ -258,21 +258,77 @@ export function buildTransfer(A = {}) {
 }
 
 /* ================= KO'PRIK: BOSH UZATMA VA DIFFERENSIAL ================= */
+// Konussimon (bevel) tishli g'ildirak: oddiy tishli g'ildirakni bir tomonga toraytiramiz.
+const bevelCache = new Map();
+function bevelGeo(r, width, teeth, taper) {
+  const key = r + '|' + width + '|' + teeth + '|' + taper;
+  if (bevelCache.has(key)) return bevelCache.get(key);
+  const g = gearGeo(r, width, teeth).clone();
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const t = (p.getZ(i) + width / 2) / width;           // 0 — keng tomon, 1 — tor tomon
+    const k = 1 - taper * t;
+    p.setXY(i, p.getX(i) * k, p.getY(i) * k);
+  }
+  g.computeVertexNormals();
+  bevelCache.set(key, g);
+  return g;
+}
+// facing: tor tomoni qaragan yo'nalish (+1/-1) o'q bo'ylab
+function bevel(r, width, axis, color, taper = 0.45, facing = 1) {
+  const teeth = Math.max(9, Math.round(r * 220));
+  const inner = mesh(bevelGeo(r, width, teeth, taper), color, { flatShading: true });
+  if (axis === 'z' && facing < 0) inner.rotation.x = Math.PI;
+  const wrapG = new THREE.Group(); wrapG.add(inner);
+  if (axis === 'x') wrapG.rotation.y = Math.PI / 2 * facing;
+  if (axis === 'y') wrapG.rotation.x = -Math.PI / 2 * facing;
+  const g = new THREE.Group(); g.add(wrapG); g.userData.axis = axis;
+  return g;
+}
+
+// Ko'prik lokal o'qlari: x — old (kardan shu tomondan keladi), y — yuqori, z — g'ildiraklar tomon
 export function buildDiff(A = {}) {
   const root = new THREE.Group();
-  const house = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), mat(COL.castDark, { metalness: 0.55, roughness: 0.55 }));
+  const castM = mat(COL.castDark, { metalness: 0.55, roughness: 0.55 });
+  const house = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), castM);
   house.scale.set(1.15, 0.9, 1); root.add(casing(house));
-  const ringG = gear(0.13, 0.03, 'z', COL.brass); ringG.position.z = 0.06; root.add(ringG);
-  const pinion = gear(0.045, 0.06, 'x', COL.gear); pinion.position.set(0.12, 0, 0.0); root.add(pinion);
+  // bosh uzatma: yetaklanuvchi konussimon katta g'ildirak (z o'qi) va yetaklovchi shesternya (x o'qi)
+  const ringG = bevel(0.135, 0.032, 'z', COL.brass, 0.32, -1); ringG.position.z = 0.055; root.add(ringG);
+  const pinion = bevel(0.05, 0.07, 'x', COL.gear, 0.5, -1); pinion.position.set(0.1, 0, 0); root.add(pinion);
+  // shesternya vali, podshipniklar va kardan flanetsi
+  const pShaft = cylX(0.022, 0.2, COL.steel, 14); pShaft.position.set(0.22, 0, 0); root.add(pShaft);
+  for (const x of [0.17, 0.25]) { const b = mesh(new THREE.TorusGeometry(0.03, 0.01, 8, 18), COL.bright); b.rotation.y = Math.PI / 2; b.position.set(x, 0, 0); root.add(b); }
+  const flange = cylX(0.055, 0.02, COL.gearDark, 20); flange.position.set(0.33, 0, 0); root.add(flange);
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + 0.4; const bt = cylX(0.007, 0.03, COL.steel, 6); bt.position.set(0.335, Math.cos(a) * 0.038, Math.sin(a) * 0.038); root.add(bt); }
+  // differensial korobkasi (ochiq ko'rinishda — ikki yarim jild), krestovina va 4 ta satellit
   const cage = new THREE.Group(); root.add(cage);
-  for (const s of [-1, 1]) { const sp = gear(0.035, 0.025, 'y', COL.gearDark); sp.position.y = s * 0.055; cage.add(sp); }
-  const side = [-1, 1].map((s) => { const g = gear(0.04, 0.025, 'z', COL.gear); g.position.z = s * 0.04; root.add(g); return g; });
+  const cupM = mat(COL.gearDark, { metalness: 0.7, roughness: 0.4, side: THREE.DoubleSide });
+  for (const s of [-1, 1]) {
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.03, 20, 1, true), cupM);
+    cup.rotation.x = Math.PI / 2; cup.position.z = s * 0.075; cage.add(cup);
+  }
+  const crossA = mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.15, 8), COL.steel); cage.add(crossA);
+  const crossB = crossA.clone(); crossB.rotation.z = Math.PI / 2; cage.add(crossB);
+  for (const [ax, s] of [['y', 1], ['y', -1], ['x', 1], ['x', -1]]) {
+    const sp = bevel(0.03, 0.026, ax, COL.gearDark, 0.45, -s);
+    sp.position[ax] = s * 0.052; cage.add(sp);
+  }
+  // yarim o'q shesternyalari va chiqish vallari (shlitsli)
+  const side = [-1, 1].map((s) => { const g = bevel(0.04, 0.028, 'z', COL.gear, 0.4, -s); g.position.z = s * 0.045; root.add(g); return g; });
+  const outs = [-1, 1].map((s) => {
+    const o = new THREE.Group(); o.userData.axis = 'z';
+    const sh = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 12), COL.steel); sh.rotation.x = Math.PI / 2; o.add(sh);
+    for (let i = 0; i < 6; i++) { const sp = mesh(new THREE.BoxGeometry(0.006, 0.006, 0.07), COL.bright); const a = i / 6 * Math.PI * 2; sp.position.set(Math.cos(a) * 0.021, Math.sin(a) * 0.021, s * 0.04); o.add(sp); }
+    const fl = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.018, 18), COL.gearDark); fl.rotation.x = Math.PI / 2; fl.position.z = s * 0.085; o.add(fl);
+    o.position.z = s * 0.13; root.add(o); return o;
+  });
   root.traverse((o) => { if (o.isMesh) o.userData.part = 'axles'; });
   if (A.diff) { root.remove(house); root.add(diffHousing(A.diff)); }
   function update(crank, wheel) {
-    spin(ringG, wheel * 2.5); cage.rotation.z = wheel * 2.5;
-    spin(pinion, -wheel * 2.5 * 0.13 / 0.045);
-    side.forEach((g) => spin(g, wheel * 2.5));
+    const a = wheel * 2.5;
+    spin(ringG, a); cage.rotation.z = a;
+    spin(pinion, -a * 0.135 / 0.05); pShaft.rotation.x = flange.rotation.x = -a * 0.135 / 0.05;
+    side.forEach((g) => spin(g, a)); outs.forEach((g) => spin(g, a));
   }
   return { root, update };
 }

@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit } from './details.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit, buildWinch, buildFireSuppression } from './details.js';
 import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
@@ -234,8 +234,9 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   }
 
   for (const x of AX) {
-    const axle = cylBetween([x, 0.56, -1.08], [x, 0.56, 1.08], 0.075, C.darkSteel);
-    add('axles', axle);
+    // BTR-80 da osma mustaqil: ko'prik bu korpusga mahkamlangan bosh uzatma, g'ildiraklarga yarim o'qlar boradi.
+    // Yaxlit balka faqat soddalashtirilgan (haqiqiy modelsiz) ko'rinishda chiziladi.
+    if (exterior) add('axles', cylBetween([x, 0.56, -1.08], [x, 0.56, 1.08], 0.075, C.darkSteel));
     addMech(buildDiff(assets), [x, 0.58, 0]);
     for (const s of [-1, 1]) {
       const red = cyl(0.13, 0.13, 0.16, C.darkSteel, 14); red.rotation.x = Math.PI / 2;
@@ -332,8 +333,10 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   /* ---------- SUZISH ---------- */
   const wjB = buildWaterjet();
   const wj = wjB.group;
-  wj.position.set(-3.42, 0.85, 0);
+  wj.scale.setScalar(0.78);
+  wj.position.set(-3.35, 0.8, 0);
   root.userData.impeller = wjB.impeller;
+  root.userData.rudders = wjB.rudders;
   add('waterjet', wj);
 
   const tv = new THREE.Group();
@@ -341,6 +344,18 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   for (const zz of [-0.7, 0, 0.7]) { const rib = box(0.56, 0.05, 0.04, C.armor); rib.position.set(0, 0.03, zz); tv.add(rib); }
   onSlopeX(tv, 3.3, 0.55, 3.85, 0.95, -0.05);
   add('trimvane', tv);
+
+  /* ---------- CHIG'IR (burun qismida) ---------- */
+  const wB = buildWinch();
+  wB.group.position.set(2.8, 0.84, 0.07);
+  root.userData.winchDrum = wB.drum;
+  add('winch', wB.group);
+  // chig'ir yuritmasining kardan vallari: taqsimlash qutisidan reduktorgacha
+  add('winch', cylBetween([0.3, 0.9, 0.41], [2.1, 0.9, 0.41], 0.022, C.shaft, 10));
+  add('winch', cylBetween([2.1, 0.9, 0.41], [2.22, 0.69, 0.41], 0.022, C.shaft, 10));
+
+  /* ---------- AVTOMATIK YONG'INGA QARSHI TIZIM ---------- */
+  add('ppo', buildFireSuppression());
 
   /* ---------- BOSHQARUV BO'LIMI ---------- */
   function seat(back = 0.5) {

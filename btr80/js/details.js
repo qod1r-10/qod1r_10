@@ -161,23 +161,166 @@ export function buildFVU() {
   return g;
 }
 
-/* ---------- Suv otgich harakatlantirgichi ---------- */
+/* ---------- Suv otgich harakatlantirgichi ----------
+   Lokal o'qlar: x — old, y — yuqori, z — yon. Suv korpus tubidagi panjarali kirish teshigidan
+   so'riladi, eksial parrak uni tezlatadi, to'g'rilovchi kurakchalar aylanishni yo'qotadi, oqim orqadagi
+   soplodan chiqadi. Ikki suv ruli oqimni chapga-o'ngga og'diradi; quruqlikda chiqish qopqoq bilan yopiladi. */
 export function buildWaterjet() {
   const g = new THREE.Group();
-  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.24, 0.62, 28, 1, true), M(DARK, { side: THREE.DoubleSide, metalness: 0.6 }));
-  tube.rotation.z = Math.PI / 2; g.add(tube);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.02, 8, 28), M(STEEL)); ring.rotation.y = Math.PI / 2; ring.position.x = 0.31; g.add(ring);
+  const olv = M(OLIVE, { metalness: 0.35, roughness: 0.6, side: THREE.DoubleSide });
+  const steel = M(STEEL, { metalness: 0.8, roughness: 0.3 });
+  const bronze = M(0xc39a45, { metalness: 0.85, roughness: 0.3, side: THREE.DoubleSide });
+  const flangeAt = (x, r) => { const f = new THREE.Mesh(new THREE.TorusGeometry(r, 0.018, 8, 32), M(OLIVE, { metalness: 0.4, roughness: 0.55 })); f.rotation.y = Math.PI / 2; f.position.x = x; g.add(f);
+    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; const bt = cyl(0.008, 0.008, 0.05, steel, 6); bt.rotation.z = Math.PI / 2; bt.position.set(x, Math.cos(a) * (r + 0.012), Math.sin(a) * (r + 0.012)); g.add(bt); } };
+  // kirish tunneli: tubdagi teshikdan yuqoriga-orqaga egilgan quvur
+  const path = new THREE.CatmullRomCurve3([new THREE.Vector3(0.78, -0.3, 0), new THREE.Vector3(0.6, -0.17, 0), new THREE.Vector3(0.36, -0.02, 0), new THREE.Vector3(0.22, 0, 0)]);
+  const tunnel = new THREE.Mesh(new THREE.TubeGeometry(path, 24, 0.2, 24, false), olv); g.add(tunnel);
+  // kirish panjarasi (korpus tubi sathida)
+  const grate = new THREE.Group();
+  const gFrame = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.016, 6, 28), M(OLIVE, { metalness: 0.4 })); gFrame.scale.set(1.6, 1, 1); gFrame.rotation.x = Math.PI / 2; grate.add(gFrame);
+  for (let i = -3; i <= 3; i++) { const bar = box(0.012, 0.03, 0.4 * Math.sqrt(1 - (i / 4) ** 2), steel); bar.position.x = i * 0.045; grate.add(bar); }
+  grate.position.set(0.8, -0.33, 0); grate.rotation.z = -0.15; g.add(grate);
+  // parrak korpusi (flanetsli) va to'g'rilovchi apparat korpusi
+  const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.3, 28, 1, true), olv); housing.rotation.z = Math.PI / 2; housing.position.x = 0.07; g.add(housing);
+  housing.userData.casing = true;
+  flangeAt(0.22, 0.21); flangeAt(-0.08, 0.21);
+  const stator = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.19, 0.2, 28, 1, true), olv); stator.rotation.z = Math.PI / 2; stator.position.x = -0.18; g.add(stator);
+  stator.userData.casing = true;
+  // eksial parrak: 8 ta qiya kurak, gupchak va konussimon qopqoq
   const imp = new THREE.Group(); imp.name = 'impeller';
-  const hub = cyl(0.05, 0.07, 0.16, M(0xc39a45, { metalness: 0.85, roughness: 0.3 })); hub.rotation.z = Math.PI / 2; imp.add(hub);
-  for (let i = 0; i < 5; i++) {
-    const blade = box(0.04, 0.17, 0.012, M(0xc39a45, { metalness: 0.85, roughness: 0.3 }));
-    blade.position.set(0, 0.1, 0); const p = new THREE.Group(); p.rotation.x = (i / 5) * Math.PI * 2; blade.rotation.x = 0.5; p.add(blade); imp.add(p);
+  const hub = cyl(0.055, 0.065, 0.14, bronze); hub.rotation.z = Math.PI / 2; imp.add(hub);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.09, 16), bronze); cone.rotation.z = -Math.PI / 2; cone.position.x = 0.115; imp.add(cone);
+  for (let i = 0; i < 8; i++) {
+    const p = new THREE.Group(); p.rotation.x = (i / 8) * Math.PI * 2;
+    const blade = box(0.1, 0.14, 0.008, bronze); blade.position.y = 0.125; blade.rotation.y = 0.75; p.add(blade); imp.add(p);
   }
-  g.add(imp);
-  const shaft = cyl(0.025, 0.025, 0.4, M(STEEL)); shaft.rotation.z = Math.PI / 2; shaft.position.x = 0.36; g.add(shaft);
-  const nozzle = cyl(0.17, 0.21, 0.18, M(STEEL, { metalness: 0.6 })); nozzle.rotation.z = Math.PI / 2; nozzle.position.x = -0.38; g.add(nozzle);
-  const flap = box(0.03, 0.46, 0.48, M(OLIVE)); flap.position.x = -0.5; g.add(flap);
-  return { group: g, impeller: imp };
+  imp.position.x = 0.08; g.add(imp);
+  // to'g'rilovchi kurakchalar (qo'zg'almas, 6 ta)
+  const vaneHub = cyl(0.05, 0.035, 0.18, steel); vaneHub.rotation.z = Math.PI / 2; vaneHub.position.x = -0.18; g.add(vaneHub);
+  for (let i = 0; i < 6; i++) { const p = new THREE.Group(); p.rotation.x = (i / 6) * Math.PI * 2 + 0.26; const v = box(0.16, 0.15, 0.007, steel); v.position.y = 0.12; v.rotation.y = -0.15; p.add(v); p.position.x = -0.18; g.add(p); }
+  // soplo
+  const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.15, 0.2, 28, 1, true), olv); nozzle.rotation.z = Math.PI / 2; nozzle.position.x = -0.38; g.add(nozzle);
+  nozzle.userData.casing = true;
+  flangeAt(-0.28, 0.19);
+  // yuritma vali: tunnel devoridan o'tadi, kardan sharniri bilan
+  const shaft = cyl(0.025, 0.025, 0.62, steel); shaft.rotation.z = Math.PI / 2; shaft.position.x = 0.45; g.add(shaft);
+  const seal = cyl(0.05, 0.05, 0.05, M(DARK)); seal.rotation.z = Math.PI / 2; seal.position.x = 0.4; g.add(seal);
+  const uj = new THREE.Group(); const yk = box(0.05, 0.07, 0.07, M(DARK)); uj.add(yk); const cr = cyl(0.012, 0.012, 0.1, steel, 8); cr.rotation.x = Math.PI / 2; uj.add(cr); uj.position.x = 0.78; g.add(uj);
+  // ikki suv ruli (vertikal, soplo ortida) — drive.js rul bilan buradi
+  const rudders = [-1, 1].map((s) => {
+    const r = new THREE.Group();
+    const plate = box(0.2, 0.34, 0.016, M(OLIVE, { metalness: 0.35, roughness: 0.6 })); plate.position.x = -0.09; r.add(plate);
+    const axle = cyl(0.014, 0.014, 0.44, steel, 8); r.add(axle);
+    r.position.set(-0.52, -0.02, s * 0.09); g.add(r); return r;
+  });
+  // ruli tortqisi
+  const tie = cyl(0.01, 0.01, 0.2, steel, 6); tie.rotation.x = Math.PI / 2; tie.position.set(-0.52, 0.22, 0); g.add(tie);
+  // zirhli chiqish qopqog'i: yuqori sharnirda, quruqlikda yopiq, suvda ochiladi
+  const shutter = new THREE.Group();
+  const lid = box(0.03, 0.46, 0.5, M(OLIVE, { metalness: 0.35, roughness: 0.6 })); lid.position.y = -0.23; shutter.add(lid);
+  for (const zz of [-0.17, 0.17]) { const hg = cyl(0.025, 0.025, 0.08, steel, 10); hg.rotation.x = Math.PI / 2; hg.position.z = zz; shutter.add(hg); }
+  const arm = box(0.03, 0.03, 0.22, M(DARK)); arm.position.set(0.08, 0.02, 0); shutter.add(arm);
+  shutter.position.set(-0.76, 0.23, 0); g.add(shutter);
+  return { group: g, impeller: imp, rudders, shutter };
+}
+
+/* ---------- Chig'ir (korpus burun qismida) ----------
+   Lokal o'qlar: x — old, y — yuqori, z — yon. Baraban o'qi z bo'ylab, chervyakli reduktor +z yonida,
+   yuritma vali orqaga (taqsimlash qutisi tomon) ketadi, tros roliklarli yo'naltirgich orqali oldinga chiqadi. */
+export function buildWinch() {
+  const g = new THREE.Group();
+  const olv = M(OLIVE, { metalness: 0.35, roughness: 0.6 });
+  const steel = M(STEEL, { metalness: 0.8, roughness: 0.3 });
+  const rope = M(0x5a5d5e, { metalness: 0.7, roughness: 0.45 });
+  const L = 0.42, R = 0.075, RF = 0.13;
+  // rama: asos va ikki yon devor
+  const base = box(0.36, 0.02, L + 0.14, olv); base.position.y = -0.16; g.add(base);
+  for (const s of [-1, 1]) { const cheek = box(0.3, 0.3, 0.02, olv); cheek.position.set(0, -0.02, s * (L / 2 + 0.05)); g.add(cheek); }
+  // baraban, gardishlari va unga o'ralgan tros (spiral)
+  const drum = new THREE.Group();
+  const core = cyl(R, R, L, steel, 24); core.rotation.x = Math.PI / 2; drum.add(core);
+  for (const s of [-1, 1]) { const fl = cyl(RF, RF, 0.016, olv, 28); fl.rotation.x = Math.PI / 2; fl.position.z = s * (L / 2); drum.add(fl); }
+  const turns = 14, layers = 3, pts = [];
+  for (let l = 0; l < layers; l++) for (let i = 0; i <= turns * 24; i++) {
+    const t = i / (turns * 24), a = t * turns * Math.PI * 2, rr = R + 0.012 + l * 0.02;
+    const z = (l % 2 ? 1 - t : t) * (L - 0.04) - (L - 0.04) / 2;
+    pts.push(new THREE.Vector3(Math.cos(a) * rr, Math.sin(a) * rr, z));
+  }
+  const coil = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), turns * layers * 24, 0.0085, 5), rope); drum.add(coil);
+  g.add(drum);
+  // chervyakli reduktor (+z yonida)
+  const gb = new THREE.Group();
+  const gbody = box(0.24, 0.3, 0.13, olv); gb.add(gbody);
+  const cover = cyl(0.1, 0.1, 0.03, olv, 24); cover.rotation.x = Math.PI / 2; cover.position.z = 0.075; gb.add(cover);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const bt = cyl(0.008, 0.008, 0.02, steel, 6); bt.rotation.x = Math.PI / 2; bt.position.set(Math.cos(a) * 0.085, Math.sin(a) * 0.085, 0.095); gb.add(bt); }
+  const wormHouse = cyl(0.045, 0.045, 0.32, olv, 16); wormHouse.rotation.z = Math.PI / 2; wormHouse.position.set(0, -0.14, 0); gb.add(wormHouse);
+  gb.position.set(0, -0.01, L / 2 + 0.13); g.add(gb);
+  // yuritma vali (orqaga) — shlitsli uchi va sharnir
+  const inp = cyl(0.022, 0.022, 0.42, steel, 12); inp.rotation.z = Math.PI / 2; inp.position.set(-0.36, -0.15, L / 2 + 0.13); g.add(inp);
+  const ujY = box(0.05, 0.06, 0.06, M(DARK)); ujY.position.set(-0.58, -0.15, L / 2 + 0.13); g.add(ujY);
+  // roliklarli tros yo'naltirgich: 2 ta gorizontal va 2 ta vertikal rolik, rama
+  const fair = new THREE.Group();
+  const frameM = olv;
+  for (const s of [-1, 1]) { const side = box(0.05, 0.22, 0.03, frameM); side.position.z = s * 0.16; fair.add(side); const tb = box(0.05, 0.025, 0.35, frameM); tb.position.y = s * 0.11; fair.add(tb); }
+  for (const s of [-1, 1]) { const hr = cyl(0.026, 0.026, 0.3, steel, 14); hr.rotation.x = Math.PI / 2; hr.position.y = s * 0.04; fair.add(hr); }
+  for (const s of [-1, 1]) { const vr = cyl(0.026, 0.026, 0.18, steel, 14); vr.position.z = s * 0.11; fair.add(vr); }
+  fair.position.set(0.42, -0.07, 0); g.add(fair);
+  // trosning drabandan yo'naltirgichgacha bo'lgan qismi va ilgak
+  const top = new THREE.Vector3(0.02, R + 0.05, 0.02);
+  const free = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([top, new THREE.Vector3(0.2, 0.02, 0.01), new THREE.Vector3(0.42, -0.07, 0), new THREE.Vector3(0.6, -0.08, 0)]), 24, 0.009, 6), rope); g.add(free);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 8, 18, Math.PI * 1.5), M(DARK)); hook.position.set(0.64, -0.11, 0); hook.rotation.z = Math.PI / 2; g.add(hook);
+  return { group: g, drum };
+}
+
+/* ---------- Avtomatik yong'inga qarshi tizim (dvigatel bo'limi) ----------
+   Mashina koordinatalarida: ballonlar desant va dvigatel bo'limlari orasidagi to'siqda, kollektor quvurlari
+   dvigatel ustidan purkagichlari bilan o'tadi, issiqlik datchiklari quvurlarda, boshqaruv bloki to'siqda. */
+export function buildFireSuppression() {
+  const g = new THREE.Group();
+  const red = M(0xb0302a, { metalness: 0.3, roughness: 0.45 });
+  const brass = M(0xc29a4a, { metalness: 0.85, roughness: 0.3 });
+  const olv = M(OLIVE, { metalness: 0.35, roughness: 0.6 });
+  const pipeM = M(0x7d8580, { metalness: 0.7, roughness: 0.35 });
+  const wire = M(0x1a1a1a, { roughness: 0.85, metalness: 0.1 });
+  const tube = (pts, r, m) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), Math.max(12, pts.length * 10), r, 8), m);
+  const X = -1.42, Y = 1.74;
+  // ikki ballon (yotiq, z bo'ylab), tagliklar va qisqichlar, bosh qismida klapan va manometr
+  for (const s of [-1, 1]) {
+    const c = new THREE.Group();
+    const body = cyl(0.085, 0.085, 0.34, red, 24); body.rotation.x = Math.PI / 2; c.add(body);
+    for (const e of [-1, 1]) { const dome = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), red); dome.rotation.x = e * Math.PI / 2; dome.position.z = e * 0.17; c.add(dome); }
+    for (const zz of [-0.09, 0.09]) { const strap = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.009, 6, 24), olv); strap.position.z = zz; c.add(strap); const foot = box(0.03, 0.05, 0.03, olv); foot.position.set(0, -0.11, zz); c.add(foot); }
+    const valve = cyl(0.03, 0.03, 0.06, brass, 14); valve.rotation.x = Math.PI / 2; valve.position.z = -s * 0.285; c.add(valve);
+    const gauge = cyl(0.022, 0.022, 0.012, M(0xe8e4d8), 16); gauge.position.set(0, 0.04, -s * 0.285); c.add(gauge);
+    const squib = box(0.03, 0.04, 0.03, M(0x8d9094)); squib.position.set(0.04, 0, -s * 0.285); c.add(squib);
+    c.position.set(X, Y, s * 0.42); g.add(c);
+  }
+  // klapanlardan markaziy taqsimlash tugunigacha va dvigatel ustidan ikki kollektor
+  g.add(tube([[X, Y, -0.1], [X, Y, 0.1]], 0.016, pipeM));
+  const tee = cyl(0.028, 0.028, 0.06, brass, 12); tee.position.set(X, Y, 0); g.add(tee);
+  g.add(tube([[X, Y, 0], [X - 0.12, Y - 0.08, 0], [X - 0.3, 1.6, 0]], 0.016, pipeM));
+  const nozzles = [];
+  for (const zz of [-0.4, 0.4]) {
+    g.add(tube([[X - 0.3, 1.6, 0], [X - 0.36, 1.6, zz * 0.7], [X - 0.45, 1.6, zz]], 0.014, pipeM));
+    g.add(tube([[X - 0.45, 1.6, zz], [-3.35, 1.6, zz]], 0.014, pipeM));
+    for (const x of [-2.0, -2.45, -2.9, -3.3]) {
+      const n = new THREE.Group();
+      const body = cyl(0.016, 0.01, 0.05, brass, 10); n.add(body);
+      const tip = cyl(0.02, 0.012, 0.015, brass, 10); tip.position.y = -0.03; n.add(tip);
+      n.position.set(x, 1.565, zz); g.add(n); nozzles.push(n);
+    }
+  }
+  // issiqlik datchiklari (termodatchiklar) va ularning simlari
+  const box2 = box(0.18, 0.13, 0.07, M(0x8a8f93, { metalness: 0.6 })); box2.position.set(X + 0.02, 1.36, -0.05); g.add(box2);
+  for (let i = 0; i < 4; i++) { const lid = cyl(0.008, 0.008, 0.02, M(STEEL), 6); lid.rotation.x = Math.PI / 2; lid.position.set(X - 0.05 + (i % 2) * 0.14, 1.31 + Math.floor(i / 2) * 0.1, -0.09); g.add(lid); }
+  const sensors = [[-2.2, -0.55], [-2.7, 0.55], [-3.15, -0.55], [-2.45, 0.0]];
+  for (const [x, z] of sensors) {
+    const sd = cyl(0.025, 0.025, 0.04, M(0xd0d2d4, { metalness: 0.7 }), 14); sd.position.set(x, 1.66, z); g.add(sd);
+    g.add(tube([[x, 1.69, z], [x + 0.3, 1.7, z * 0.6], [X - 0.05, 1.42, -0.05]], 0.006, wire));
+  }
+  // ballon piropatronlariga simlar
+  for (const s of [-1, 1]) g.add(tube([[X + 0.04, 1.42, -0.05], [X + 0.06, 1.6, s * 0.15], [X + 0.04, Y, -s * 0.285 + s * 0.42]], 0.006, wire));
+  return g;
 }
 
 /* ---------- Sovutish tizimi (radiatordan tashqari qismlar) ----------

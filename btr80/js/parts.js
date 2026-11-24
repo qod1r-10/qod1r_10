@@ -50,6 +50,7 @@ export const CATEGORIES = [
       { id: 'crank', name: 'Krivoship-shatun mexanizmi', desc: "Porshenning ilgarilama-qaytma harakatini tirsakli valning aylanma harakatiga aylantiradi. Qo'zg'aluvchan qismlari: porshen, porshen halqalari va barmog'i, shatun, tirsakli val, maxovik. Qo'zg'almas qismlari: silindrlar bloki, karter, silindr kallagi.", specs: [['Silindrlar', '8, V-simon 90°'], ['Diametr × porshen yo\'li', '120 × 120 mm']] },
       { id: 'valvetrain', name: 'Gaz taqsimlash mexanizmi', desc: "Silindrlarga havo kiritish va ishlatilgan gazlarni chiqarish uchun klapanlarni o'z vaqtida ochib-yopadi. Taqsimlash vali harakatni tirsakli valdan oladi va undan 2 marta sekin aylanadi.", specs: [['Klapanlar', 'kirituvchi va chiqaruvchi, 16 ta'], ['Taqsimlash vali', 'tirsakli valdan 2 marta sekin']] },
       { id: 'radiator', name: 'Sovutish tizimi', desc: "Suyuqlik bilan sovitiladigan yopiq tizim. Suyuqlik nasosi sovitish suyuqligini dvigatel g'ilofi orqali haydaydi; termostat dvigatel qizigunga qadar uni kichik doirada aylantiradi, qizigach radiatorga (katta doiraga) yo'naltiradi. Radiator dvigatel bo'limi tomidagi jalyuzlar ostida yotadi, uni gidromufta orqali yuritiladigan ventilyator havo bilan sovitadi. Kengaytiruvchi bakcha suyuqlik hajmining o'zgarishini qoplaydi, moy radiatori esa dvigatel moyini sovitadi.", specs: [['Sovutish suyuqligi', '48 l antifriz'], ["Me'yoriy harorat", '85–95 °C'], ['Doiralar', 'kichik va katta']] },
+      { id: 'ppo', name: "Avtomatik yong'inga qarshi tizim", desc: "Dvigatel bo'limida yong'in chiqsa, quvurlardagi issiqlik datchiklari harorat keskin oshganini sezadi va boshqaruv bloki ballon klapanlaridagi piropatronlarni ishga tushiradi. O't o'chiruvchi tarkib ballonlardan kollektor quvurlari orqali dvigatel ustidagi purkagichlarga boradi. Tizimni haydovchi qo'lda ham ishga tushira oladi." },
       { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan. Barcha uzatmalarda shesternyalar doimiy ilashishda, 2–5-uzatmalarda sinxronizatorlar bor: ular uzatmalarni shovqinsiz ulaydi; yurgizish rejimida ulangan juftlik yorishadi.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
       { id: 'transfer', name: 'Taqsimlash qutisi', desc: "Burovchi momentni oldingi va orqa ko'priklar o'rtasida taqsimlaydi. Ikki diapazonli, differensialni blokirovka qilish mumkin. Suv to'pi uchun quvvat olish qurilmasi shu yerda." },
       { id: 'shafts', name: 'Kardan uzatmalari', desc: "Taqsimlash qutisidan to'rtta ko'prikka, chig'ir reduktoriga va suv otgich harakatlantirgichiga burovchi momentni uzatuvchi vallar. Uzun vallar oraliq tayanchlarga o'rnatilgan, sharnirlarda krestovinalar bor." },
@@ -70,10 +71,11 @@ export const CATEGORIES = [
   },
   {
     id: 'suzish',
-    name: 'Suzish uskunalari',
+    name: "Suzish uskunalari va chig'ir",
     desc: "BTR-80 suv to'siqlarini oldindan tayyorgarliksiz suzib o'ta oladi.",
     parts: [
-      { id: 'waterjet', name: "Suv otgich harakatlantirgichi", desc: "Korpus orqasidagi suv-reaktiv harakatlantirgich. Suvda harakatlanish va burilish uchun ishlatiladi. Chiqish teshigi qopqoq bilan yopiladi.", specs: [['Suvdagi tezlik', '9–10 km/soat']] },
+      { id: 'waterjet', name: "Suv otgich harakatlantirgichi", desc: "Korpus orqasidagi suv-reaktiv harakatlantirgich. Suv korpus tubidagi panjarali teshikdan so'riladi, kardan val orqali aylanadigan eksial parrak uni tezlatadi, to'g'rilovchi kurakchalar oqimni tekislaydi va u orqadagi soplodan otilib chiqadi. Ikki suv ruli oqimni og'dirib mashinani suvda buradi (rul chambaragi bilan birga ishlaydi). Quruqlikda chiqish teshigi zirhli qopqoq bilan yopiladi.", specs: [['Suvdagi tezlik', '9–10 km/soat']] },
+      { id: 'winch', name: "Chig'ir", desc: "Korpusning burun qismida o'rnatilgan. Mashinaning o'zini botqoq, qor yoki tik qirg'oqdan tortib chiqarish va boshqa texnikani tortish uchun ishlatiladi. Taqsimlash qutisidan kardan vallar orqali chervyakli reduktor bilan harakatga keltiriladi. Tros barabanga o'ralgan, roliklarli yo'naltirgich orqali korpusning old pastki listidan tashqariga chiqadi." },
       { id: 'trimvane', name: "To'lqin qaytargich shit", desc: "Suvga kirishdan oldin oldinga ochiladi va to'lqin korpusning old qismini bosib ketishiga yo'l qo'ymaydi." },
     ],
   },
