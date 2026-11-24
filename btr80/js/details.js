@@ -15,55 +15,114 @@ function canvasTex(w, h, draw) {
   return { tex: t, redraw };
 }
 
-/* ---------- Haydovchi asboblar paneli ---------- */
-function gauge(g, x, y, r, frac, label, unit, maxLabel) {
-  g.fillStyle = '#0d0f0e'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
-  g.strokeStyle = '#8d9396'; g.lineWidth = r * 0.07; g.beginPath(); g.arc(x, y, r * 0.96, 0, 7); g.stroke();
-  const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
-  g.strokeStyle = '#e9e6da'; g.lineWidth = 2;
-  for (let i = 0; i <= 10; i++) {
-    const a = a0 + (a1 - a0) * i / 10, r1 = r * (i % 5 ? 0.78 : 0.7);
-    g.beginPath(); g.moveTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1); g.lineTo(x + Math.cos(a) * r * 0.86, y + Math.sin(a) * r * 0.86); g.stroke();
+/* ---------- Haydovchi asboblar paneli (BTR-80 paneli uslubida) ---------- */
+// Raqamli shkalali strelkali asbob. ticks: [qiymatlar], vmax — shkala oxiri
+function dial(g, x, y, r, value, vmax, ticks, caption, unit, redFrom = null) {
+  g.fillStyle = '#5d6455'; g.beginPath(); g.arc(x, y, r * 1.12, 0, 7); g.fill();          // gardish
+  g.fillStyle = '#2c302a'; g.beginPath(); g.arc(x, y, r * 1.05, 0, 7); g.fill();
+  g.fillStyle = '#0e0f0e'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25, ang = (v) => a0 + (a1 - a0) * Math.min(1, Math.max(0, v / vmax));
+  if (redFrom !== null) { g.strokeStyle = '#b5332a'; g.lineWidth = r * 0.09; g.beginPath(); g.arc(x, y, r * 0.86, ang(redFrom), a1); g.stroke(); }
+  g.strokeStyle = '#ece8da'; g.fillStyle = '#ece8da'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const n = (ticks.length - 1) * 5;
+  for (let i = 0; i <= n; i++) {
+    const a = a0 + (a1 - a0) * i / n, major = i % 5 === 0;
+    g.lineWidth = major ? r * 0.035 : r * 0.018;
+    g.beginPath(); g.moveTo(x + Math.cos(a) * r * (major ? 0.74 : 0.8), y + Math.sin(a) * r * (major ? 0.74 : 0.8)); g.lineTo(x + Math.cos(a) * r * 0.9, y + Math.sin(a) * r * 0.9); g.stroke();
   }
-  g.strokeStyle = '#c0392b'; g.lineWidth = r * 0.06; g.beginPath(); g.arc(x, y, r * 0.82, a0 + (a1 - a0) * 0.85, a1); g.stroke();
-  g.fillStyle = '#e9e6da'; g.font = `bold ${Math.round(r * 0.22)}px monospace`; g.textAlign = 'center';
-  g.fillText(label, x, y + r * 0.45); g.font = `${Math.round(r * 0.17)}px monospace`; g.fillText(unit, x, y + r * 0.66);
-  g.fillText('0', x - r * 0.5, y + r * 0.62 - r * 0.05); g.fillText(maxLabel, x + r * 0.5, y + r * 0.57);
-  const a = a0 + (a1 - a0) * Math.min(1, Math.max(0, frac));
-  g.strokeStyle = '#f5d23b'; g.lineWidth = r * 0.07; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * r * 0.76, y + Math.sin(a) * r * 0.76); g.stroke();
-  g.fillStyle = '#5a5f62'; g.beginPath(); g.arc(x, y, r * 0.1, 0, 7); g.fill();
+  g.font = `bold ${Math.round(r * 0.2)}px sans-serif`;
+  ticks.forEach((t, i) => { const a = a0 + (a1 - a0) * i / (ticks.length - 1); g.fillText(String(t), x + Math.cos(a) * r * 0.56, y + Math.sin(a) * r * 0.56); });
+  g.font = `${Math.round(r * 0.15)}px sans-serif`; g.fillText(unit, x, y + r * 0.5);
+  if (caption) { g.font = `bold ${Math.round(r * 0.17)}px sans-serif`; g.fillText(caption, x, y - r * 0.3); }
+  const a = ang(value);
+  g.strokeStyle = '#f1efe6'; g.lineWidth = r * 0.06; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(x - Math.cos(a) * r * 0.12, y - Math.sin(a) * r * 0.12); g.lineTo(x + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8); g.stroke();
+  g.fillStyle = '#3a3d38'; g.beginPath(); g.arc(x, y, r * 0.1, 0, 7); g.fill();
+  g.lineCap = 'butt'; g.textBaseline = 'alphabetic';
 }
-export function buildDashboard(realGauges = null) {
-  const { tex, redraw } = canvasTex(1024, 360, (g, w, h, kmh = 0, rpm = 800, on = false) => {
-    g.fillStyle = '#3d4636'; g.fillRect(0, 0, w, h);
-    g.fillStyle = '#323a2c'; g.fillRect(14, 14, w - 28, h - 28);
-    gauge(g, 160, 170, 125, kmh / 100, 'km/soat', 'TEZLIK', '100');
-    gauge(g, 440, 170, 125, rpm / 3000, 'ayl/daq', '×1000', '3');
-    const small = [['°C', 'SUV', on ? 0.6 : 0.2, '120'], ['kgf', 'MOY', on ? 0.45 : 0, '8'], ['V', 'VOLT', on ? 0.7 : 0.62, '32'], ['l', "YONILG'I", 0.75, '1']];
-    small.forEach(([u, l, f, mx], i) => {
-      const x = 660 + (i % 2) * 170, y = 95 + Math.floor(i / 2) * 160;
-      if (realGauges) { g.fillStyle = '#1b1f18'; g.beginPath(); g.arc(x, y, 70, 0, 7); g.fill(); } // haqiqiy asbob shu joyga o'rnatiladi
-      else gauge(g, x, y, 66, f, u, l, mx);
+function plate(g, x, y, w, text) {
+  g.fillStyle = '#c9c7bb'; g.fillRect(x - w / 2, y - 11, w, 22);
+  g.strokeStyle = '#6f7266'; g.lineWidth = 1.5; g.strokeRect(x - w / 2, y - 11, w, 22);
+  g.fillStyle = '#1d1f1b'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.fillText(text, x, y + 5);
+}
+function toggle(g, x, y, up) {
+  g.fillStyle = '#2a2c29'; g.beginPath(); g.arc(x, y, 13, 0, 7); g.fill();
+  g.fillStyle = '#b9bcb4'; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill();
+  g.strokeStyle = '#d5d7d0'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + (up ? -24 : 24)); g.stroke(); g.lineCap = 'butt';
+}
+function lamp(g, x, y, col, on) {
+  g.fillStyle = '#3b3e38'; g.beginPath(); g.arc(x, y, 19, 0, 7); g.fill();
+  const grd = g.createRadialGradient(x - 4, y - 4, 2, x, y, 15);
+  grd.addColorStop(0, on ? '#fff' : col); grd.addColorStop(1, on ? col : shade(col));
+  g.fillStyle = grd; g.beginPath(); g.arc(x, y, 14, 0, 7); g.fill();
+}
+const shade = (c) => '#' + c.slice(1).match(/../g).map((h) => Math.round(parseInt(h, 16) * 0.35).toString(16).padStart(2, '0')).join('');
+function screw(g, x, y) { g.fillStyle = '#80857a'; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.strokeStyle = '#4a4d46'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 4, y); g.lineTo(x + 4, y); g.stroke(); }
+
+export function buildDashboard() {
+  const W = 1600, H = 560;
+  const { tex, redraw } = canvasTex(W, H, (g, w, h, kmh = 0, rpm = 0, on = false) => {
+    g.fillStyle = '#7e8574'; g.fillRect(0, 0, w, h);
+    const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, 'rgba(255,255,255,0.08)'); grd.addColorStop(1, 'rgba(0,0,0,0.15)');
+    g.fillStyle = grd; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#5b6152'; g.lineWidth = 6; g.strokeRect(8, 8, w - 16, h - 16);
+    [[30, 30], [w - 30, 30], [30, h - 30], [w - 30, h - 30], [w / 2, 30]].forEach(([x, y]) => screw(g, x, y));
+    // kichik asboblar
+    const small = [
+      ['МАСЛО', 'кгс/см²', on ? 4.2 : 0, 8, [0, 2, 4, 6, 8], 'ДАВЛ. МАСЛА', null],
+      ['°C', '', on ? 82 : 20, 120, [40, 60, 80, 100, 120], 'ТЕМП. ЖИДКОСТИ', 100],
+      ['°C', '', on ? 75 : 20, 150, [50, 75, 100, 125, 150], 'ТЕМП. МАСЛА', 120],
+      ['', '', 0.75, 1, [0, '¼', '½', '¾', 1], 'ТОПЛИВО', null],
+      ['A', '', on ? 12 : 0, 60, [-60, -30, 0, 30, 60], 'АМПЕРМЕТР', null],
+    ];
+    small.forEach(([cap, unit, v, max, ticks, lab, red], i) => {
+      const x = 105 + i * 155, y = 150;
+      dial(g, x, y, 62, cap === 'A' ? v + 60 : (ticks[0] === 40 ? v - 40 : ticks[0] === 50 ? v - 50 : v), cap === 'A' ? 120 : (ticks[0] === 40 ? 80 : ticks[0] === 50 ? 100 : max), ticks, cap, unit, red !== null ? (ticks[0] === 40 ? red - 40 : red - 50) : null);
+      plate(g, x, y + 92, 140, lab);
     });
-    for (let i = 0; i < 6; i++) {
-      g.fillStyle = i === 0 && on ? '#4caf50' : i === 3 ? '#c0392b' : '#555';
-      g.beginPath(); g.arc(70 + i * 70, 330, 11, 0, 7); g.fill();
-    }
-    g.fillStyle = '#d8d4c4'; g.font = 'bold 22px monospace'; g.textAlign = 'left'; g.fillText('BTR-80', 860, 340);
+    // katta asboblar
+    dial(g, 955, 175, 118, kmh, 120, [0, 20, 40, 60, 80, 100, 120], '', 'км/ч'); plate(g, 955, 318, 150, 'СПИДОМЕТР');
+    g.fillStyle = '#d9d6c8'; g.fillRect(925, 205, 62, 18); g.fillStyle = '#111'; g.font = 'bold 15px monospace'; g.textAlign = 'center'; g.fillText('03826', 956, 219);
+    dial(g, 1215, 175, 118, rpm / 100, 30, [0, 5, 10, 15, 20, 25, 30], '', 'об/мин ×100', 26); plate(g, 1215, 318, 150, 'ТАХОМЕТР');
+    dial(g, 1460, 175, 105, 3.0, 10, [0, 2, 4, 6, 8, 10], 'ШИНЫ', 'кгс/см²'); plate(g, 1460, 318, 130, 'ДАВЛЕНИЕ В ШИНАХ');
+    // tumblerlar
+    ['ЗАЖИГАНИЕ', 'СТАРТЕР', 'ФАРЫ', 'ОТОПИТЕЛЬ', 'НАСОС', 'ПЕРЕДН. МОСТ', 'ВОДОМЁТ', 'ГАБАРИТЫ', 'ПРИБОРЫ'].forEach((l, i) => {
+      const x = 80 + i * 82, y = 330; toggle(g, x, y, on && i !== 1 && i !== 6); g.save(); g.translate(x, y + 58); g.rotate(-0.35); g.fillStyle = '#1d1f1b'; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.fillText(l, 0, 0); g.restore();
+    });
+    plate(g, 410, 430, 640, 'ВЫКЛЮЧАТЕЛИ');
+    // nazorat chiroqlari
+    [['#c0392b', 'МАСЛО', !on], ['#2e9e4f', 'ТЕРМОСТАТ', on], ['#e0a020', 'ГЕНЕРАТОР', !on], ['#e07b20', 'ТОРМОЗ', false], ['#c0392b', 'ПОЖАР', false], ['#2f6fd0', 'ДАЛЬНИЙ', false]].forEach(([c, l, o], i) => {
+      const x = 860 + (i % 3) * 95, y = 400 + Math.floor(i / 3) * 80; lamp(g, x, y, c, o);
+      g.fillStyle = '#1d1f1b'; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.fillText(l, x, y + 34);
+    });
+    // knopkalar
+    [['СТАРТЕР', '#2a2c29'], ['ЗВУК. СИГНАЛ', '#2a2c29'], ['ЖАЛЮЗИ', '#b0302a'], ['МАССА', '#2a2c29']].forEach(([l, c], i) => {
+      const x = 1190 + (i % 2) * 150, y = 400 + Math.floor(i / 2) * 80;
+      g.fillStyle = '#3b3e38'; g.beginPath(); g.arc(x, y, 20, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(x, y, 14, 0, 7); g.fill();
+      plate(g, x, y + 36, 120, l);
+    });
+    g.fillStyle = '#2e322b'; g.font = 'bold 26px sans-serif'; g.textAlign = 'center'; g.fillText('БТР-80', 640, 520);
   });
   const g = new THREE.Group();
-  const body = box(0.16, 0.3, 0.86, M(OLIVE)); g.add(body);
-  const face = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.29), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.1 }));
+  const body = box(0.16, 0.32, 0.9, M(0x737a69, { metalness: 0.35, roughness: 0.6 })); g.add(body);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.308), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.65, metalness: 0.15 }));
   face.rotation.y = -Math.PI / 2; face.position.x = -0.081; g.add(face);
-  if (realGauges) realGauges.slice(0, 4).forEach((rg, i) => {
-    const u = (660 + (i % 2) * 170) / 1024, v = (95 + Math.floor(i / 2) * 160) / 360;
-    rg.position.set(-0.088, 0.145 - 0.29 * v, -0.41 + 0.82 * u);
-    g.add(rg);
-  });
-  for (let i = 0; i < 5; i++) { const s = cyl(0.008, 0.008, 0.05, M(STEEL)); s.rotation.z = Math.PI / 2; s.position.set(-0.1, -0.16, -0.3 + i * 0.13); g.add(s); }
+  const hood = box(0.12, 0.02, 0.9, M(0x737a69)); hood.position.set(-0.07, 0.165, 0); hood.rotation.z = 0.15; g.add(hood);
   let t = 0;
   return { group: g, update(kmh, rpm, on, dt) { t += dt; if (t > 0.15) { t = 0; redraw(kmh, rpm, on); } } };
+}
+
+// BTR-80 ruli: katta, uch kegayli, qora
+export function buildSteeringWheel() {
+  const g = new THREE.Group();
+  const black = M(0x161716, { metalness: 0.1, roughness: 0.55 });
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.017, 12, 48), black); g.add(rim);
+  const hub = cyl(0.045, 0.05, 0.05, black, 20); hub.rotation.x = Math.PI / 2; g.add(hub);
+  [Math.PI / 2, Math.PI / 2 + 2.3, Math.PI / 2 - 2.3].forEach((a) => {
+    const sp = box(0.2, 0.03, 0.014, black);
+    sp.position.set(Math.cos(a) * 0.12, Math.sin(a) * 0.12, -0.01); sp.rotation.z = a; g.add(sp);
+  });
+  return g;
 }
 
 /* ---------- R-163-50U radiostansiyasi ---------- */

@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling } from './details.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel } from './details.js';
 import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
@@ -328,12 +328,31 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   wheel.position.set(0.38, 0.4, 0);
   wheel.rotation.set(0.55, Math.PI / 2, 0, 'YXZ'); drv.add(wheel);
   const steerSpin = new THREE.Group(); steerSpin.name = 'steerSpin'; wheel.add(steerSpin);
-  if (assets.steer) steerSpin.add(steerModel(assets.steer));
-  else steerSpin.add(new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), mat(C.darkSteel)));
-  const dashB = buildDashboard(assets.gauges ? gaugeSet(assets.gauges) : null); // ko'rsatkichlari yurishda jonli o'zgaradi
+  steerSpin.add(buildSteeringWheel()); // BTR-80 ruli: katta, uch kegayli
+  const dashB = buildDashboard(); // ko'rsatkichlari yurishda jonli o'zgaradi
   dashB.group.position.set(0.8, 0.36, 0.12); drv.add(dashB.group);
   root.userData.dash = dashB;
-  for (const zz of [-0.12, 0.06, 0.18]) { const ped = box(0.04, 0.12, 0.07, C.darkSteel); ped.position.set(0.7, -0.15, zz); ped.rotation.z = 0.4; drv.add(ped); }
+  // Pedallar (BTR-80 kabinasi suratiga ko'ra): ilashish muftasi, tormoz (qovurg'ali kvadrat) va baland yonilg'i pedali
+  const pedalPad = (w, h, zz, x, y) => {
+    const g = new THREE.Group();
+    const pad = box(0.02, h, w, C.darkSteel); g.add(pad);
+    for (let i = 0; i < Math.round(h / 0.018); i++) { const rib = box(0.008, 0.006, w * 0.9, C.steel); rib.position.set(-0.012, -h / 2 + 0.01 + i * 0.018, 0); g.add(rib); }
+    g.position.set(x, y, zz); g.rotation.z = 0.35; drv.add(g);
+  };
+  pedalPad(0.09, 0.09, -0.13, 0.66, -0.26);
+  pedalPad(0.09, 0.09, 0.03, 0.66, -0.26);
+  pedalPad(0.07, 0.2, 0.17, 0.7, -0.3);
+  for (const zz of [-0.13, 0.03]) drv.add(cylBetween([0.7, -0.2, zz], [0.78, 0.15, zz], 0.012, C.darkSteel, 6));
+  drv.add(cylBetween([0.62, 0.05, 0], [0.78, -0.44, 0], 0.035, C.darkSteel, 10)); // rul ustuni polgacha
+  const boot = cyl(0.07, 0.09, 0.08, C.rubber, 14); boot.position.set(0.76, -0.4, 0); drv.add(boot);
+  // Dastaklar (o'ng tomonda): uzatmalar qutisi va taqsimlash qutisi (ikkita)
+  [[0.42, 0.36, 0.46, 0.2], [0.52, 0.46, 0.38, -0.15], [0.34, 0.5, 0.34, 0.1]].forEach(([x, zz, len, tilt]) => {
+    const top = [x + Math.sin(tilt) * len * 0.3, -0.44 + len, zz];
+    drv.add(cylBetween([x, -0.44, zz], top, 0.011, C.steel, 8));
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.026, 14, 10), mat(0x141414, { metalness: 0.1, roughness: 0.4 }));
+    knob.position.set(...top); drv.add(knob);
+    const base = box(0.08, 0.03, 0.06, C.armorDark); base.position.set(x, -0.43, zz); drv.add(base);
+  });
   drv.position.set(2.3, 0.95, -0.47);
   add('driver', drv);
 
