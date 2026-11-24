@@ -285,6 +285,31 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
     const capT = cyl(0.06, 0.06, 0.06, C.darkSteel, 10); capT.position.set(-1.8, 1.82, s * 0.72);
     add('fuel', capT);
   }
+  // Yonilg'i tizimi: baklardan taqsimlash krani, dag'al va mayin tozalash filtrlari, qo'l nasosi orqali
+  // dvigatelning yuqori bosimli yonilg'i nasosiga (YuBYoN, silindr qatorlari orasida) boradi.
+  {
+    const fs = new THREE.Group();
+    const steelM = mat(C.steel), darkM = mat(C.darkSteel), lineM = mat(0x2a2a26, { metalness: 0.3, roughness: 0.6 });
+    const pipe = (pts, r = 0.012) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 30, r, 6), lineM);
+    const valve = new THREE.Group(); const vb = box(0.1, 0.08, 0.12, C.darkSteel); valve.add(vb); const lever = cylBetween([0, 0.04, 0], [0.12, 0.12, 0], 0.01, C.steel, 6); valve.add(lever);
+    valve.position.set(-1.62, 0.95, 0); fs.add(valve);                                      // taqsimlash krani
+    const coarse = cyl(0.06, 0.06, 0.18, C.steel, 16); coarse.position.set(-2.05, 0.85, -0.32); fs.add(coarse);   // dag'al filtr
+    const cbowl = cyl(0.05, 0.04, 0.06, 0x8a8f95, 16); cbowl.position.set(-2.05, 0.73, -0.32); fs.add(cbowl);
+    const fine = cyl(0.07, 0.07, 0.22, 0x9aa0a6, 16); fine.position.set(-2.12, 1.15, 0.32); fs.add(fine);       // mayin filtr
+    const fcap = cyl(0.075, 0.075, 0.03, C.darkSteel, 16); fcap.position.set(-2.12, 1.27, 0.32); fs.add(fcap);
+    const prime = box(0.08, 0.12, 0.08, C.darkSteel); prime.position.set(-2.2, 1.0, -0.12); fs.add(prime);       // qo'l nasosi
+    const knob = cyl(0.02, 0.02, 0.06, 0x141414, 10); knob.position.set(-2.2, 1.09, -0.12); fs.add(knob);
+    const tnvd = box(0.36, 0.14, 0.14, 0x6f7377); tnvd.position.set(-2.62, 1.36, 0); fs.add(tnvd);               // YuBYoN
+    for (let k = 0; k < 8; k++) { const o = cyl(0.008, 0.008, 0.06, C.steel, 6); o.position.set(-2.76 + k * 0.04, 1.45, 0); fs.add(o); }
+    fs.add(pipe([[-1.8, 0.86, -0.62], [-1.7, 0.85, -0.3], [-1.62, 0.92, -0.04]]));
+    fs.add(pipe([[-1.8, 0.86, 0.62], [-1.7, 0.85, 0.3], [-1.62, 0.92, 0.04]]));
+    fs.add(pipe([[-1.62, 0.92, 0], [-1.85, 0.95, -0.25], [-2.05, 0.95, -0.32]]));
+    fs.add(pipe([[-2.05, 0.95, -0.32], [-2.2, 0.95, -0.12]]));
+    fs.add(pipe([[-2.2, 1.06, -0.12], [-2.15, 1.1, 0.15], [-2.12, 1.05, 0.32]]));
+    fs.add(pipe([[-2.12, 1.28, 0.32], [-2.3, 1.38, 0.15], [-2.45, 1.37, 0.02]]));
+    add('fuel', fs);
+  }
+
 
   const rad = new THREE.Group();
   if (assets.radiator) rad.add(radiatorModel(assets.radiator));

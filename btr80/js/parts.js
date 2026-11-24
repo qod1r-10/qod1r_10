@@ -53,7 +53,7 @@ export const CATEGORIES = [
       { id: 'gearbox', name: 'Ilashish muftasi va uzatmalar qutisi', desc: "Ikki diskli quruq ilashish muftasi va 5 pog'onali mexanik uzatmalar qutisi dvigatel bilan bir blokda o'rnatilgan. Barcha uzatmalarda shesternyalar doimiy ilashishda, 2–5-uzatmalarda sinxronizatorlar bor: ular uzatmalarni shovqinsiz ulaydi; yurgizish rejimida ulangan juftlik yorishadi.", specs: [['Uzatmalar', '5 old + 1 orqa']] },
       { id: 'transfer', name: 'Taqsimlash qutisi', desc: "Burovchi momentni oldingi va orqa ko'priklar o'rtasida taqsimlaydi. Ikki diapazonli, differensialni blokirovka qilish mumkin. Suv to'pi uchun quvvat olish qurilmasi shu yerda." },
       { id: 'shafts', name: 'Kardan uzatmalari', desc: "Taqsimlash qutisidan to'rtta ko'prikka, chig'ir reduktoriga va suv otgich harakatlantirgichiga burovchi momentni uzatuvchi vallar. Uzun vallar oraliq tayanchlarga o'rnatilgan, sharnirlarda krestovinalar bor." },
-      { id: 'fuel', name: "Yonilg'i baklari", desc: "Desant bo'limi bilan dvigatel bo'limi orasidagi to'siq yonida joylashgan baklar.", specs: [['Umumiy hajm', '≈300 l']] },
+      { id: 'fuel', name: "Yonilg'i tizimi", desc: "Ikkita zirhlangan yonilg'i baki desant va dvigatel bo'limlari orasidagi to'siq yonida, chap va o'ng devorlarga mahkamlangan. Yonilg'i taqsimlash krani orqali dag'al tozalash filtriga, qo'l nasosi va mayin tozalash filtridan o'tib, silindr qatorlari orasidagi yuqori bosimli yonilg'i nasosiga (YuBYoN) boradi; u yonilg'ini forsunkalar orqali silindrlarga purkaydi.", specs: [['Umumiy hajm', '≈300 l'], ['Tozalash', "dag'al va mayin filtr"], ['Purkash', 'YuBYoN va forsunkalar']] },
     ],
   },
   {
