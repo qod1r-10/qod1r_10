@@ -9,7 +9,7 @@ const RULES = {
   hull: [0, 2.3, 0], hatch_front: [0.2, 2.9, 0], hatch_roof: [0, 2.9, 0], side_doors: [0, 2.3, 'S0.9'],
   vision: [0.35, 2.5, 0], lights: [0.9, 2.4, 0], firing_ports: [0, 2.3, 'S0.6'], trimvane: [1.4, 1.6, 0], antenna: [-0.3, 3.4, 0.3],
   turret: [0, 3.6, 0], kpvt: [0.9, 3.9, 0], pkt: [0.9, 3.9, -0.35], sight: [0, 4.4, 0], smoke: [-0.5, 4.1, 0], gunner: [0, 2.6, 0],
-  wheels: [0, 0, 'S1.3'], suspension: [0, -0.15, 'S0.75'], axles: [0, -0.55, 0], shafts: [0, -0.3, 0],
+  wheels: [0, 0, 'S1.3'], suspension: [0, -0.15, 'S0.75'], brakes: [0, -0.05, 'S0.95'], halfshafts: [0, -0.45, 'S0.4'], axles: [0, -0.55, 0], shafts: [0, -0.3, 0],
   engine: [-1.1, 1.1, 0], crank: [-1.1, 0.35, 0], valvetrain: [-1.1, 1.55, 0], radiator: [-1.3, 3.0, 0],
   gearbox: [-0.2, 0.75, 0], transfer: [0, 0.55, 0], fuel: [-0.3, 1.0, 'S1.0'], waterjet: [-1.7, 0.4, 0],
   driver: [1.2, 1.0, -0.5], commander: [1.2, 1.0, 0.5], troop_seats: [0, 1.25, 0], fire: [0, 1.4, 'S0.6'],
@@ -25,9 +25,11 @@ export function createExplode(meshes) {
     const r = RULES[m.userData.part];
     let off;
     if (r) {
-      const side = c.z >= 0 ? 1 : -1;
+      // Qoidalar mashina tizimida (x — old, z — yon); sahnada esa BTR modeli old tomoni +z, yoni x bo'ylab:
+      // mashina (x, y, z) -> sahna (-z, y, x)
+      const side = -c.x >= 0 ? 1 : -1;
       const dz = typeof r[2] === 'string' ? side * parseFloat(r[2].slice(1)) : r[2];
-      off = new THREE.Vector3(r[0], r[1], dz);
+      off = new THREE.Vector3(-dz, r[1], r[0]);
     } else off = c.clone().sub(C).multiplyScalar(0.8);
     // kichik tasodifiy kechikish — "portlash" tabiiyroq ko'rinadi
     const delay = ((i * 9301 + 49297) % 233280) / 233280 * 0.25;

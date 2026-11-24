@@ -63,7 +63,9 @@ export const CATEGORIES = [
     parts: [
       { id: 'wheels', name: "G'ildiraklar (8 ta)", desc: "O'q tekkanda ham ishlay oladigan KI-80 shinalari. Markazlashtirilgan shina bosimini boshqarish tizimi bosimni yurish paytida o'zgartirish imkonini beradi.", specs: [["Shina o'lchami", '13.00-18'], ['Boshqariladigan', "1- va 2-ko'prik"]] },
       { id: 'axles', name: "Ko'priklar (4 ta)", desc: "Har bir ko'prikda bosh uzatma (yetaklovchi shesternya va yetaklanuvchi tishli g'ildirak) hamda differensial bor. Differensial burilishda chap va o'ng g'ildiraklarning har xil tezlikda aylanishiga imkon beradi. Moment g'ildiraklarga g'ildirak reduktorlari orqali beriladi." },
-      { id: 'suspension', name: 'Osma', desc: "Mustaqil torsionli osma, gidravlik amortizatorlar bilan. Notekis yo'lda ravon harakatni ta'minlaydi." },
+      { id: 'suspension', name: 'Osma', desc: "Har bir g'ildirak mustaqil osilgan: yuqori va pastki ko'ndalang richaglar, elastik element — bo'ylama torsion val, tebranishlarni so'ndiruvchi gidravlik teleskopik amortizator va rezina siqilish buferi. Osma notekis yo'lda dinamik yuklamalarni qabul qilib, kuzov tebranishlarini so'ndiradi.", specs: [['Turi', "mustaqil, richag-torsionli"], ['Elastik element', 'torsion val'], ["So'ndiruvchi", 'gidravlik amortizator']] },
+      { id: 'brakes', name: 'Tormoz mexanizmlari', desc: "Sakkizala g'ildirakda barabanli tormoz mexanizmi: g'ildirak bilan aylanadigan tormoz barabani, ichida ikkita kolodka va ularni suruvchi g'ildirak tormoz silindri. Ishchi tormoz tizimining yuritmasi pnevmogidravlik: pedal bosilganda siqilgan havo gidravlik suyuqlikni silindrlarga haydaydi. Tormoz kuchi g'ildirak bilan yo'l orasida hosil bo'ladi.", specs: [['Mexanizm', 'barabanli, kolodkali'], ['Yuritma', 'pnevmogidravlik'], ['Soni', "8 ta (har g'ildirakda)"]] },
+      { id: 'halfshafts', name: "Yarim o'qlar va sharnirlar", desc: "Ko'prikdagi differensialdan g'ildirak reduktoriga burovchi momentni uzatadi. Osma ishlaganda va old g'ildiraklar burilganda ham uzluksiz aylanishi uchun ikki uchida sharnirlar bor; ular rezina chexol bilan himoyalangan." },
     ],
   },
   {

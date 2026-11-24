@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { buildKPVT, buildPKT, pktModel } from './weapons.js';
 import { dshkModel } from './assets.js';
+import { buildWheelStation } from './wheelstation.js';
 
 const KMH = 3.6;
 const VMAX = 80 / KMH;            // m/s
@@ -74,6 +75,7 @@ export function createDrive(ctx) {
       real.updateMatrixWorld(true);
       list.forEach((o) => spin.attach(o));
       wheels.push({ steer, spin, axle: Math.floor(+wi / 2) });
+      buildWheelStation(real, steer, spin, c, extra);
     });
     // Qurol beshigi: KPVT va PKT o'q (tsapfa) atrofida ko'tariladi/tushadi.
     // Modelda stvol 25.7° ko'tarilgan holda; GUN_REST uni gorizontal holatga keltiradi.
