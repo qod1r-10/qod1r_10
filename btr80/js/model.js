@@ -3,8 +3,8 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit, buildWinch, buildFireSuppression } from './details.js';
-import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit, buildWinch, buildFireSuppression, buildRadiator } from './details.js';
+import { driveshaftBetween, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
   armor: 0x5a6640, armorDark: 0x46502f, rubber: 0x1d1e1b, hub: 0x4c5534,
@@ -312,16 +312,8 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   }
 
 
-  const rad = new THREE.Group();
-  if (assets.radiator) rad.add(radiatorModel(assets.radiator));
-  else {
-    const core = box(1.0, 0.14, 1.5, C.radiator, { metalness: 0.4, roughness: 0.5 }); rad.add(core);
-    for (const s of [-1, 1]) {
-      const fan = cyl(0.28, 0.28, 0.06, C.darkSteel, 20); fan.name = 'fan'; fan.position.set(0, -0.12, s * 0.38); rad.add(fan);
-    }
-  }
-  rad.position.set(-2.85, 1.78, 0);
-  add('radiator', rad);
+  // Radiator dvigatel orqasida tik turadi, orqasida ventilyator (ma'ruzadagi sxema bo'yicha)
+  add('radiator', buildRadiator());
   add('radiator', buildCooling()); // nasos, termostat, bakcha, moy radiatori, gidromufta, shlanglar
   // tomdagi jalyuzlar (radiatorga tegishli)
   for (let i = 0; i < 7; i++) {

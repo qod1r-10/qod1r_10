@@ -323,10 +323,42 @@ export function buildFireSuppression() {
   return g;
 }
 
-/* ---------- Sovutish tizimi (radiatordan tashqari qismlar) ----------
-   Mashina koordinatalarida (x — old, y — yuqori, z — o'ng/chap). Dvigatel markazi (-2.85, 0.95, 0),
-   radiator (-2.85, 1.78, 0) dvigatel ustida yotadi. Ma'ruzadagi BTR-80 sovitish tizimi sxemasiga ko'ra:
-   radiator, ventilyator, gidromufta, kengaytiruvchi bakcha, suyuqlik nasosi, termostat, moy radiatori, shlanglar. */
+/* ---------- Sovutish tizimi ----------
+   Mashina koordinatalarida (x — old, y — yuqori, z — yon). Ma'ruzadagi BTR-80 sovitish tizimi sxemasiga ko'ra
+   radiator dvigatel orqasida TIK turadi; uning orqasida kojux (g'ilof) ichida bitta katta ventilyator bor,
+   u dvigateldan gidromufta va val orqali aylanadi va issiq havoni korpus orqasidagi jalyuzlarga haydaydi.
+   Radiator yonida moy radiatori, tepasida kengaytiruvchi bakcha. Dvigatel markazi (-2.85, 0.95, 0). */
+const RX = -3.5, RY = 1.55;
+export function buildRadiator() {
+  const g = new THREE.Group();
+  const coreM = M(0x8a8f86, { metalness: 0.6, roughness: 0.45 });
+  const finM = M(0x5f655c, { metalness: 0.6, roughness: 0.5 });
+  const tankM = M(0x3d4233, { metalness: 0.5, roughness: 0.5 });
+  const W = 0.9, H = 0.56, T = 0.1;
+  // o'zak: qovurg'ali sirt (ko'p yupqa plastinalar)
+  const core = box(T, H, W, coreM); core.position.set(RX, RY, 0); g.add(core);
+  for (let i = 0; i < 30; i++) { const f = box(T + 0.01, H - 0.02, 0.004, finM); f.position.set(RX, RY, -W / 2 + 0.015 + i * (W - 0.03) / 29); g.add(f); }
+  // yuqori va pastki bakchalar, yon tirgaklar
+  for (const s of [-1, 1]) { const t = box(T + 0.05, 0.08, W + 0.04, tankM); t.position.set(RX, RY + s * (H / 2 + 0.04), 0); g.add(t); const side = box(T + 0.03, H, 0.03, tankM); side.position.set(RX, RY, s * (W / 2 + 0.015)); g.add(side); }
+  const neck = cyl(0.03, 0.03, 0.06, M(DARK), 14); neck.position.set(RX, RY + H / 2 + 0.11, -0.3); g.add(neck);
+  const capR = cyl(0.04, 0.04, 0.02, M(0x9a9a92, { metalness: 0.8 }), 14); capR.position.set(RX, RY + H / 2 + 0.145, -0.3); g.add(capR);
+  for (const s of [-1, 1]) { const pipeS = cyl(0.035, 0.035, 0.08, tankM, 14); pipeS.rotation.z = Math.PI / 2; pipeS.position.set(RX + 0.08, RY + s * (H / 2 + 0.04), s * 0.3); g.add(pipeS); }
+  // kojux (ventilyator g'ilofi): radiator orqasidagi plastina va halqa
+  const shroudM = M(0xb9bcb4, { metalness: 0.5, roughness: 0.45, side: THREE.DoubleSide });
+  const plate = new THREE.Shape(); plate.moveTo(-W / 2, -H / 2 - 0.04); plate.lineTo(W / 2, -H / 2 - 0.04); plate.lineTo(W / 2, H / 2 + 0.04); plate.lineTo(-W / 2, H / 2 + 0.04);
+  const hole = new THREE.Path(); hole.absarc(0, 0, 0.27, 0, Math.PI * 2, true); plate.holes.push(hole);
+  const shroud = new THREE.Mesh(new THREE.ShapeGeometry(plate, 32), shroudM); shroud.rotation.y = Math.PI / 2; shroud.position.set(RX - 0.08, RY, 0); g.add(shroud);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 40, 1, true), shroudM); ring.rotation.z = Math.PI / 2; ring.position.set(RX - 0.14, RY, 0); g.add(ring);
+  // ventilyator: 8 kurak, gupchak; drive.js 'fan' nomli obyektni o'z y o'qi atrofida aylantiradi
+  const fanHolder = new THREE.Group(); fanHolder.rotation.z = Math.PI / 2; fanHolder.position.set(RX - 0.15, RY, 0); g.add(fanHolder);
+  const fan = new THREE.Group(); fan.name = 'fan'; fanHolder.add(fan);
+  const hub = cyl(0.06, 0.06, 0.07, M(DARK), 18); fan.add(hub);
+  for (let i = 0; i < 8; i++) { const p = new THREE.Group(); p.rotation.y = i / 8 * Math.PI * 2; const bl = box(0.2, 0.008, 0.075, M(0x3a3d3f, { metalness: 0.5 })); bl.position.x = 0.16; bl.rotation.x = 0.45; p.add(bl); fan.add(p); }
+  // ventilyator kronshteyni
+  const brace = box(0.03, 0.03, 0.6, tankM); brace.position.set(RX - 0.2, RY, 0); g.add(brace);
+  return g;
+}
+
 export function buildCooling() {
   const g = new THREE.Group();
   const hoseM = M(0x1c1d1c, { metalness: 0.05, roughness: 0.85 });
@@ -334,25 +366,27 @@ export function buildCooling() {
     const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
     return new THREE.Mesh(new THREE.TubeGeometry(curve, 40, r, 10, false), hoseM);
   };
-  // suyuqlik nasosi (dvigatel orqa yuzida, -x tomonda) va shkivi
-  const pump = cyl(0.09, 0.09, 0.16, M(0x6b7075), 20); pump.rotation.z = Math.PI / 2; pump.position.set(-3.38, 0.98, 0); g.add(pump);
-  const pulley = cyl(0.1, 0.1, 0.03, M(DARK), 24); pulley.rotation.z = Math.PI / 2; pulley.position.set(-3.48, 0.98, 0); g.add(pulley);
+  // suyuqlik nasosi (dvigatel orqa yuzida) va shkivi
+  const pump = cyl(0.09, 0.09, 0.16, M(0x6b7075), 20); pump.rotation.z = Math.PI / 2; pump.position.set(-3.3, 0.98, 0); g.add(pump);
+  const pulley = cyl(0.1, 0.1, 0.03, M(DARK), 24); pulley.rotation.z = Math.PI / 2; pulley.position.set(-3.4, 0.98, 0); g.add(pulley);
   // termostat korpusi (dvigatel ustida, orqa tomonda)
-  const thermo = cyl(0.06, 0.06, 0.12, M(0x8c8f93), 16); thermo.position.set(-3.25, 1.42, 0); g.add(thermo);
-  // kengaytiruvchi bakcha
-  const tank = cyl(0.11, 0.11, 0.42, M(0xd7d3c4, { metalness: 0.1, roughness: 0.5, transparent: false }), 20); tank.rotation.x = Math.PI / 2; tank.position.set(-2.3, 1.72, 0.62); g.add(tank);
-  const cap = cyl(0.04, 0.04, 0.05, M(0xb8322a), 12); cap.position.set(-2.3, 1.85, 0.62); g.add(cap);
-  // moy radiatori (chap tomonda)
-  const oil = box(0.5, 0.06, 0.32, M(0x7a7f84, { metalness: 0.6, roughness: 0.4 })); oil.position.set(-2.85, 1.7, -0.86); g.add(oil);
-  for (let i = 0; i < 8; i++) { const f = box(0.5, 0.004, 0.3, M(0x5c6166)); f.position.set(-2.85, 1.675 + i * 0.008, -0.86); g.add(f); }
-  // gidromufta (ventilyator yuritmasi)
-  const fluid = cyl(0.12, 0.12, 0.12, M(0x8a8f95), 24); fluid.rotation.z = Math.PI / 2; fluid.position.set(-3.38, 1.32, 0.0); g.add(fluid);
-  // shlanglar: termostat -> radiator kirishi; radiator chiqishi -> nasos; bakcha -> nasos; moy radiatori
-  g.add(pipe([[-3.25, 1.48, 0], [-3.32, 1.62, 0.25], [-3.3, 1.74, 0.55]]));
-  g.add(pipe([[-2.4, 1.72, -0.6], [-2.5, 1.3, -0.62], [-3.1, 0.95, -0.35], [-3.3, 0.98, -0.05]]));
-  g.add(pipe([[-2.3, 1.6, 0.62], [-2.7, 1.2, 0.45], [-3.3, 1.0, 0.08]], 0.018));
-  g.add(pipe([[-2.6, 1.7, -0.7], [-2.5, 1.2, -0.5], [-2.45, 0.85, -0.32]], 0.022));
-  g.add(pipe([[-3.1, 1.7, -0.7], [-3.2, 1.1, -0.45], [-3.25, 0.8, -0.3]], 0.022));
+  const thermo = cyl(0.06, 0.06, 0.12, M(0x8c8f93), 16); thermo.position.set(-3.22, 1.42, 0.3); g.add(thermo);
+  // kengaytiruvchi bakcha (radiator oldida, yuqorida)
+  const tank = box(0.2, 0.18, 0.34, M(0xd7d3c4, { metalness: 0.1, roughness: 0.5 })); tank.position.set(-3.2, 1.88, 0.5); g.add(tank);
+  const cap = cyl(0.035, 0.035, 0.05, M(0xb8322a), 12); cap.position.set(-3.2, 2.0, 0.42); g.add(cap);
+  // moy radiatori (tik, asosiy radiator yonida)
+  const oil = box(0.08, 0.46, 0.3, M(0x7a7f84, { metalness: 0.6, roughness: 0.4 })); oil.position.set(RX, RY, -0.66); g.add(oil);
+  for (let i = 0; i < 10; i++) { const f = box(0.09, 0.44, 0.004, M(0x5c6166)); f.position.set(RX, RY, -0.79 + i * 0.028); g.add(f); }
+  // gidromufta va ventilyator yuritma vali (radiator markazidagi teshik orqali ventilyatorga)
+  const fluid = cyl(0.11, 0.11, 0.12, M(0x8a8f95), 24); fluid.rotation.z = Math.PI / 2; fluid.position.set(-3.33, RY, 0); g.add(fluid);
+  const fshaft = cyl(0.022, 0.022, 0.3, M(STEEL)); fshaft.rotation.z = Math.PI / 2; fshaft.position.set(-3.5, RY, 0); g.add(fshaft);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.012, 6, 30), M(DARK)); belt.rotation.y = Math.PI / 2; belt.scale.set(1, 1.9, 0.35); belt.position.set(-3.31, 1.27, 0); g.add(belt);
+  // shlanglar: termostat -> radiator yuqori bakchasi; pastki bakcha -> nasos; bakcha -> nasos; moy radiatori -> dvigatel
+  g.add(pipe([[-3.22, 1.48, 0.3], [-3.3, 1.75, 0.3], [-3.42, 1.87, 0.3]]));
+  g.add(pipe([[-3.42, 1.23, -0.3], [-3.36, 1.1, -0.2], [-3.3, 1.0, -0.08]]));
+  g.add(pipe([[-3.2, 1.79, 0.5], [-3.12, 1.3, 0.35], [-3.28, 1.02, 0.08]], 0.016));
+  g.add(pipe([[-3.46, 1.4, -0.66], [-3.3, 1.1, -0.5], [-3.1, 0.85, -0.32]], 0.02));
+  g.add(pipe([[-3.46, 1.72, -0.66], [-3.25, 1.6, -0.5], [-3.0, 1.3, -0.35]], 0.02));
   return g;
 }
 

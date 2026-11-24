@@ -3,7 +3,7 @@
 // Korpus detallari userData.casing = true — "Kesim" rejimida ular qirqiladi.
 import * as THREE from 'three';
 import { buildV8 } from './engine3d.js';
-import { clutchModel, gearboxGears, transferHousing, diffHousing } from './assets.js';
+import { clutchModel, gearboxGears, diffHousing } from './assets.js';
 
 const Y = new THREE.Vector3(0, 1, 0);
 const COL = {
@@ -246,13 +246,31 @@ export function buildGearbox(A = {}) {
 export function buildTransfer(A = {}) {
   const root = new THREE.Group();
   const castM = (c) => mat(c, { metalness: 0.55, roughness: 0.55 });
-  const box = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.5), castM(COL.cast)); root.add(casing(box));
+  // BTR-80 taqsimlash qutisi korpusi (ma'ruzadagi qirqim chizmasi bo'yicha): ikki yarim korpus, ajratish
+  // chizig'idagi boltlar, yuqorida yetaklovchi val, pastda old va orqa ko'priklarga chiqish vallari.
+  const housing = new THREE.Group(); root.add(housing);
+  const hm = castM(COL.cast);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.36, 0.34), hm); housing.add(casing(body));
+  for (const s of [-1, 1]) {
+    const boss = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.42, 24), hm); boss.rotation.z = Math.PI / 2; boss.position.set(0, s * 0.09, 0); housing.add(casing(boss));
+    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.36), castM(COL.castDark)); rib.position.y = s * 0.17; housing.add(casing(rib));
+  }
+  const flangeLine = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.4, 0.38), castM(COL.castDark)); housing.add(casing(flangeLine));
+  for (let i = 0; i < 10; i++) {
+    const t = i / 10 * Math.PI * 2; const bolt = cylX(0.009, 0.04, COL.steel, 6);
+    bolt.position.set(0, Math.max(-0.18, Math.min(0.18, Math.sin(t) * 0.26)), Math.max(-0.18, Math.min(0.18, Math.cos(t) * 0.26))); housing.add(bolt);
+  }
+  for (const [x, y] of [[-0.25, 0.08], [0.25, -0.08], [-0.25, -0.08]]) {
+    const cap = cylX(0.06, 0.05, COL.castDark, 20); cap.position.set(x * 0.92, y, 0); housing.add(cap);
+    const fl = cylX(0.07, 0.02, COL.gearDark, 20); fl.position.set(x * 1.06, y, 0); housing.add(fl);
+  }
+  const lever = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 8), mat(COL.steel)); lever.position.set(0.05, 0.26, 0.1); lever.rotation.x = -0.3; housing.add(lever);
+  const pto = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.08), hm); pto.position.set(0.08, -0.1, 0.21); housing.add(casing(pto));
   const g1 = gear(0.075, 0.05, 'x'); g1.position.set(-0.05, 0.08, 0); root.add(g1);
   const g2 = gear(0.075, 0.05, 'x', COL.gearDark); g2.position.set(-0.05, -0.08, 0); root.add(g2);
   const g3 = gear(0.05, 0.04, 'x', COL.brass); g3.position.set(0.1, -0.08, 0.1); root.add(g3);
   const diff = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), mat(COL.steel)); diff.position.set(0.08, -0.08, -0.08); root.add(diff);
   root.traverse((o) => { if (o.isMesh) o.userData.part = 'transfer'; });
-  if (A.transfer) { root.remove(box); root.add(transferHousing(A.transfer)); }
   function update(crank, wheel) { spin(g1, wheel * 4); spin(g2, -wheel * 4); spin(g3, wheel * 6); diff.rotation.x = wheel * 4; }
   return { root, update };
 }
