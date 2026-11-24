@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { buildKPVT, buildPKT, pktModel, buildTurretInterior, buildSightBody } from './weapons.js';
 import { dshkModel } from './assets.js';
 import { buildWheelStation } from './wheelstation.js';
+import { buildSteering } from './steering.js';
 
 const KMH = 3.6;
 const VMAX = 80 / KMH;            // m/s
@@ -31,7 +32,7 @@ export function createDrive(ctx) {
   /* --- harakatlanuvchi qismlar --- */
   const wheels = [];
   const body = [];
-  let turretPivot = null, gunPivot = null;
+  let turretPivot = null, gunPivot = null, steering = null;
   const extra = [];
   const GUN_REST = Math.atan2(0.52, 1.08);
   if (real) {
@@ -77,6 +78,10 @@ export function createDrive(ctx) {
       wheels.push({ steer, spin, axle: Math.floor(+wi / 2) });
       buildWheelStation(real, steer, spin, c, extra);
     });
+    // Rul boshqarmasi (old ikki ko'prik)
+    steering = buildSteering([axles[0], axles[1]]);
+    real.add(steering.group);
+    steering.group.traverse((m) => { if (m.isMesh) extra.push(m); });
     // Qurol beshigi: KPVT va PKT o'q (tsapfa) atrofida ko'tariladi/tushadi.
     // Modelda stvol 25.7° ko'tarilgan holda; GUN_REST uni gorizontal holatga keltiradi.
     gunPivot = new THREE.Group();
@@ -297,7 +302,8 @@ export function createDrive(ctx) {
     if (turretPivot) turretPivot.rotation.y = S.turret;
     if (dash) dash.update(a, S.on ? S.rpm : 0, S.on, dt);
     if (impeller && running) impeller.rotation.x += engineSpin * dt * 0.6; // suv otgich parragi taqsimlash qutisidan harakat oladi
-    if (steerSpin) steerSpin.rotation.z = S.steer * 5; // rul chambaragi g'ildiraklar bilan birga buriladi
+    if (steerSpin) steerSpin.rotation.z = S.steer * 5;
+    if (steering) steering.update(S.steer); // rul chambaragi g'ildiraklar bilan birga buriladi
     if (gunPivot) gunPivot.rotation.x = GUN_REST - S.elev * Math.PI / 180;
 
     // yer harakati
