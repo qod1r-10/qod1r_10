@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel } from './details.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit } from './details.js';
 import { driveshaftBetween, radiatorModel, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
@@ -365,7 +365,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   const cmd = new THREE.Group();
   if (assets.seat) { const m = seatModel(assets.seat); m.position.set(-0.05, -0.44, 0); cmd.add(m); }
   else { const cSeat = seat(); cmd.add(cSeat); }
-  const cPanel = box(0.18, 0.22, 0.5, C.darkSteel); cPanel.position.set(0.78, 0.35, 0); cmd.add(cPanel);
+  cmd.add(buildCommanderKit()); // TKN-3, IQ yoritgich, R-174, komandir pulti
   cmd.position.set(2.3, 0.95, 0.47);
   add('commander', cmd);
 

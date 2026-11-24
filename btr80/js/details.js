@@ -212,3 +212,34 @@ export function buildCooling() {
   g.add(pipe([[-3.1, 1.7, -0.7], [-3.2, 1.1, -0.45], [-3.25, 0.8, -0.3]], 0.022));
   return g;
 }
+
+/* ---------- Komandir o'rni jihozlari ----------
+   Komandir guruhi lokal koordinatalarida: x — old, y — yuqori (o'rindiq asosi y≈0), z — o'ngga (bort tomon). */
+export function buildCommanderKit() {
+  const g = new THREE.Group();
+  const OLV = M(0x56603f, { metalness: 0.35, roughness: 0.6 });
+  // TKN-3: tomga osilgan kuzatish pribori, ikki okulyar komandir tomonga (-x)
+  const tkn = new THREE.Group();
+  const body = box(0.16, 0.22, 0.22, OLV); tkn.add(body);
+  const head = cyl(0.07, 0.07, 0.16, OLV, 16); head.position.y = 0.17; tkn.add(head);
+  for (const dz of [-0.045, 0.045]) { const eye = cyl(0.026, 0.03, 0.09, M(DARK), 14); eye.rotation.z = Math.PI / 2; eye.position.set(-0.12, -0.02, dz); tkn.add(eye); const cupE = cyl(0.032, 0.032, 0.02, M(0x111111, { roughness: 0.9 }), 14); cupE.rotation.z = Math.PI / 2; cupE.position.set(-0.17, -0.02, dz); tkn.add(cupE); }
+  const handle = box(0.03, 0.03, 0.14, M(DARK)); handle.position.set(-0.05, -0.13, 0); tkn.add(handle);
+  tkn.position.set(0.42, 0.88, 0.02); g.add(tkn);
+  // Infraqizil yoritgich (tom ustida, TKN-3 bilan birga buriladi)
+  const ir = new THREE.Group();
+  const lampB = cyl(0.11, 0.09, 0.14, OLV, 20); lampB.rotation.z = Math.PI / 2; ir.add(lampB);
+  const lens = cyl(0.1, 0.1, 0.01, M(0x3a1010, { emissive: 0x220000, roughness: 0.2 }), 20); lens.rotation.z = Math.PI / 2; lens.position.x = 0.075; ir.add(lens);
+  const stand = cyl(0.015, 0.015, 0.18, M(DARK)); stand.position.y = -0.14; ir.add(stand);
+  ir.position.set(0.48, 1.32, 0.05); g.add(ir);
+  // R-174 ichki aloqa qurilmasi (o'ng devorda)
+  const ic = box(0.14, 0.16, 0.06, OLV); ic.position.set(0.05, 0.5, 0.36); g.add(ic);
+  for (let i = 0; i < 2; i++) { const k = cyl(0.018, 0.018, 0.03, M(STEEL), 10); k.rotation.x = Math.PI / 2; k.position.set(0.02 + i * 0.06, 0.52, 0.33); g.add(k); }
+  // Komandir pulti: kichik panel, uchta asbob, tumblerlar
+  const panel = box(0.12, 0.2, 0.36, OLV); panel.position.set(0.72, 0.34, 0.02); g.add(panel);
+  for (let i = 0; i < 3; i++) { const d = cyl(0.04, 0.04, 0.02, M(0x0e0f0e), 18); d.rotation.z = Math.PI / 2; d.position.set(0.655, 0.38, -0.1 + i * 0.1); g.add(d); const r = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.006, 6, 20), M(STEEL)); r.rotation.y = Math.PI / 2; r.position.set(0.655, 0.38, -0.1 + i * 0.1); g.add(r); }
+  for (let i = 0; i < 4; i++) { const t = cyl(0.006, 0.006, 0.04, M(STEEL), 6); t.rotation.z = Math.PI / 2 - 0.4; t.position.set(0.64, 0.29, -0.12 + i * 0.08); g.add(t); }
+  // kabellar
+  const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.05, 0.5, 0.36), new THREE.Vector3(0.2, 0.75, 0.38), new THREE.Vector3(0.42, 0.85, 0.12)]), 24, 0.01, 6), M(0x141414, { roughness: 0.9 }));
+  g.add(cable);
+  return g;
+}

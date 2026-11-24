@@ -83,7 +83,7 @@ export const CATEGORIES = [
     desc: "Korpusning old qismida ekipaj ish o'rinlari joylashgan.",
     parts: [
       { id: 'driver', name: "Haydovchi o'rni", desc: "Chap tomonda. Gidrokuchaytirgichli rul, pedallar, nazorat-o'lchov asboblari va shina bosimini boshqarish pulti shu yerda." },
-      { id: 'commander', name: "Komandir o'rni", desc: "O'ng tomonda. Komandir radiostansiya orqali aloqani boshqaradi va kuzatish priborlari bilan vaziyatni kuzatadi." },
+      { id: 'commander', name: "Komandir o'rni", desc: "O'ng old tomonda. Komandir tomdagi TKN-3 kuzatish pribori (kunduzgi va tungi) orqali atrofni kuzatadi; tunda u infraqizil yoritgich bilan ishlaydi. Old tomonda zirhli qopqoqli oyna va periskoplar bor. Komandir radiostansiya orqali tashqi aloqani, R-174 qurilmasi orqali ekipaj ichki aloqasini boshqaradi.", specs: [['Kuzatish pribori', 'TKN-3 (kunduzgi/tungi)'], ['Ichki aloqa', 'R-174']] },
       { id: 'steering', name: 'Rul boshqarmasi', desc: "Rul chambaragidan aylanish rul ustuni orqali rul mexanizmiga beriladi. Rul mexanizmi soshkani tebratadi; soshka bo'ylama tortqi orqali 1-ko'prikning burilish richagini, oraliq tortqi orqali 2-ko'prikni buradi. Har ko'prikdagi ko'ndalang tortqi chap va o'ng g'ildiraklarni birga buradi. Gidrokuchaytirgich (nasos va kuchaytirgich silindri) rulni burishni yengillashtiradi. Faqat oldingi ikki ko'prik g'ildiraklari buriladi.", specs: [['Boshqariladigan', "1- va 2-ko'prik"], ['Kuchaytirgich', 'gidravlik'], ['Tarkibi', 'rul mexanizmi va rul yuritmasi']] },
       { id: 'gunner', name: "O'q otuvchi o'rni", desc: "Minora ostidagi osma o'rindiq. O'q otuvchi minora bilan birga buriladi." },
     ],
