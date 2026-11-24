@@ -163,6 +163,16 @@ export function extModel(scene) {
 // Qurol beshigi koordinatalarida: stvol o'qi (x -0.01, y -0.04), +z ga qaragan.
 export function dshkModel(scene, s = 1.0) {
   const g = wrap(scene, { pivot: [0.16, 0.744, 1.23], scale: s, pos: [-0.01, -0.04, 1.32] });
+  // Qo'shaloq qurilmaning ramkasi (tepadagi to'sin va orqa ustun) olib tashlanadi
+  g.updateMatrixWorld(true);
+  const drop = [];
+  g.traverse((o) => {
+    if (!o.isMesh) return;
+    const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+    const local = g.worldToLocal(c.clone());
+    if (local.y > 0.18 || (sz.y < 0.15 && sz.z > 0.8 && local.y > 0.1)) drop.push(o);
+  });
+  drop.forEach((o) => o.parent.remove(o));
   return paint(g, null, 'kpvt');
 }
 

@@ -76,7 +76,7 @@ export const AXLES_X = [2.115, 0.765, -0.765, -2.115];
 
 // Haqiqiy 3D modelda (models/btr80.glb) bor tashqi qismlar
 const REAL_PARTS = new Set(['hull', 'hatch_front', 'hatch_roof', 'side_doors', 'vision', 'turret', 'kpvt', 'pkt', 'sight', 'smoke',
-  'wheels', 'suspension', 'trimvane', 'lights', 'antenna']);
+  'wheels', 'suspension', 'trimvane', 'lights', 'antenna', 'gunner']);
 export const REAL_AXLES_X = [2.16, 0.755, -0.935, -2.41];
 
 // exterior=false: faqat ichki qismlar (tashqi ko'rinish haqiqiy modeldan olinadi)
@@ -96,7 +96,6 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   const add = (part, obj, parent = root) => {
     tag(part, obj);
     if (!exterior && REAL_PARTS.has(part)) return obj; // haqiqiy modelda bor
-    if (!exterior && part === 'firing_ports') obj.traverse(o => { o.userData.ghost = true; });
     if (!exterior && part === 'radiator' && obj.isMesh && obj.position.y > 2) return obj; // tomdagi jalyuzlar
     parent.add(obj); return obj;
   };
@@ -272,7 +271,14 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   add('shafts', cylBetween([-0.4, 0.72, 0.12], [-3.3, 0.82, 0.12], 0.03, C.shaft, 8));
 
   for (const s of [-1, 1]) {
-    if (assets.tank) { const t = tankModel(assets.tank); t.position.set(-1.8, 0.85, s * 0.72); add('fuel', t); continue; }
+    // BTR-80 yonilg'i baki: korpus yon devoriga moslangan to'rtburchak bak (qovurg'alari va quyish bo'g'izi bilan)
+    { const t = new THREE.Group();
+      const body = box(0.42, 0.9, 0.34, C.tank); t.add(body);
+      for (const yy of [-0.25, 0, 0.25]) { const rib = box(0.43, 0.025, 0.35, C.armorDark); rib.position.y = yy; t.add(rib); }
+      const neck = cyl(0.05, 0.05, 0.08, C.darkSteel, 14); neck.position.set(0.1, 0.49, 0); t.add(neck);
+      const capT = cyl(0.065, 0.065, 0.03, C.darkSteel, 14); capT.position.set(0.1, 0.54, 0); t.add(capT);
+      const strap = box(0.03, 0.92, 0.36, C.darkSteel); strap.position.x = -0.12; t.add(strap); const strap2 = strap.clone(); strap2.position.x = 0.12; t.add(strap2);
+      t.position.set(-1.8, 1.3, s * 0.78); add('fuel', t); continue; }
     const tank = box(0.36, 0.95, 0.5, C.tank);
     tank.position.set(-1.8, 1.32, s * 0.72);
     add('fuel', tank);

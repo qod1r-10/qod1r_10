@@ -1,7 +1,7 @@
 // Yurgizish rejimi: harakat, rul, minora va kuch uzatilishini ko'rsatish.
 // Mashina joyida turadi, yer (to'r va belgilar) uning ostidan harakatlanadi.
 import * as THREE from 'three';
-import { buildKPVT, buildPKT, pktModel } from './weapons.js';
+import { buildKPVT, buildPKT, pktModel, buildTurretInterior, buildSightBody } from './weapons.js';
 import { dshkModel } from './assets.js';
 import { buildWheelStation } from './wheelstation.js';
 
@@ -94,6 +94,10 @@ export function createDrive(ctx) {
     rig.rotation.x = -GUN_REST;
     const A = ctx.assets || {};
     rig.add(A.dshk ? dshkModel(A.dshk) : buildKPVT(), A.pkt ? pktModel(A.pkt) : buildPKT());
+    // Minora ichi: minora bilan birga buriladi
+    const ti = buildTurretInterior(); turretPivot.add(ti);
+    const sb = buildSightBody(); sb.position.set(0, 2.28, 0.29); turretPivot.add(sb);
+    [ti, sb].forEach((o) => o.traverse((m) => { if (m.isMesh) extra.push(m); }));
     gunPivot.add(rig);
     rig.traverse((o) => { if (o.isMesh) extra.push(o); });
     body.push({ o: turretPivot, y: turretPivot.position.y });

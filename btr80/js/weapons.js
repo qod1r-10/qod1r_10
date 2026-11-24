@@ -118,3 +118,48 @@ export function pktModel(scene) {
   });
   return g;
 }
+
+// Minora ichi (BPU-1): tishli pogon halqasi, minora osti karkasi, burish va ko'tarish qo'l g'ildirakchalari
+// reduktorlari bilan, nishon qurilmasi tanasi, patron qutilari, osma o'q otuvchi o'rindig'i.
+// Minora burilish guruhi koordinatalarida: (0,0,0) — pogon markazi poldan pastda, minora tagi y≈2.0; +z — old.
+export function buildTurretInterior() {
+  const g = new THREE.Group();
+  const OL = 0x56603f, OL2 = 0x4a5236, part = (o, p) => { o.traverse((m) => { if (m.isMesh) { m.userData.part = p; m.castShadow = true; } }); return o; };
+  const Y0 = 1.97;
+  // pogon: sharikli tayanch halqasi va ichki tishli gardish
+  const ringO = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.03, 10, 64), M(STEEL)); ringO.rotation.x = Math.PI / 2; ringO.position.y = Y0 - 0.03; g.add(part(ringO, 'turret'));
+  const teeth = new THREE.Group();
+  for (let i = 0; i < 72; i++) { const a = (i / 72) * Math.PI * 2; const t = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.04, 0.03), M(GUN2)); t.position.set(Math.cos(a) * 0.56, Y0 - 0.02, Math.sin(a) * 0.56); t.rotation.y = -a; teeth.add(t); }
+  g.add(part(teeth, 'turret'));
+  // minora osti karkasi: pastki halqa va ustunlar
+  const cageY = 1.18;
+  const ringB = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.02, 8, 48), M(OL)); ringB.rotation.x = Math.PI / 2; ringB.position.y = cageY; g.add(part(ringB, 'turret'));
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + 0.3;
+    const p0 = new THREE.Vector3(Math.cos(a) * 0.46, cageY, Math.sin(a) * 0.46), p1 = new THREE.Vector3(Math.cos(a) * 0.56, Y0 - 0.04, Math.sin(a) * 0.56);
+    const d = p1.clone().sub(p0); const r = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, d.length(), 8), M(OL));
+    r.position.copy(p0).add(p1).multiplyScalar(0.5); r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(part(r, 'turret'));
+  }
+  // qo'l g'ildirakchalari (burish — chapda, ko'tarish — o'ngda) va reduktorlar
+  const handwheel = (x, y, z, rotY) => {
+    const w = new THREE.Group();
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 28), M(OL2)); w.add(rim);
+    for (let k = 0; k < 4; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.012, 0.012), M(OL2)); sp.rotation.z = (k / 4) * Math.PI; w.add(sp); }
+    const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.06, 8), M(0x2a2420, { metalness: 0.1, roughness: 0.7 })); knob.rotation.x = Math.PI / 2; knob.position.set(0.09, 0, 0.03); w.add(knob);
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.12), M(OL)); box.position.z = -0.1; w.add(box);
+    w.position.set(x, y, z); w.rotation.y = rotY; return w;
+  };
+  g.add(part(handwheel(0.34, 1.72, 0.1, Math.PI / 2), 'turret'));   // burish mexanizmi
+  g.add(part(handwheel(-0.3, 1.78, 0.25, -Math.PI / 2), 'turret')); // ko'tarish mexanizmi
+  // patron qutilari (KPVT — o'ngda, PKT — chapda) va gilza trubkalari
+  const ammo = (x, z, w, h, d, p) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(OL)); b.position.set(x, 1.7, z); const lid = new THREE.Mesh(new THREE.BoxGeometry(w + 0.01, 0.02, d + 0.01), M(OL2)); lid.position.set(x, 1.7 + h / 2, z); const grp = new THREE.Group(); grp.add(b, lid); return part(grp, p); };
+  g.add(ammo(-0.38, 0.0, 0.16, 0.26, 0.36, 'kpvt'));
+  g.add(ammo(0.36, 0.42, 0.12, 0.2, 0.26, 'pkt'));
+  // osma o'q otuvchi o'rindig'i (karkas halqasiga ilingan)
+  const seat = new THREE.Group();
+  const cushion = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.3), M(0x5a3b28, { metalness: 0.05, roughness: 0.8 })); seat.add(cushion);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.04), M(0x5a3b28, { metalness: 0.05, roughness: 0.8 })); back.position.set(0, 0.14, -0.16); seat.add(back);
+  for (const sx of [-0.15, 0.15]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 8), M(OL)); arm.position.set(sx, -0.16, -0.12); arm.rotation.x = 0.5; seat.add(arm); }
+  seat.position.set(0, 1.28, -0.3); g.add(part(seat, 'gunner'));
+  return g;
+}
