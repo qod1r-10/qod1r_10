@@ -93,7 +93,8 @@ export const CATEGORIES = [
     name: "Desant bo'limi",
     desc: "Korpusning o'rta qismida 7 nafar desantchi joylashadi.",
     parts: [
-      { id: 'troop_seats', name: "Desantchilar o'rindiqlari", desc: "O'rindiqlar korpus o'rtasida orqama-orqa joylashgan. Desantchilar yonga qarab o'tirib, ambrazuralardan o't ochadi." },
+      { id: 'troop_seats', name: "Desantchilar o'rindiqlari", desc: "Korpus o'rtasida orqama-orqa joylashgan ikki skameyka: metall quvur ramka, charm qoplamali o'rindiq va suyanchiqlar. Desantchilar yon devorlarga, ya'ni ambrazuralar tomonga qarab o'tiradi va ulardan o't ochadi." },
+      { id: 'stowage', name: "O'q-dorilar va jihozlar joylanishi", desc: "Desant bo'limi devorlari bo'ylab pulemyotlar uchun patron qutilari va ichimlik suvi kanistrlari mahkamlangan." },
       { id: 'fire', name: "O't o'chirgichlar", desc: "Qo'l o't o'chirgichlari boshqaruv va desant bo'limlarida mahkamlangan. Dvigatel bo'limi uchun esa ballonli avtomatik yong'inga qarshi tizim o'rnatilgan." },
       { id: 'firing_ports', name: "Ambrazuralar (o'q otish teshiklari)", desc: "Korpus yonlaridagi teshiklar. Desantchilar ular orqali shaxsiy qurolidan mashina ichidan turib o't ochadi." },
     ],

@@ -12,7 +12,7 @@ const RULES = {
   wheels: [0, 0, 'S1.3'], suspension: [0, -0.15, 'S0.75'], brakes: [0, -0.05, 'S0.95'], halfshafts: [0, -0.45, 'S0.4'], axles: [0, -0.55, 0], shafts: [0, -0.3, 0],
   engine: [-1.1, 1.1, 0], crank: [-1.1, 0.35, 0], valvetrain: [-1.1, 1.55, 0], radiator: [-1.3, 3.0, 0],
   gearbox: [-0.2, 0.75, 0], transfer: [0, 0.55, 0], fuel: [-0.3, 1.0, 'S1.0'], waterjet: [-1.7, 0.4, 0],
-  driver: [1.2, 1.0, -0.5], steering: [0.6, -0.35, 0], commander: [1.2, 1.0, 0.5], troop_seats: [0, 1.25, 0], fire: [0, 1.4, 'S0.6'],
+  driver: [1.2, 1.0, -0.5], steering: [0.6, -0.35, 0], commander: [1.2, 1.0, 0.5], troop_seats: [0, 1.25, 0], stowage: [0, 1.0, 'S0.9'], fire: [0, 1.4, 'S0.6'],
   radio: [0.6, 1.8, 0.9], battery: [0.4, 0.6, -1.3], fvu: [0.3, 1.3, 1.3],
 };
 

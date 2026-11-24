@@ -378,24 +378,41 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   /* ---------- DESANT BO'LIMI ---------- */
   const seats = new THREE.Group();
   const BL = assets.kamaz ? 1.6 : 2.2;
-  if (assets.seat) {
-    // Desantchilar o'rindiqlari: o'rtada orqama-orqa, yon tomonga (ambrazuralarga) qaragan
-    for (const xx of [-0.55, 0, 0.55]) for (const s of [-1, 1]) {
-      const m = seatModel(assets.seat, 0.0031, 'troop_seats');
-      m.rotation.y = s > 0 ? 0 : Math.PI; // modelning old tomoni +z
-      m.position.set(xx, -0.44, s * 0.26);
-      seats.add(m);
+  {
+    // Desantchilar skameykalari: o'rtada orqama-orqa, yon devorlarga (ambrazuralarga) qaragan.
+    // Metall quvur ramka, to'q rangli charm o'rindiq va suyanchiqlar, har tomonda 3 kishilik.
+    const LEATHER = mat(0x2e2522, { metalness: 0.05, roughness: 0.75 }), TUBE = mat(0x9aa09a, { metalness: 0.75, roughness: 0.35 });
+    const n = 3, segL = BL / n;
+    const tube = (a, b, r = 0.016) => { const m = cylBetween(a, b, r, 0x9aa09a, 8); m.material = TUBE; seats.add(m); };
+    for (const sd of [-1, 1]) {
+      for (let i = 0; i < n; i++) {
+        const x = -BL / 2 + segL * (i + 0.5);
+        const cu = new THREE.Mesh(new THREE.BoxGeometry(segL - 0.04, 0.08, 0.36), LEATHER); cu.position.set(x, 0, sd * 0.24); seats.add(cu);
+        const bk = new THREE.Mesh(new THREE.BoxGeometry(segL - 0.04, 0.4, 0.07), LEATHER); bk.position.set(x, 0.3, sd * 0.06); bk.rotation.x = sd * -0.08; seats.add(bk);
+      }
+      tube([-BL / 2, -0.05, sd * 0.42], [BL / 2, -0.05, sd * 0.42]);   // o'rindiq old quvuri
+      tube([-BL / 2, 0.52, sd * 0.02], [BL / 2, 0.52, sd * 0.02]);       // suyanchiq tepasidagi quvur
+      for (let i = 0; i <= n; i++) {
+        const x = -BL / 2 + segL * i;
+        tube([x, -0.45, sd * 0.4], [x, -0.05, sd * 0.42]);                 // oyoq
+        tube([x, -0.05, sd * 0.42], [x, -0.05, 0]);                        // ko'ndalang
+      }
     }
-  } else {
-  const bench = box(BL, 0.1, 0.9, C.seat); seats.add(bench);
-  const backrest = box(BL, 0.55, 0.08, C.seat); backrest.position.y = 0.32; seats.add(backrest);
-  for (const xx of [-BL * 0.43, 0, BL * 0.43]) for (const zz of [-0.36, 0.36]) { const leg = box(0.06, 0.4, 0.06, C.darkSteel); leg.position.set(xx, -0.25, zz); seats.add(leg); }
-  for (const s of [-1, 1]) {
-    const side = box(0.5, 0.08, 0.38, C.seat); side.position.set(BL / 2 + 0.25, 0.0, s * 0.6); seats.add(side);
-  }
+    for (let i = 0; i <= n; i++) { const x = -BL / 2 + segL * i; tube([x, -0.45, 0], [x, 0.52, 0], 0.02); }  // markaziy ustunlar
+    tube([-BL / 2, -0.44, 0], [BL / 2, -0.44, 0], 0.02);                   // pol bo'ylab asos
   }
   seats.position.set(assets.kamaz ? -0.3 : -0.62, 0.95, 0);
   add('troop_seats', seats);
+
+  // Desant bo'limida joylangan jihozlar: patron qutilari va suv kanistrlari (yon devorlar bo'ylab)
+  {
+    const st = new THREE.Group();
+    const ammoBox = (x, zz) => { const g = new THREE.Group(); const b = box(0.3, 0.18, 0.16, 0x4f5a37); g.add(b); const lid = box(0.31, 0.02, 0.17, 0x3e4729); lid.position.y = 0.1; g.add(lid); const h = box(0.1, 0.015, 0.02, C.darkSteel); h.position.set(0, 0.12, 0); g.add(h); g.position.set(x, 0.6, zz); st.add(g); };
+    const can = (x, zz) => { const g = new THREE.Group(); const b = box(0.14, 0.34, 0.24, 0x55603c); g.add(b); const cap = cyl(0.025, 0.025, 0.04, C.darkSteel, 10); cap.position.set(0.04, 0.19, 0.07); g.add(cap); const hd = box(0.03, 0.03, 0.18, C.darkSteel); hd.position.set(-0.02, 0.19, -0.02); g.add(hd); g.position.set(x, 0.68, zz); st.add(g); };
+    for (const sd of [-1, 1]) { ammoBox(-0.9, sd * 0.86); ammoBox(-0.55, sd * 0.86); ammoBox(0.35, sd * 0.86); }
+    can(-1.3, -0.82); can(0.7, 0.82);
+    add('stowage', st);
+  }
 
   // O't o'chirgichlar: boshqaruv va desant bo'limlarida
   if (assets.ext) for (const [x, z] of [[1.95, -0.6], [-1.3, 0.42]]) { const e = extModel(assets.ext); e.position.set(x, 0.9, z); add('fire', e); }
