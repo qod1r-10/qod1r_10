@@ -1,6 +1,13 @@
 /* Layout: chap tomonda to'liq balandlikdagi 3D ko'rinish, o'ngda qismlar paneli; telefonda ustma-ust. */
+/* Ko'rinish rejimi: sarlavhadagi "Kunduzgi | Tungi" tugmasi bilan tanlanadi (standart: tungi).
+   O'ng panel har doim tungi (yashil-qora) ranglarda qoladi. */
 :root {
-  /* Sayt doim bitta, tungi (yashil-qora) ko'rinishda: kunduzgi rejim yo'q */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --panel-w: 400px;
+}
+:root, .panel {
   --bg: #12150f;
   --surface: #191d15;
   --line: #2c3225;
@@ -12,11 +19,21 @@
   --grid: #343b2b;
   --stage-top: #1c2017;
   --stage-bottom: #0e100b;
-  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
-  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --panel-w: 400px;
   color-scheme: dark;
+}
+:root[data-mode="light"] {
+  --bg: #e7e9e0;
+  --surface: #f4f5ef;
+  --line: #cfd3c3;
+  --fg: #1e2218;
+  --muted: #5d6452;
+  --accent: #55652c;
+  --accent-soft: #dfe5cc;
+  --hl: #d98613;
+  --grid: #b9bea9;
+  --stage-top: #f1f2ec;
+  --stage-bottom: #d9dccf;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -67,8 +84,29 @@ button { font: inherit; color: inherit; }
   text-transform: uppercase;
   color: var(--muted);
 }
+/* Kunduzgi / tungi rejim almashtirgichi */
+.mode {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.mode-btn {
+  border: 0;
+  background: none;
+  padding: 6px 11px;
+  font: 500 12px/1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+}
+.mode-btn + .mode-btn { border-left: 1px solid var(--line); }
+.mode-btn:hover { color: var(--fg); }
+.mode-btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
 .author {
-  margin: 0 0 0 auto;
+  margin: 0 0 0 16px;
   flex: none;
   text-align: right;
   font-size: 13px;
@@ -250,6 +288,7 @@ button { font: inherit; color: inherit; }
   overflow-y: auto;
   border-left: 1px solid var(--line);
   background: var(--surface);
+  color: var(--fg);
 }
 /* Panel ichi: ekran past bo'lsa (masalan, yotiq interaktiv doska), main.js uni zoom bilan kichraytirib,
    qismlar ro'yxatini aylantirmasdan to'liq sig'diradi */
@@ -383,8 +422,9 @@ button { font: inherit; color: inherit; }
   .panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
   .top h1 { font-size: 19px; }
   .top { flex-wrap: wrap; row-gap: 6px; }
-  .top-text { flex: 1 1 0; }
-  .author { margin: 0; flex-basis: 100%; text-align: left; padding-left: 52px; }
+  .top-text { flex: 1 1 calc(100% - 52px); }
+  .author { order: 3; margin: 0; flex: 1 1 0; min-width: 0; text-align: left; padding-left: 52px; }
+  .mode { order: 4; align-self: center; }
   .author-label { display: inline; }
   .author-group { display: inline; margin-left: 6px; }
   .crumbs, .info, .list-title, .foot { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }

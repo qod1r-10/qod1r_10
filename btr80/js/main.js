@@ -15,6 +15,19 @@ const $ = (s) => document.querySelector(s);
 // Oflayn (bitta fayl) versiyada fayllar ichki xotiradan olinadi
 const asset = (p) => (window.__asset ? window.__asset(p) : p);
 
+/* ---------- Ko'rinish rejimi: kunduzgi / tungi ----------
+   Foydalanuvchi sarlavhadagi tugma bilan tanlaydi, tanlov shu brauzerda eslab qolinadi (standart: tungi).
+   O'ng panel CSS da har doim tungi ranglarda. */
+function setMode(mode, save) {
+  document.documentElement.dataset.mode = mode;
+  document.querySelectorAll('[data-mode-set]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modeSet === mode)));
+  if (save) { try { localStorage.setItem('btr80-mode', mode); } catch (e) { /* saqlab bo'lmasa ham ishlaydi */ } }
+}
+let savedMode = null;
+try { savedMode = localStorage.getItem('btr80-mode'); } catch (e) { /* saqlangan tanlov yo'q */ }
+setMode(savedMode === 'light' ? 'light' : 'dark', false);
+document.querySelectorAll('[data-mode-set]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.modeSet, true)));
+
 /* ---------- O'ng panelni ekranga sig'dirish ----------
    Yotiq va past ekranlarda (masalan, sensorli interaktiv doska) panel ichidagi hamma narsa — ma'lumot va
    "Asosiy qismlar" ro'yxati — aylantirmasdan ko'rinishi uchun panel ichi zoom bilan kichraytiriladi. */
@@ -129,7 +142,7 @@ function applyTheme() {
 }
 applyTheme();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-mode'] });
 
 /* ---------- Model ---------- */
 // Tashqi ko'rinish: haqiqiy teksturali model (models/btr80.glb). Ichki qismlar: model.js dagi sxematik detallar.
