@@ -166,6 +166,7 @@ button { font: inherit; color: inherit; }
 .tool:hover:not(:disabled) { border-color: var(--accent); }
 .tool:disabled { opacity: 0.45; cursor: default; }
 .tool[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.tool-only { border-color: var(--hl); }
 .legend {
   position: absolute;
   left: 14px; bottom: 12px;
@@ -286,22 +287,19 @@ button { font: inherit; color: inherit; }
 .dlabels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .dl {
   position: absolute; left: 0; top: 0;
-  display: flex; align-items: center; gap: 6px;
-  padding: 3px 9px 3px 3px;
+  display: grid; place-items: center;
+  padding: 2px;
   border-radius: 99px;
-  background: rgb(14 16 11 / 0.82);
-  border: 1px solid rgb(255 255 255 / 0.16);
-  color: #eef0e6;
-  font: 600 12.5px/1.2 var(--font-body);
-  white-space: nowrap;
+  background: rgb(14 16 11 / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.22);
 }
 .dl b {
   display: grid; place-items: center;
-  width: 20px; height: 20px; border-radius: 50%;
+  min-width: 22px; height: 22px; padding: 0 4px; border-radius: 99px;
   background: #f2a33a; color: #1b1405;
-  font: 700 12px/1 var(--font-mono);
+  font: 700 12.5px/1 var(--font-mono);
 }
-.dl-side { padding-left: 9px; color: #c9cdbf; font-weight: 500; }
+.dl-side b { background: #cfd5c0; }
 /* Namoyish paneli: doira tanlovi, qadamlar, ranglar, takt ko'rsatkichi */
 .seg { display: flex; margin: 10px 0 8px; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
 .seg-btn { flex: 1; border: 0; background: none; padding: 8px 10px; font: 600 15px/1.2 var(--font-display); letter-spacing: 0.02em; color: var(--muted); cursor: pointer; }
@@ -311,12 +309,14 @@ button { font: inherit; color: inherit; }
 .steps { margin: 6px 0 8px; padding: 0; list-style: none; counter-reset: st; display: grid; gap: 3px; }
 .steps li { counter-increment: st; display: flex; align-items: baseline; gap: 8px; font-size: 14px; }
 .steps li::before {
-  content: counter(st); flex: none;
-  display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  content: attr(data-n); flex: none;
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 3px; border-radius: 99px;
   background: var(--hl); color: #1b1405; font: 700 11.5px/1 var(--font-mono);
 }
+.steps-side li::before { background: #cfd5c0; }
+.legend-t { margin-top: 10px; }
 .steps li.back { color: var(--muted); font-style: italic; }
-.steps li.back::before { content: "↺"; background: none; color: var(--muted); border: 1px solid var(--line); }
+.steps li.back::before { background: none; color: var(--muted); border: 1px solid var(--line); }
 .swatches { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
 .swatches span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 18px; height: 6px; border-radius: 3px; }
@@ -484,8 +484,6 @@ button { font: inherit; color: inherit; }
   .cats { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .legend { display: none; }
   /* telefonda modeldagi yorliqlar faqat raqam bilan; nomlari paneldagi ro'yxatda */
-  .dl-num span, .dl-side { display: none; }
-  .dl-num { padding: 2px; }
   .fig-img img { max-height: 260px; }
   .hud { left: 8px; bottom: 8px; padding: 8px 10px; gap: 4px 10px; grid-template-columns: auto auto; max-width: calc(100% - 190px); }
   .hud .rpm, .hud .keys { display: none; }

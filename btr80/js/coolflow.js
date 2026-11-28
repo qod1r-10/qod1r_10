@@ -88,28 +88,27 @@ export function buildCoolFlow() {
   setCircuit('large');
   function update(dt, speed) { tex.offset.x -= dt * speed / SPACING; }
 
-  // Raqamli yorliqlar: suyuqlik o'tadigan qismlar tartibi bilan (panel ro'yxati bilan bir xil)
-  const L = (n, text, pos) => ({ n, text, pos });
+  // Raqamli yorliqlar: suyuqlik o'tadigan qismlar tartibi bilan (paneldagi ro'yxat bilan bir xil).
+  // unit — yoyilmada yorliq qaysi bo'lak bilan birga siljishi.
+  const L = (n, text, pos, unit) => ({ n, text, pos, unit });
+  const common = [
+    L(1, 'Suyuqlik nasosi', [-3.3, 0.86, 0.12], 'u_pump'),
+    L(2, "Silindrlar bloki g'ilofi", [-2.75, 0.88, 0.34], 'u_engine'),
+    L(3, "Silindrlar kallagi g'ilofi", [-2.45, 1.3, 0.34], 'u_engine'),
+    L(4, "Suv yig'uvchi quvurlar", [-3.08, 1.31, 0.3], 'u_coll_r'),
+  ];
   const labels = {
-    small: [
-      L(1, 'Suyuqlik nasosi', [-3.3, 0.86, 0.12]),
-      L(2, "Blok g'ilofi", [-2.75, 0.88, 0.34]),
-      L(3, "Kallak g'ilofi", [-2.45, 1.3, 0.34]),
-      L(4, "Suv yig'uvchi quvur", [-3.08, 1.31, 0.3]),
-      L(5, 'Termostat (yopiq)', [-3.2, 1.5, 0.32]),
-      L(6, "Aylanib o'tish shlangi", [-3.27, 1.12, 0.22]),
+    small: [...common,
+      L(5, 'Termostat (yopiq)', [-3.2, 1.5, 0.32], 'u_thermo'),
+      L(6, "Aylanib o'tish shlangi", [-3.27, 1.12, 0.22], 'u_bypass'),
     ],
-    large: [
-      L(1, 'Suyuqlik nasosi', [-3.3, 0.86, 0.12]),
-      L(2, "Blok g'ilofi", [-2.75, 0.88, 0.34]),
-      L(3, "Kallak g'ilofi", [-2.45, 1.3, 0.34]),
-      L(4, "Suv yig'uvchi quvur", [-3.08, 1.31, 0.3]),
-      L(5, 'Termostat (ochiq)', [-3.2, 1.5, 0.32]),
-      L(6, 'Yuqori shlang', [-3.32, 1.72, 0.3]),
-      L(7, 'Radiator', [RX, RY + 0.05, -0.42]),
-      L(8, 'Pastki shlang', [-3.44, 0.98, -0.32]),
-      L(0, 'Kengaytiruvchi bakcha', [-3.05, 1.95, 0.55]),
-      L(0, 'Ventilyator', [RX - 0.2, RY - 0.42, 0]),
+    large: [...common,
+      L(5, 'Termostat (ochiq)', [-3.2, 1.5, 0.32], 'u_thermo'),
+      L(6, 'Yuqori shlang', [-3.32, 1.72, 0.3], 'u_hose_up'),
+      L(7, 'Radiator', [RX, RY + 0.05, -0.42], 'u_radiator'),
+      L(8, 'Pastki shlang', [-3.44, 0.98, -0.32], 'u_hose_low'),
+      L('A', 'Kengaytiruvchi bakcha', [-3.66, 1.92, 0.37], 'u_tank'),
+      L('B', 'Ventilyator', [RX - 0.2, RY - 0.42, 0], 'u_fan'),
     ],
   };
   return { group, setCircuit, update, labels, get circuit() { return circuit; } };

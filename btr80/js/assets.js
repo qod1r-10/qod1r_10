@@ -51,6 +51,7 @@ function paint(obj, mat, part, casing = false) {
 // Dvigatel korpusi (dvigatel koordinatalarida: o'q +x maxovik tomonga, tirsakli val o'qi y = -0.16)
 export function kamazCasing(scene) {
   const w = wrap(scene, { pivot: [-230, 1046, -6127], scale: 0.001, rot: [0, -Math.PI / 2, 0], pos: [-0.03, -0.16, 0] });
+  w.name = 'u_engine'; w.userData.unit = true; // namoyish yoyilmasida korpus bitta bo'lak bo'lib siljiydi
   return paint(w, { color: 0x50565b, metalness: 0.55, roughness: 0.5 }, 'engine', true);
 }
 

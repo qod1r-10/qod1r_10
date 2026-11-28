@@ -330,69 +330,85 @@ export function buildFireSuppression() {
    Radiator yonida moy radiatori, tepasida kengaytiruvchi bakcha. Dvigatel markazi (-2.85, 0.95, 0). */
 const RX = -3.5, RY = 1.45; // radiator yuqori bakchasi va bo'g'izi korpus tomidan pastda qoladi
 export function buildRadiator() {
+  // Bo'laklar (namoyish yoyilmasida alohida siljiydi): radiator, ventilyator kojuxi, ventilyator
   const g = new THREE.Group();
+  const unit = (name) => { const u = new THREE.Group(); u.name = name; u.userData.unit = true; g.add(u); return u; };
+  const rad = unit('u_radiator'), shroudU = unit('u_shroud');
   const coreM = M(0x8a8f86, { metalness: 0.6, roughness: 0.45 });
   const finM = M(0x5f655c, { metalness: 0.6, roughness: 0.5 });
   const tankM = M(0x3d4233, { metalness: 0.5, roughness: 0.5 });
   const W = 0.9, H = 0.56, T = 0.1;
   // o'zak: qovurg'ali sirt (ko'p yupqa plastinalar)
-  const core = box(T, H, W, coreM); core.position.set(RX, RY, 0); g.add(core);
-  for (let i = 0; i < 30; i++) { const f = box(T + 0.01, H - 0.02, 0.004, finM); f.position.set(RX, RY, -W / 2 + 0.015 + i * (W - 0.03) / 29); g.add(f); }
+  const core = box(T, H, W, coreM); core.position.set(RX, RY, 0); rad.add(core);
+  for (let i = 0; i < 30; i++) { const f = box(T + 0.01, H - 0.02, 0.004, finM); f.position.set(RX, RY, -W / 2 + 0.015 + i * (W - 0.03) / 29); rad.add(f); }
   // yuqori va pastki bakchalar, yon tirgaklar
-  for (const s of [-1, 1]) { const t = box(T + 0.05, 0.08, W + 0.04, tankM); t.position.set(RX, RY + s * (H / 2 + 0.04), 0); g.add(t); const side = box(T + 0.03, H, 0.03, tankM); side.position.set(RX, RY, s * (W / 2 + 0.015)); g.add(side); }
-  const neck = cyl(0.03, 0.03, 0.06, M(DARK), 14); neck.position.set(RX, RY + H / 2 + 0.11, -0.3); g.add(neck);
-  const capR = cyl(0.04, 0.04, 0.02, M(0x9a9a92, { metalness: 0.8 }), 14); capR.position.set(RX, RY + H / 2 + 0.145, -0.3); g.add(capR);
-  for (const s of [-1, 1]) { const pipeS = cyl(0.035, 0.035, 0.08, tankM, 14); pipeS.rotation.z = Math.PI / 2; pipeS.position.set(RX + 0.08, RY + s * (H / 2 + 0.04), s * 0.3); g.add(pipeS); }
+  for (const s of [-1, 1]) { const t = box(T + 0.05, 0.08, W + 0.04, tankM); t.position.set(RX, RY + s * (H / 2 + 0.04), 0); rad.add(t); const side = box(T + 0.03, H, 0.03, tankM); side.position.set(RX, RY, s * (W / 2 + 0.015)); rad.add(side); }
+  const neck = cyl(0.03, 0.03, 0.06, M(DARK), 14); neck.position.set(RX, RY + H / 2 + 0.11, -0.3); rad.add(neck);
+  const capR = cyl(0.04, 0.04, 0.02, M(0x9a9a92, { metalness: 0.8 }), 14); capR.position.set(RX, RY + H / 2 + 0.145, -0.3); rad.add(capR);
+  for (const s of [-1, 1]) { const pipeS = cyl(0.035, 0.035, 0.08, tankM, 14); pipeS.rotation.z = Math.PI / 2; pipeS.position.set(RX + 0.08, RY + s * (H / 2 + 0.04), s * 0.3); rad.add(pipeS); }
   // kojux (ventilyator g'ilofi): radiator orqasidagi plastina va halqa
   const shroudM = M(0xb9bcb4, { metalness: 0.5, roughness: 0.45, side: THREE.DoubleSide });
   const plate = new THREE.Shape(); plate.moveTo(-W / 2, -H / 2 - 0.04); plate.lineTo(W / 2, -H / 2 - 0.04); plate.lineTo(W / 2, H / 2 + 0.04); plate.lineTo(-W / 2, H / 2 + 0.04);
   const hole = new THREE.Path(); hole.absarc(0, 0, 0.27, 0, Math.PI * 2, true); plate.holes.push(hole);
-  const shroud = new THREE.Mesh(new THREE.ShapeGeometry(plate, 32), shroudM); shroud.rotation.y = Math.PI / 2; shroud.position.set(RX - 0.08, RY, 0); g.add(shroud);
-  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 40, 1, true), shroudM); ring.rotation.z = Math.PI / 2; ring.position.set(RX - 0.14, RY, 0); g.add(ring);
+  const shroud = new THREE.Mesh(new THREE.ShapeGeometry(plate, 32), shroudM); shroud.rotation.y = Math.PI / 2; shroud.position.set(RX - 0.08, RY, 0); shroudU.add(shroud);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 40, 1, true), shroudM); ring.rotation.z = Math.PI / 2; ring.position.set(RX - 0.14, RY, 0); shroudU.add(ring);
+  // ventilyator kronshteyni
+  const brace = box(0.03, 0.03, 0.6, tankM); brace.position.set(RX - 0.2, RY, 0); shroudU.add(brace);
   // ventilyator: 8 kurak, gupchak; drive.js 'fan' nomli obyektni o'z y o'qi atrofida aylantiradi
-  const fanHolder = new THREE.Group(); fanHolder.rotation.z = Math.PI / 2; fanHolder.position.set(RX - 0.15, RY, 0); g.add(fanHolder);
+  const fanHolder = new THREE.Group(); fanHolder.name = 'u_fan'; fanHolder.userData.unit = true;
+  fanHolder.rotation.z = Math.PI / 2; fanHolder.position.set(RX - 0.15, RY, 0); g.add(fanHolder);
   const fan = new THREE.Group(); fan.name = 'fan'; fanHolder.add(fan);
   const hub = cyl(0.06, 0.06, 0.07, M(DARK), 18); fan.add(hub);
   for (let i = 0; i < 8; i++) { const p = new THREE.Group(); p.rotation.y = i / 8 * Math.PI * 2; const bl = box(0.2, 0.008, 0.075, M(0x3a3d3f, { metalness: 0.5 })); bl.position.x = 0.16; bl.rotation.x = 0.45; p.add(bl); fan.add(p); }
-  // ventilyator kronshteyni
-  const brace = box(0.03, 0.03, 0.6, tankM); brace.position.set(RX - 0.2, RY, 0); g.add(brace);
   return g;
 }
 
 export function buildCooling() {
   const g = new THREE.Group();
+  const unit = (name) => { const u = new THREE.Group(); u.name = name; u.userData.unit = true; g.add(u); return u; };
   const hoseM = M(0x1c1d1c, { metalness: 0.05, roughness: 0.85 });
-  const pipe = (pts, r = 0.035) => {
+  const pipe = (pts, r = 0.035, name = '') => {
     const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
-    return new THREE.Mesh(new THREE.TubeGeometry(curve, 40, r, 10, false), hoseM);
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, r, 10, false), hoseM);
+    if (name) m.name = name;
+    return m;
   };
   // suyuqlik nasosi (dvigatel orqa yuzida) va shkivi
-  const pump = cyl(0.09, 0.09, 0.16, M(0x6b7075), 20); pump.rotation.z = Math.PI / 2; pump.position.set(-3.3, 0.98, 0); g.add(pump);
-  const pulley = cyl(0.1, 0.1, 0.03, M(DARK), 24); pulley.rotation.z = Math.PI / 2; pulley.position.set(-3.4, 0.98, 0); g.add(pulley);
+  const pumpU = unit('u_pump');
+  const pump = cyl(0.09, 0.09, 0.16, M(0x6b7075), 20); pump.rotation.z = Math.PI / 2; pump.position.set(-3.3, 0.98, 0); pumpU.add(pump);
+  const pulley = cyl(0.1, 0.1, 0.03, M(DARK), 24); pulley.rotation.z = Math.PI / 2; pulley.position.set(-3.4, 0.98, 0); pumpU.add(pulley);
   // termostat korpusi (dvigatel ustida, orqa tomonda)
-  const thermo = cyl(0.06, 0.06, 0.12, M(0x8c8f93), 16); thermo.position.set(-3.22, 1.42, 0.3); g.add(thermo);
-  // kengaytiruvchi bakcha (radiator oldida, yuqorida)
-  const tank = box(0.2, 0.14, 0.32, M(0xd7d3c4, { metalness: 0.1, roughness: 0.5 })); tank.position.set(-3.15, 1.7, 0.5); g.add(tank);
-  const cap = cyl(0.03, 0.03, 0.04, M(0xb8322a), 12); cap.position.set(-3.15, 1.79, 0.42); g.add(cap);
+  const thermoU = unit('u_thermo');
+  const thermo = cyl(0.06, 0.06, 0.12, M(0x8c8f93), 16); thermo.position.set(-3.22, 1.42, 0.3); thermoU.add(thermo);
+  // kengaytiruvchi bakcha: ma'ruza sxemasidagidek ventilyator kojuxi yonida, yuqorida (o'ng tomonda)
+  const tankU = unit('u_tank');
+  const TX = -3.66, TY = 1.66, TZ = 0.37;
+  const tank = box(0.12, 0.22, 0.24, M(0xd7d3c4, { metalness: 0.1, roughness: 0.5 })); tank.position.set(TX, TY, TZ); tankU.add(tank);
+  const cap = cyl(0.03, 0.03, 0.04, M(0xb8322a), 12); cap.position.set(TX, TY + 0.13, TZ + 0.05); tankU.add(cap);
+  const strap = box(0.13, 0.02, 0.25, M(DARK)); strap.position.set(TX, TY - 0.05, TZ); tankU.add(strap);
   // moy radiatori (tik, asosiy radiator yonida)
-  const oil = box(0.08, 0.46, 0.3, M(0x7a7f84, { metalness: 0.6, roughness: 0.4 })); oil.position.set(RX, RY, -0.66); g.add(oil);
-  for (let i = 0; i < 10; i++) { const f = box(0.09, 0.44, 0.004, M(0x5c6166)); f.position.set(RX, RY, -0.79 + i * 0.028); g.add(f); }
+  const oilU = unit('u_oilrad');
+  const oil = box(0.08, 0.46, 0.3, M(0x7a7f84, { metalness: 0.6, roughness: 0.4 })); oil.position.set(RX, RY, -0.66); oilU.add(oil);
+  for (let i = 0; i < 10; i++) { const f = box(0.09, 0.44, 0.004, M(0x5c6166)); f.position.set(RX, RY, -0.79 + i * 0.028); oilU.add(f); }
   // gidromufta va ventilyator yuritma vali (radiator markazidagi teshik orqali ventilyatorga)
-  const fluid = cyl(0.11, 0.11, 0.12, M(0x8a8f95), 24); fluid.rotation.z = Math.PI / 2; fluid.position.set(-3.33, RY, 0); g.add(fluid);
-  const fshaft = cyl(0.022, 0.022, 0.3, M(STEEL)); fshaft.rotation.z = Math.PI / 2; fshaft.position.set(-3.5, RY, 0); g.add(fshaft);
-  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.012, 6, 30), M(DARK)); belt.rotation.y = Math.PI / 2; belt.scale.set(1, 1.15, 0.35); belt.position.set(-3.31, 1.215, 0); g.add(belt);
-  // shlanglar: termostat -> radiator yuqori bakchasi; pastki bakcha -> nasos; bakcha -> nasos; moy radiatori -> dvigatel
-  g.add(pipe([[-3.22, 1.48, 0.3], [-3.3, 1.68, 0.3], [-3.42, 1.77, 0.3]]));
-  g.add(pipe([[-3.42, 1.13, -0.3], [-3.36, 1.05, -0.2], [-3.3, 1.0, -0.08]]));
-  g.add(pipe([[-3.15, 1.63, 0.5], [-3.1, 1.3, 0.35], [-3.28, 1.02, 0.08]], 0.016));
+  const cplU = unit('u_coupling');
+  const fluid = cyl(0.11, 0.11, 0.12, M(0x8a8f95), 24); fluid.rotation.z = Math.PI / 2; fluid.position.set(-3.33, RY, 0); cplU.add(fluid);
+  const fshaft = cyl(0.022, 0.022, 0.3, M(STEEL)); fshaft.rotation.z = Math.PI / 2; fshaft.position.set(-3.5, RY, 0); cplU.add(fshaft);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.012, 6, 30), M(DARK)); belt.rotation.y = Math.PI / 2; belt.scale.set(1, 1.15, 0.35); belt.position.set(-3.31, 1.215, 0); cplU.add(belt);
+  // shlanglar: termostat -> radiator yuqori bakchasi; pastki bakcha -> nasos; moy radiatori -> dvigatel
+  g.add(pipe([[-3.22, 1.48, 0.3], [-3.3, 1.68, 0.3], [-3.42, 1.77, 0.3]], 0.035, 'u_hose_up'));
+  g.add(pipe([[-3.42, 1.13, -0.3], [-3.36, 1.05, -0.2], [-3.3, 1.0, -0.08]], 0.035, 'u_hose_low'));
   g.add(pipe([[-3.46, 1.3, -0.66], [-3.3, 1.05, -0.5], [-3.1, 0.85, -0.32]], 0.02));
   g.add(pipe([[-3.46, 1.62, -0.66], [-3.25, 1.5, -0.5], [-3.0, 1.3, -0.35]], 0.02));
+  // kengaytiruvchi bakcha: radiator yuqori bakchasidan bug' quvuri va nasosga to'ldirish quvuri
+  g.add(pipe([[RX, RY + 0.34, 0.36], [-3.55, 1.8, 0.37], [TX + 0.02, TY + 0.06, TZ - 0.04]], 0.012, 'u_tank_vent'));
+  g.add(pipe([[TX, TY - 0.11, TZ + 0.06], [-3.64, 1.2, 0.46], [-3.6, 1.0, 0.36], [-3.45, 0.96, 0.18], [-3.32, 0.98, 0.07]], 0.016, 'u_tank_line'));
   // dvigatelga ulanish: ikki qator kallagidan termostatga suv yig'uvchi quvurlar (metall)
-  const steelPipe = (pts, r) => { const m = pipe(pts, r); m.material = M(0x8c9196, { metalness: 0.7, roughness: 0.35 }); return m; };
-  g.add(steelPipe([[-3.24, 1.18, 0.3], [-3.27, 1.24, 0.3], [-3.25, 1.31, 0.3], [-3.22, 1.37, 0.3]], 0.024));
-  g.add(steelPipe([[-3.24, 1.18, -0.3], [-3.27, 1.25, -0.28], [-3.24, 1.34, -0.14], [-3.21, 1.38, 0.05], [-3.21, 1.39, 0.2], [-3.22, 1.4, 0.27]], 0.024));
+  const steelPipe = (pts, r, name) => { const m = pipe(pts, r, name); m.material = M(0x8c9196, { metalness: 0.7, roughness: 0.35 }); return m; };
+  g.add(steelPipe([[-3.24, 1.18, 0.3], [-3.27, 1.24, 0.3], [-3.25, 1.31, 0.3], [-3.22, 1.37, 0.3]], 0.024, 'u_coll_r'));
+  g.add(steelPipe([[-3.24, 1.18, -0.3], [-3.27, 1.25, -0.28], [-3.24, 1.34, -0.14], [-3.21, 1.38, 0.05], [-3.21, 1.39, 0.2], [-3.22, 1.4, 0.27]], 0.024, 'u_coll_l'));
   // termostatdan nasosga aylanib o'tish (kichik doira) shlangi
-  g.add(pipe([[-3.22, 1.38, 0.3], [-3.24, 1.24, 0.27], [-3.27, 1.1, 0.16], [-3.29, 1.02, 0.08], [-3.3, 0.98, 0.04]], 0.026));
+  g.add(pipe([[-3.22, 1.38, 0.3], [-3.24, 1.24, 0.27], [-3.27, 1.1, 0.16], [-3.29, 1.02, 0.08], [-3.3, 0.98, 0.04]], 0.026, 'u_bypass'));
   return g;
 }
 

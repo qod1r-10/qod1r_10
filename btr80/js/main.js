@@ -12,6 +12,7 @@ import { addSignature, syncSignature } from './signature.js';
 import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 import { DEMOS, STROKES } from './demos.js';
 import { buildCoolFlow } from './coolflow.js';
+import { createDemoExplode } from './demoexplode.js';
 
 const $ = (s) => document.querySelector(s);
 // Oflayn (bitta fayl) versiyada fayllar ichki xotiradan olinadi
@@ -214,7 +215,7 @@ function registerMesh(o) {
   if (!meshesByPart.has(id)) meshesByPart.set(id, []);
   meshesByPart.get(id).push(o);
 }
-model.traverse((o) => { if (o.isMesh) registerMesh(o); });
+model.traverse((o) => { if (o.isMesh && !o.userData.noReg) registerMesh(o); });
 
 const drive = createDrive({ scene, real, interior, axles: real ? REAL_AXLES_X : AXLES_X, getGrid: () => grid, shadowGround: ground, assets });
 drive.extra.forEach(registerMesh);
@@ -229,11 +230,13 @@ const coolFlow = buildCoolFlow();
 coolFlow.group.visible = false;
 interior.add(coolFlow.group);
 const DEMO = new Map(DEMOS.map((d) => [d.id, d]));
+const demoExp = createDemoExplode(interior);
+const v8gas = interior.getObjectByName('v8gas'); // silindr ichidagi gaz (engine3d.js)
 const meshByName = new Map();
 for (const m of meshes) if (m.name && !meshByName.has(m.name)) meshByName.set(m.name, m);
 
 /* ---------- Holat ---------- */
-const state = { cat: null, part: null, open: null, xray: false, demo: null, circuit: 'large' };
+const state = { cat: null, part: null, open: null, xray: false, demo: null, circuit: 'large', only: false };
 
 function focusIds() {
   if (state.part) return new Set([state.part]);
@@ -248,7 +251,8 @@ function applyMeshStates() {
     // namoyish: faqat mexanizm/tizim qismlari; qolgani yashiriladi
     for (const m of meshes) {
       const id = m.userData.part;
-      m.userData.state = D.show.includes(id) ? 'show' : D.xray.includes(id) ? 'xray' : (D.context || []).includes(id) ? 'context' : D.faint.includes(id) ? 'faint' : 'hidden';
+      // "Faqat" bosilmagan bo'lsa, atrofdagi qismlar xira ko'rinib turadi
+      m.userData.state = D.show.includes(id) ? 'show' : D.xray.includes(id) ? 'xray' : (D.context || []).includes(id) ? 'context' : D.faint.includes(id) ? 'faint' : state.only ? 'hidden' : 'dim';
     }
     return;
   }
@@ -320,13 +324,17 @@ let demoLabels = [];
 function selectDemo(id) {
   const D = DEMO.get(id);
   if (!D) return;
-  if (explode.state.on) { explode.set(false); $('#btn-explode').setAttribute('aria-pressed', 'false'); }
+  if (explode.state.on) { explode.set(false); explode.undo(); }
+  demoExp.reset();
+  $('#btn-explode').setAttribute('aria-pressed', 'false');
   if (drive.state.on) $('#btn-drive').click();
   if (drive.state.flow) $('#btn-flow').click();
   state.demo = id; state.cat = null; state.part = null; state.open = '_extra';
-  $('#btn-explode').disabled = true;
-  $('#btn-explode').title = "Namoyishda yoyilma o'chirilgan: mexanizm yaxlit holda ishlaydi";
+  $('#btn-explode').title = "Faqat shu mexanizm yoki tizimning o'z qismlari ajraladi";
+  $('#btn-only').hidden = false;
+  $('#btn-only').setAttribute('aria-pressed', String(state.only));
   coolFlow.group.visible = id === 'cool';
+  if (v8gas) v8gas.visible = id === 'kshm' || id === 'gtm';
   coolFlow.setCircuit(state.circuit);
   buildDemoLabels();
   applyMeshStates();
@@ -346,8 +354,12 @@ function selectDemo(id) {
 function leaveDemo() {
   if (!state.demo) return;
   state.demo = null;
+  demoExp.reset();
+  $('#btn-explode').setAttribute('aria-pressed', 'false');
   coolFlow.group.visible = false;
-  $('#btn-explode').disabled = false;
+  if (v8gas) v8gas.visible = false;
+  state.only = false;
+  $('#btn-only').hidden = true;
   $('#btn-explode').title = "BTR qismlarga ajralib havoda yoyiladi; qayta bosilsa yig'iladi";
   labelsEl.innerHTML = ''; demoLabels = [];
 }
@@ -357,12 +369,13 @@ function buildDemoLabels() {
   if (!D) return;
   const list = state.demo === 'cool'
     ? coolFlow.labels[state.circuit].map((l) => ({ ...l, local: new THREE.Vector3(...l.pos) }))
-    : (D.labels || []).map((l) => ({ ...l, obj: meshByName.get(l.mesh) })).filter((l) => l.obj);
+    : (D.labels || []).map((l) => ({ ...l, at: l.at || [0.5, 0.5, 0.5], obj: l.gas !== undefined ? (v8gas && v8gas.children[l.gas]) : meshByName.get(l.mesh) })).filter((l) => l.obj);
+  // modelda faqat raqam; nomlari paneldagi ro'yxatda shu raqam bilan
   for (const l of list) {
     const el = document.createElement('div');
-    el.className = 'dl' + (l.n === 0 ? ' dl-side' : '');
-    el.className += l.n ? ' dl-num' : '';
-    el.innerHTML = (l.n ? `<b>${l.n}</b>` : '') + `<span>${esc(l.text)}</span>`;
+    el.className = 'dl' + (typeof l.n === 'string' ? ' dl-side' : '');
+    el.innerHTML = `<b>${esc(l.n)}</b>`;
+    el.title = l.text;
     labelsEl.appendChild(el);
     demoLabels.push({ ...l, el });
   }
@@ -373,8 +386,12 @@ function updateDemoLabels() {
   const w = viewer.clientWidth, h = viewer.clientHeight;
   lblInv.copy(interior.matrixWorld).invert();
   for (const l of demoLabels) {
-    if (l.local) lblV.copy(l.local);
-    else {
+    if (l.local) {
+      lblV.copy(l.local).applyMatrix4(interior.matrixWorld);
+      const off = l.unit ? demoExp.offsetOf(l.unit) : null;
+      if (off) lblV.add(off);
+      lblV.applyMatrix4(lblInv);
+    } else {
       // detal chegarasi ichki tizimda (x — old, y — yuqori, z — yon) olinadi, keyin nisbiy nuqta
       lblBox.setFromObject(l.obj).applyMatrix4(lblInv);
       lblV.set(
@@ -384,7 +401,9 @@ function updateDemoLabels() {
     }
     lblV.applyMatrix4(interior.matrixWorld);
     lblV.project(camera);
-    l.el.hidden = lblV.z > 1 || explode.state.on;
+    let hide = lblV.z > 1 || explode.state.on;
+    if (l.obj && (!l.obj.visible || !l.obj.parent.visible)) hide = true; // masalan, yoyilmada yashirilgan gaz
+    l.el.hidden = hide;
     l.el.style.transform = `translate(${Math.round((lblV.x * 0.5 + 0.5) * w)}px, ${Math.round((-lblV.y * 0.5 + 0.5) * h)}px) translate(-50%, -50%)`;
   }
 }
@@ -416,15 +435,19 @@ function demoHTML(D) {
     h += `<div class="seg" role="group" aria-label="Suyuqlik aylanish doirasi">${Object.entries(D.circuits).map(([k, c]) =>
       `<button type="button" class="seg-btn" data-circuit="${k}" aria-pressed="${state.circuit === k}">${esc(c.title)}</button>`).join('')}</div>`;
     const c = D.circuits[state.circuit];
-    h += `<p class="circ-when">${esc(c.when)}</p><ol class="steps">${c.steps.map((s, i) => `<li${i === c.steps.length - 1 ? ' class="back"' : ''}>${esc(s)}</li>`).join('')}</ol>`;
+    h += `<p class="circ-when">${esc(c.when)}</p><ol class="steps">${c.steps.map((s, i) => i === c.steps.length - 1
+      ? `<li class="back" data-n="↺">${esc(s)}</li>` : `<li data-n="${i + 1}">${esc(s)}</li>`).join('')}</ol>`;
+    const extra = coolFlow.labels[state.circuit].filter((l) => typeof l.n === 'string');
+    if (extra.length) h += `<ul class="steps steps-side">${extra.map((l) => `<li data-n="${esc(l.n)}">${esc(l.text)}</li>`).join('')}</ul>`;
     h += `<p class="swatches"><span><i class="sw sw-hot"></i>issiq</span><span><i class="sw sw-warm"></i>iliq</span><span><i class="sw sw-cold"></i>radiatorda sovigan</span></p>`;
   }
   if (D.live) {
     h += `<div class="live" id="demo-live"><p class="eyebrow">1-silindr hozir</p><div class="strokes">${STROKES.map(([n]) => `<span class="stroke">${esc(n)}</span>`).join('')}</div><p class="live-text"></p></div>`;
   }
+  if (D.labels) h += `<p class="eyebrow legend-t">Modeldagi raqamlar</p><ol class="steps">${D.labels.map((l) => `<li data-n="${esc(l.n)}">${esc(l.text)}</li>`).join('')}</ol>`;
   if (D.list) h += `<dl class="specs">${D.list.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
   if (D.note) h += `<p class="hint">${esc(D.note)}</p>`;
-  h += `<p class="hint">"Sekin" tugmasi harakatni 4 marta sekinlashtiradi. "Kesim" bilan ichini ham ko'rish mumkin.</p>`;
+  h += `<p class="hint">"Yoyilma" shu ${D.kind === 'Tizim' ? 'tizimning' : 'mexanizmning'} o'z qismlarini ajratadi, ishlash to'xtamaydi. "Faqat" atrofdagi qismlarni yashiradi. "Sekin" harakatni 4 marta sekinlashtiradi, "Kesim" ichini ochadi.</p>`;
   return h + figsHTML(D.fig);
 }
 
@@ -561,6 +584,16 @@ $('#btn-cut').addEventListener('click', (e) => {
   if (on && !state.cat && !state.demo) flyTo(new THREE.Vector3(8.4, 3.4, 2.2), new THREE.Vector3(0, 1.1, -0.2), 1400);
 });
 $('#btn-explode').addEventListener('click', (e) => {
+  if (state.demo) {
+    // namoyishda: faqat shu mexanizm/tizim qismlari yoyiladi
+    const on = !demoExp.state.on;
+    demoExp.set(on, meshes.filter((m) => ['show', 'xray', 'context', 'faint'].includes(m.userData.state)));
+    e.currentTarget.setAttribute('aria-pressed', on);
+    // ajralgan qismlar sig'ishi uchun kamera biroz uzoqlashadi (yig'ilganda qaytadi)
+    const k = on ? 1.5 : 1 / 1.5;
+    flyTo(controls.target.clone().add(camera.position.clone().sub(controls.target).multiplyScalar(k)), controls.target.clone(), 1000);
+    return;
+  }
   const on = !explode.state.on;
   explode.set(on);
   e.currentTarget.setAttribute('aria-pressed', on);
@@ -568,6 +601,11 @@ $('#btn-explode').addEventListener('click', (e) => {
     if (on) flyTo(new THREE.Vector3(9.5, 7.2, 11.5), new THREE.Vector3(0, 2.4, 0), 1300);
     else flyTo(HOME.pos.clone(), HOME.target.clone(), 1300);
   }
+});
+$('#btn-only').addEventListener('click', (e) => {
+  state.only = !state.only;
+  e.currentTarget.setAttribute('aria-pressed', state.only);
+  applyMeshStates();
 });
 $('#btn-slow').addEventListener('click', (e) => {
   drive.state.slow = !drive.state.slow;
@@ -665,9 +703,15 @@ function frame() {
   drive.state.hideWorld = !!(state.part || state.cat || state.demo);
   drive.state.idle = cut.state.on || !!state.demo; // namoyishda dvigatel doim ishlaydi
   explode.undo();
+  demoExp.undo();
   drive.update(dt);
   cut.update(dt, reduceMotion);
   explode.apply(dt, reduceMotion);
+  demoExp.apply(dt, reduceMotion);
+  // yoyilgan holatda oqim va gaz yashiriladi (ular qismlar bilan birga ajralmaydi)
+  const assembled = demoExp.state.p < 0.02;
+  coolFlow.group.visible = state.demo === 'cool' && assembled;
+  if (v8gas) v8gas.visible = (state.demo === 'kshm' || state.demo === 'gtm') && assembled;
   if (state.demo === 'cool') coolFlow.update(dt, drive.state.slow ? 0.08 : 0.32);
   controls.update();
 

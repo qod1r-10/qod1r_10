@@ -125,8 +125,55 @@ export function buildV8(asset, kamaz) {
   const front = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.5), castM(0x5a5e62));
   front.position.set(-0.53, -0.1, 0); casing.push(front);
   if (kamaz) root.add(kamazCasing(kamaz)); // haqiqiy KamAZ-740 korpusi
+
   else casing.forEach((m) => { m.userData.casing = true; m.userData.part = 'engine'; m.castShadow = true; root.add(m); });
+  // Silindr ichidagi gaz ("Qo'shimcha" namoyishida): porshen tepasidan kallakkacha bo'lgan hajm,
+  // rangi takt bo'yicha o'zgaradi — kiritilgan havo, siqilgan havo, yonish, ishlatilgan gazlar.
+  const gas = new THREE.Group(); gas.name = 'v8gas'; gas.visible = false;
+  inner.add(gas);
+  const gasCols = [];
+  const unitY = new THREE.Vector3(0, 1, 0);
+  cyl.forEach((c, i) => {
+    if (!c.piston) return;
+    const d = new THREE.Vector2(c.d[0], c.d[1]);
+    const pos = c.piston.geometry.attributes.position;
+    let maxP = -Infinity, zMin = Infinity, zMax = -Infinity;
+    for (let k = 0; k < pos.count; k++) {
+      const pr = (pos.getX(k) - cAx.x) * d.x + (pos.getY(k) - cAx.y) * d.y;
+      if (pr > maxP) maxP = pr;
+      const z = pos.getZ(k); if (z < zMin) zMin = z; if (z > zMax) zMax = z;
+    }
+    const top = maxP - c.s0;                 // porshen barmog'idan tubigacha
+    const r = (zMax - zMin) / 2 * 0.94;
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 24, 1),
+      new THREE.MeshBasicMaterial({ color: 0x59b6ff, transparent: true, opacity: 0.4, depthWrite: false, toneMapped: false }));
+    m.quaternion.setFromUnitVectors(unitY, new THREE.Vector3(d.x, d.y, 0));
+    m.renderOrder = 7; m.raycast = () => {}; m.userData.noReg = true;
+    gas.add(m);
+    gasCols.push({ m, c, i, d, top, z: (zMin + zMax) / 2 });
+  });
+  const SMAX = R + L, CLEAR = 0.9;
+  const cA = new THREE.Color(0x59b6ff), cB = new THREE.Color(0xd2f2ff), cF = new THREE.Color(0xfff2a0), cP = new THREE.Color(0xff6a1a), cQ = new THREE.Color(0xb0301a), cE = new THREE.Color(0x8d8478);
+  function updateGas(theta) {
+    if (!gas.visible) return;
+    const FOUR = Math.PI * 4;
+    for (const g of gasCols) {
+      const s = sOf(g.c.psi0 + theta);
+      const a = s + g.top, b = SMAX + g.top + CLEAR;
+      const mid = (a + b) / 2;
+      g.m.position.set(cAx.x + g.d.x * mid, cAx.y + g.d.y * mid, g.z);
+      g.m.scale.set(1, Math.max(0.05, b - a), 1);
+      const cyc = (((g.c.psi0 + theta + (g.i % 2) * Math.PI * 2) % FOUR) + FOUR) % FOUR;
+      const k = Math.floor(cyc / Math.PI), t = cyc / Math.PI - k;
+      const mt = g.m.material;
+      if (k === 0) { mt.color.copy(cA); mt.opacity = 0.32; }
+      else if (k === 1) { mt.color.copy(cA).lerp(cB, t); mt.opacity = 0.32 + 0.33 * t; }
+      else if (k === 2) { if (t < 0.25) mt.color.copy(cF).lerp(cP, t / 0.25); else mt.color.copy(cP).lerp(cQ, (t - 0.25) / 0.75); mt.opacity = 0.9 - 0.35 * t; }
+      else { mt.color.copy(cE); mt.opacity = 0.5 - 0.25 * t; }
+    }
+  }
+
 
   update(0);
-  return { root, update };
+  return { root, update: (theta) => { update(theta); updateGas(theta); }, gas };
 }
