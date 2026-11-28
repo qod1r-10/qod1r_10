@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE:START -->
+<title>BTR-80 tuzilishi</title>
+<meta name="author" content="Sobirov Qodirbek Nodirbek o'g'li, 253-guruh">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="emblem" aria-hidden="true">HAT</div>
+    <div class="top-text">
+      <p class="dept">Harbiy avtotransport va avtomobil tayyorgarligi kafedrasi</p>
+      <h1>BTR-80 zirhli transportyorining tuzilishi</h1>
+    </div>
+    <div class="mode" role="group" aria-label="Ko'rinish rejimi">
+      <button type="button" class="mode-btn" data-mode-set="light" aria-pressed="false">Kunduzgi</button>
+      <button type="button" class="mode-btn" data-mode-set="dark" aria-pressed="true">Tungi</button>
+    </div>
+    <p class="author"><span class="author-label">Loyiha muallifi</span> Sobirov Qodirbek Nodirbek o'g'li <span class="author-group">253-guruh</span></p>
+  </header>
+
+  <main class="main">
+    <section class="viewer" id="viewer" aria-label="BTR-80 ning 3D modeli">
+      <div class="loading" id="loading">Model yuklanmoqda…</div>
+      <div class="tools">
+        <button class="tool" id="btn-reset" type="button">Umumiy ko'rinish</button>
+        <button class="tool tool-only" id="btn-only" type="button" aria-pressed="false" hidden title="Faqat mexanizmning o'zi ko'rinadi; atrofdagi qismlar yashiriladi">Faqat</button>
+        <button class="tool" id="btn-cut" type="button" aria-pressed="false">Kesim</button>
+        <button class="tool" id="btn-explode" type="button" aria-pressed="false" title="BTR qismlarga ajralib havoda yoyiladi; qayta bosilsa yig'iladi">Yoyilma</button>
+        <button class="tool" id="btn-xray" type="button" aria-pressed="false">Rentgen</button>
+        <button class="tool" id="btn-rotate" type="button" aria-pressed="false">Aylantirish</button>
+        <button class="tool tool-drive" id="btn-drive" type="button" aria-pressed="false">Yurgizish</button>
+        <button class="tool" id="btn-flow" type="button" aria-pressed="false">Kuch oqimi</button>
+        <button class="tool" id="btn-slow" type="button" aria-pressed="false" title="Dvigatel va mexanizmlar harakatini 4 marta sekinlashtiradi">Sekin</button>
+      </div>
+      <div class="hud" id="hud" hidden>
+        <div class="gauge"><span class="speed" id="hud-speed">0</span><span class="unit">km/soat</span></div>
+        <div class="gear"><span class="lbl">Uzatma</span><b id="hud-gear">N</b></div>
+        <div class="rpm">
+          <span class="lbl">Dvigatel, ayl/daq</span>
+          <div class="bar"><i id="hud-rpm"></i></div>
+          <span class="rpm-val" id="hud-rpm-val">800</span>
+        </div>
+        <p class="keys">W/S: gaz, tormoz · A/D: rul · Q/E: minora · R/F: pulemyot · Probel: to'xtatish</p>
+      </div>
+      <div class="pad" id="pad" hidden>
+        <button type="button" class="pk" data-hold="tl" aria-label="Minorani chapga burish">⟲</button>
+        <button type="button" class="pk" data-hold="up" aria-label="Gaz">▲</button>
+        <button type="button" class="pk" data-hold="tr" aria-label="Minorani o'ngga burish">⟳</button>
+        <button type="button" class="pk" data-hold="left" aria-label="Chapga">◀</button>
+        <button type="button" class="pk" data-hold="down" aria-label="Tormoz va orqaga">▼</button>
+        <button type="button" class="pk" data-hold="right" aria-label="O'ngga">▶</button>
+        <button type="button" class="pk" data-hold="gu" aria-label="Pulemyotni ko'tarish">⤒</button>
+        <button type="button" class="pk stop" data-hold="brake">Stop</button>
+        <button type="button" class="pk" data-hold="gd" aria-label="Pulemyotni tushirish">⤓</button>
+      </div>
+      <div class="tag" id="tag" hidden></div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="dlabels" id="dlabels" aria-hidden="true"></div>
+      <p class="legend">Sichqoncha: aylantirish · g'ildirakcha: yaqinlashtirish · o'ng tugma: surish · ikki marta bosish yoki Esc: umumiy ko'rinish</p>
+    </section>
+
+    <aside class="side-info" aria-label="Tanlangan qism haqida">
+      <nav class="crumbs" id="crumbs" aria-label="Joriy tanlov"></nav>
+      <div class="info" id="info" aria-live="polite"></div>
+    </aside>
+
+    <aside class="panel" aria-label="BTR-80 qismlari">
+      <div class="panel-in">
+      <h2 class="list-title">Asosiy qismlar</h2>
+      <ul class="cats" id="cats"></ul>
+      <div class="foot">
+        <p><b>Loyiha muallifi:</b> 253-guruh, Sobirov Qodirbek Nodirbek o'g'li.</p>
+        <details><summary>Manbalar va 3D modellar mualliflari</summary><p>Model o'quv maqsadida soddalashtirilgan: qismlarning joylashuvi va nisbatlari taxminiy. Rasmlar kafedra ma'ruzalaridan va ochiq manbalardan olingan.<br>3D modellar (Sketchfab): BTR-80 tashqi modeli; «V8 engine Internals» — UnforgettableName (CC BY-NC 4.0); KamAZ 740.3 — ChB corp.; ilashish muftasi — Er.Praveen.Kumar; uzatmalar qutisi — avredu; differensial — Anoopbg; kardan vali — PolyPhantom; PKT — MikeRTV; akkumulyator — NatharaQuetzl; kardan sharniri — ravindra.mohan09; o'rindiq — DeWolfePilot; bak — ROY (CC BY 4.0); o't o'chirgich — Renend Studio (Sketchfab Standard); KPVT o'rnidagi DShK — Sleepykingzzz (CC BY 4.0). Modellar soddalashtirilgan, qismlarga ajratilgan va harakatlantirilgan.</p></details>
+      </div>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-label="Rasm"></div>
+<script type="module" src="js/main.js"></script>
+<!-- PAGE:END -->
+</body>
+</html>
