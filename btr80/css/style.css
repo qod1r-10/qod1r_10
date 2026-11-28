@@ -5,9 +5,10 @@
   --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --panel-w: 400px;
+  --info-w: clamp(270px, 24vw, 390px);
+  --panel-w: clamp(230px, 19vw, 300px);
 }
-:root, .panel {
+:root, .panel, .side-info {
   --bg: #12150f;
   --surface: #191d15;
   --line: #2c3225;
@@ -129,11 +130,23 @@ button { font: inherit; color: inherit; }
   text-wrap: balance;
 }
 
+/* Uch ustun: chapda tanlangan qism haqida ma'lumot, o'rtada BTR, o'ngda asosiy qismlar menyusi */
 .main {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--panel-w);
+  grid-template-columns: var(--info-w) minmax(0, 1fr) var(--panel-w);
+  grid-template-areas: "info view menu";
 }
+.viewer { grid-area: view; }
+.side-info {
+  grid-area: info;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+}
+.panel { grid-area: menu; }
 
 /* 3D sahna */
 .viewer {
@@ -333,6 +346,7 @@ button { font: inherit; color: inherit; }
   font: 600 15px/1.2 var(--font-display); letter-spacing: 0.02em; cursor: pointer;
 }
 .demo-link:hover { background: var(--accent); color: var(--surface); }
+.sub-h { padding: 6px 10px 2px; font: 500 10.5px/1.3 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .cat-extra { margin-top: 6px; border-top: 1px dashed var(--line); padding-top: 6px; }
 
 /* O'ng panel */
@@ -458,12 +472,8 @@ button { font: inherit; color: inherit; }
 
 /* Katta ekran: panel ichi ustun; menyu va pastki yozuv qisqarmaydi, sig'masa faqat ma'lumot qismi aylanadi */
 @media (min-width: 861px) {
-  .crumbs, .list-title, .cats, .foot { flex: none; }
-  .info { flex: 1 1 auto; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; }
-  .info.is-clipped {
-    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
-  }
+  .list-title, .cats, .foot { flex: none; }
+  .info { border-bottom: 0; }
 }
 
 /* Telefon va planshet */
@@ -473,6 +483,7 @@ button { font: inherit; color: inherit; }
   .main { display: block; }
   .viewer { height: 58vh; min-height: 320px; }
   .panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .side-info { border-right: 0; border-top: 1px solid var(--line); overflow: visible; }
   .top h1 { font-size: 19px; }
   .top { flex-wrap: wrap; row-gap: 6px; }
   .top-text { flex: 1 1 calc(100% - 52px); }

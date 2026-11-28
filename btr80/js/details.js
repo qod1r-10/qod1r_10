@@ -398,8 +398,8 @@ export function buildCooling() {
   // shlanglar: termostat -> radiator yuqori bakchasi; pastki bakcha -> nasos; moy radiatori -> dvigatel
   g.add(pipe([[-3.22, 1.48, 0.3], [-3.3, 1.68, 0.3], [-3.42, 1.77, 0.3]], 0.035, 'u_hose_up'));
   g.add(pipe([[-3.42, 1.13, -0.3], [-3.36, 1.05, -0.2], [-3.3, 1.0, -0.08]], 0.035, 'u_hose_low'));
-  g.add(pipe([[-3.46, 1.3, -0.66], [-3.3, 1.05, -0.5], [-3.1, 0.85, -0.32]], 0.02));
-  g.add(pipe([[-3.46, 1.62, -0.66], [-3.25, 1.5, -0.5], [-3.0, 1.3, -0.35]], 0.02));
+  g.add(pipe([[-3.46, 1.3, -0.66], [-3.3, 1.05, -0.5], [-3.1, 0.85, -0.32]], 0.02, 'u_oilhose1'));
+  g.add(pipe([[-3.46, 1.62, -0.66], [-3.25, 1.5, -0.5], [-3.0, 1.3, -0.35]], 0.02, 'u_oilhose2'));
   // kengaytiruvchi bakcha: radiator yuqori bakchasidan bug' quvuri va nasosga to'ldirish quvuri
   g.add(pipe([[RX, RY + 0.34, 0.36], [-3.55, 1.8, 0.37], [TX + 0.02, TY + 0.06, TZ - 0.04]], 0.012, 'u_tank_vent'));
   g.add(pipe([[TX, TY - 0.11, TZ + 0.06], [-3.64, 1.2, 0.46], [-3.6, 1.0, 0.36], [-3.45, 0.96, 0.18], [-3.32, 0.98, 0.07]], 0.016, 'u_tank_line'));
@@ -409,6 +409,83 @@ export function buildCooling() {
   g.add(steelPipe([[-3.24, 1.18, -0.3], [-3.27, 1.25, -0.28], [-3.24, 1.34, -0.14], [-3.21, 1.38, 0.05], [-3.21, 1.39, 0.2], [-3.22, 1.4, 0.27]], 0.024, 'u_coll_l'));
   // termostatdan nasosga aylanib o'tish (kichik doira) shlangi
   g.add(pipe([[-3.22, 1.38, 0.3], [-3.24, 1.24, 0.27], [-3.27, 1.1, 0.16], [-3.29, 1.02, 0.08], [-3.3, 0.98, 0.04]], 0.026, 'u_bypass'));
+  return g;
+}
+
+/* ---------- Moylash tizimi (ma'ruza 5/1 sxemasi bo'yicha) ----------
+   Ichki koordinatalar: x — old tomon, y — yuqori, z — chap/o'ng. Dvigatel x −3.5…−2.1 oralig'ida,
+   tirsakli val o'qi y ≈ 0.79 da. Har bir agregat — alohida bo'lak (namoyish yoyilmasi uchun). */
+export function buildLubrication() {
+  const g = new THREE.Group();
+  const unit = (name) => { const u = new THREE.Group(); u.name = name; u.userData.unit = true; g.add(u); return u; };
+  const bodyM = M(0x7c858b, { metalness: 0.6, roughness: 0.4 });
+  const darkM = M(DARK);
+  const pipeM = M(0x9a7b4f, { metalness: 0.5, roughness: 0.45 });
+  const tube = (pts, r = 0.014) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 30, r, 8), pipeM);
+  // moy nasosi (ikki seksiyali: moylash va radiator seksiyalari) karter ichida, moy qabul qilgich bilan
+  const pu = unit('u_oilpump');
+  const pb = box(0.16, 0.09, 0.13, bodyM); pb.position.set(-2.62, 0.6, 0); pu.add(pb);
+  for (const dz of [-0.035, 0.035]) { const sec = cyl(0.04, 0.04, 0.14, darkM, 16); sec.rotation.z = Math.PI / 2; sec.position.set(-2.62, 0.6, dz); pu.add(sec); }
+  pu.add(tube([[-2.7, 0.58, 0], [-2.8, 0.54, 0], [-2.9, 0.53, 0]], 0.016));
+  const net = cyl(0.06, 0.06, 0.012, M(0x55595c), 20); net.position.set(-2.93, 0.515, 0); pu.add(net);
+  // to'liq oqimli moy filtri (16): bitta korpusda ikkita filtrlovchi element
+  const ff = unit('u_ff');
+  const ffBase = box(0.22, 0.05, 0.11, bodyM); ffBase.position.set(-2.55, 1.1, -0.52); ff.add(ffBase);
+  for (const dx of [-0.055, 0.055]) { const c = cyl(0.045, 0.045, 0.2, M(0x9aa2a8, { metalness: 0.6 }), 18); c.position.set(-2.55 + dx, 0.98, -0.52); ff.add(c); }
+  // markazdan qochma moy filtri (27): qo'ng'iroqsimon qopqoq, ichida aylanuvchi rotor
+  const cf = unit('u_cf');
+  const cfb = cyl(0.075, 0.08, 0.13, bodyM, 24); cfb.position.set(-3.1, 1.0, -0.47); cf.add(cfb);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), bodyM); dome.position.set(-3.1, 1.065, -0.47); cf.add(dome);
+  const nut = cyl(0.018, 0.018, 0.03, darkM, 6); nut.position.set(-3.1, 1.145, -0.47); cf.add(nut);
+  // moy issiqlik almashtirgichi (9): moy sovitish suyuqligi bilan soviydi
+  const he = unit('u_he');
+  const heb = cyl(0.05, 0.05, 0.3, M(0x8b9196, { metalness: 0.6 }), 20); heb.rotation.z = Math.PI / 2; heb.position.set(-2.9, 0.64, -0.44); he.add(heb);
+  for (const dx of [-0.16, 0.16]) { const capE = cyl(0.056, 0.056, 0.025, darkM, 20); capE.rotation.z = Math.PI / 2; capE.position.set(-2.9 + dx, 0.64, -0.44); he.add(capE); }
+  // moy quvurlari
+  g.add(tube([[-2.55, 0.62, -0.06], [-2.55, 0.7, -0.4], [-2.55, 0.88, -0.52]]));
+  g.add(tube([[-2.7, 0.6, -0.06], [-2.95, 0.66, -0.35], [-3.1, 0.935, -0.47]]));
+  g.add(tube([[-3.1, 1.0, -0.4], [-3.1, 0.88, -0.36], [-3.1, 0.85, -0.32]], 0.012));
+  g.add(tube([[-2.98, 0.9, -0.38], [-3.0, 0.75, -0.42], [-3.04, 0.66, -0.44]], 0.012));
+  g.add(tube([[-2.74, 0.64, -0.44], [-2.7, 0.56, -0.25], [-2.75, 0.53, -0.04]]));
+  return g;
+}
+
+/* ---------- Ishga tushirish va o't oldirish yordamchilari ----------
+   Elektr starter maxovik tishli gardishini aylantiradi; sovuq havoda kiritish kollektorlaridagi
+   alangali shamlar (elektrofakel) havoni qizdiradi. Dizelda yoqilg'i siqilgan qaynoq havoda o'zi alangalanadi. */
+export function buildStarter() {
+  const g = new THREE.Group();
+  const unit = (name) => { const u = new THREE.Group(); u.name = name; u.userData.unit = true; g.add(u); return u; };
+  const bodyM = M(0x3f4447, { metalness: 0.55, roughness: 0.45 });
+  const st = unit('u_starter');
+  const body = cyl(0.065, 0.065, 0.26, bodyM, 24); body.rotation.z = Math.PI / 2; body.position.set(-2.58, 0.6, 0.3); st.add(body);
+  const endc = cyl(0.05, 0.065, 0.04, M(DARK), 24); endc.rotation.z = Math.PI / 2; endc.position.set(-2.73, 0.6, 0.3); st.add(endc);
+  const sol = cyl(0.035, 0.035, 0.16, M(0x6b7075, { metalness: 0.6 }), 18); sol.rotation.z = Math.PI / 2; sol.position.set(-2.55, 0.69, 0.32); st.add(sol); // tortish relesi
+  const term = cyl(0.012, 0.012, 0.04, M(0xb33a2a), 8); term.position.set(-2.62, 0.735, 0.32); st.add(term);
+  const shaft = cyl(0.014, 0.014, 0.16, M(STEEL), 10); shaft.rotation.z = Math.PI / 2; shaft.position.set(-2.4, 0.598, 0.25); st.add(shaft);
+  // shesternya: maxovik gardishi bilan ilashadi; main.js uni tirsakli valga nisbatan aylantiradi
+  const pin = new THREE.Group(); pin.name = 'starterPinion'; pin.position.set(-2.35, 0.594, 0.2); st.add(pin);
+  const gear = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.045, 11), M(0xc4c8cc, { metalness: 0.85, roughness: 0.3, flatShading: true }));
+  gear.rotation.z = Math.PI / 2; pin.add(gear);
+  // akkumulyatordan starterga kuch kabeli
+  const cableM = M(0x161616, { metalness: 0.1, roughness: 0.85 });
+  const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[1.55, 0.95, -0.62], [1.3, 0.62, -0.5], [0.5, 0.5, 0.05], [-1.3, 0.5, 0.55], [-2.3, 0.56, 0.45], [-2.62, 0.74, 0.34]].map((p) => new THREE.Vector3(...p))), 80, 0.012, 6), cableM);
+  cable.name = 'u_cable'; g.add(cable);
+  // elektrofakel: elektromagnitli klapan va ikki alangali sham (har bir silindr qatorining kiritish kollektorida)
+  const ef = unit('u_efakel');
+  const valve = box(0.06, 0.05, 0.06, M(0x6b7075)); valve.position.set(-3.15, 1.46, 0); ef.add(valve);
+  const flames = new THREE.Group(); flames.name = 'efFlames'; flames.visible = false;
+  const flameM = new THREE.MeshBasicMaterial({ color: 0xff8a1f, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false });
+  for (const s of [-1, 1]) {
+    const plug = cyl(0.013, 0.013, 0.07, M(0xb8bcc0, { metalness: 0.8 }), 12); plug.position.set(-3.25, 1.39, 0.16 * s); ef.add(plug);
+    const hex = cyl(0.02, 0.02, 0.02, M(DARK), 6); hex.position.set(-3.25, 1.43, 0.16 * s); ef.add(hex);
+    const pipeF = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-3.15, 1.46, 0), new THREE.Vector3(-3.2, 1.48, 0.08 * s), new THREE.Vector3(-3.25, 1.44, 0.16 * s)]), 16, 0.006, 6), M(STEEL));
+    ef.add(pipeF);
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 14, 1, true), flameM);
+    fl.rotation.x = Math.PI; fl.position.set(-3.25, 1.29, 0.16 * s); fl.userData.noReg = true; fl.raycast = () => {};
+    flames.add(fl);
+  }
+  g.add(flames);
   return g;
 }
 

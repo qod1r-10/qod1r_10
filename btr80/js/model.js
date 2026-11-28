@@ -3,7 +3,7 @@
 // Har bir mesh'ga userData.part beriladi — u parts.js dagi qism id'si bilan bir xil.
 import * as THREE from 'three';
 import { buildEngine, buildGearbox, buildTransfer, buildDiff } from './mech.js';
-import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit, buildWinch, buildFireSuppression, buildRadiator } from './details.js';
+import { buildDashboard, buildRadio, buildFVU, buildWaterjet, buildCooling, buildSteeringWheel, buildCommanderKit, buildWinch, buildFireSuppression, buildRadiator, buildLubrication, buildStarter } from './details.js';
 import { driveshaftBetween, batteryModel, steerModel, seatModel, tankModel, extModel, gaugeSet } from './assets.js';
 
 const C = {
@@ -258,7 +258,9 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
   // Batafsil mexanizmlar (mech.js): dvigatel, uzatmalar qutisi, taqsimlash qutisi
   // KamAZ korpusi uzunroq (maxovik karteri bilan), shuning uchun uzatmalar qutisi biroz oldinga suriladi
   const GBX = assets.kamaz ? -1.82 : -2.12;
-  addMech(buildEngine(v8, assets.kamaz), [-2.85, 0.95, 0]);
+  const ENG = [-2.85, 0.95, 0];
+  const engine = buildEngine(v8, assets.kamaz);
+  addMech(engine, ENG);
   addMech(buildGearbox(assets), [GBX, 0.88, 0]);
   addMech(buildTransfer(assets), [-0.05, 0.78, 0]);
 
@@ -279,7 +281,7 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
       const neck = cyl(0.05, 0.05, 0.08, C.darkSteel, 14); neck.position.set(0.1, 0.49, 0); t.add(neck);
       const capT = cyl(0.065, 0.065, 0.03, C.darkSteel, 14); capT.position.set(0.1, 0.54, 0); t.add(capT);
       const strap = box(0.03, 0.92, 0.36, C.darkSteel); strap.position.x = -0.12; t.add(strap); const strap2 = strap.clone(); strap2.position.x = 0.12; t.add(strap2);
-      t.position.set(-1.8, 1.3, s * 0.78); add('fuel', t); continue; }
+      t.position.set(-1.8, 1.3, s * 0.78); t.name = s < 0 ? 'u_tank_l' : 'u_tank_r'; t.userData.unit = true; add('fuel', t); continue; }
     const tank = box(0.36, 0.95, 0.5, C.tank);
     tank.position.set(-1.8, 1.32, s * 0.72);
     add('fuel', tank);
@@ -293,28 +295,71 @@ export function buildBTR80({ exterior = true, v8 = null, assets = {} } = {}) {
     const steelM = mat(C.steel), darkM = mat(C.darkSteel), lineM = mat(0x2a2a26, { metalness: 0.3, roughness: 0.6 });
     const pipe = (pts, r = 0.012) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 30, r, 6), lineM);
     const valve = new THREE.Group(); const vb = box(0.1, 0.08, 0.12, C.darkSteel); valve.add(vb); const lever = cylBetween([0, 0.04, 0], [0.12, 0.12, 0], 0.01, C.steel, 6); valve.add(lever);
-    valve.position.set(-1.62, 0.95, 0); fs.add(valve);                                      // taqsimlash krani
-    const coarse = cyl(0.06, 0.06, 0.18, C.steel, 16); coarse.position.set(-2.05, 0.85, -0.32); fs.add(coarse);   // dag'al filtr
-    const cbowl = cyl(0.05, 0.04, 0.06, 0x8a8f95, 16); cbowl.position.set(-2.05, 0.73, -0.32); fs.add(cbowl);
-    const fine = cyl(0.07, 0.07, 0.22, 0x9aa0a6, 16); fine.position.set(-2.12, 1.15, 0.32); fs.add(fine);       // mayin filtr
-    const fcap = cyl(0.075, 0.075, 0.03, C.darkSteel, 16); fcap.position.set(-2.12, 1.27, 0.32); fs.add(fcap);
-    const prime = box(0.08, 0.12, 0.08, C.darkSteel); prime.position.set(-2.2, 1.0, -0.12); fs.add(prime);       // qo'l nasosi
-    const knob = cyl(0.02, 0.02, 0.06, 0x141414, 10); knob.position.set(-2.2, 1.09, -0.12); fs.add(knob);
-    const tnvd = box(0.36, 0.14, 0.14, 0x6f7377); tnvd.position.set(-2.62, 1.36, 0); fs.add(tnvd);               // YuBYoN
-    for (let k = 0; k < 8; k++) { const o = cyl(0.008, 0.008, 0.06, C.steel, 6); o.position.set(-2.76 + k * 0.04, 1.45, 0); fs.add(o); }
+    valve.position.set(-1.62, 0.95, 0); valve.name = 'u_kran'; valve.userData.unit = true; fs.add(valve); // taqsimlash krani
+    const U = (name) => { const u = new THREE.Group(); u.name = name; u.userData.unit = true; fs.add(u); return u; };
+    const uCoarse = U('u_coarse'), uFine = U('u_fine'), uPrime = U('u_prime'), uTnvd = U('u_tnvd');
+    const coarse = cyl(0.06, 0.06, 0.18, C.steel, 16); coarse.position.set(-2.05, 0.85, -0.32); uCoarse.add(coarse);   // dag'al filtr
+    const cbowl = cyl(0.05, 0.04, 0.06, 0x8a8f95, 16); cbowl.position.set(-2.05, 0.73, -0.32); uCoarse.add(cbowl);
+    const fine = cyl(0.07, 0.07, 0.22, 0x9aa0a6, 16); fine.position.set(-2.12, 1.15, 0.32); uFine.add(fine);       // mayin filtr
+    const fcap = cyl(0.075, 0.075, 0.03, C.darkSteel, 16); fcap.position.set(-2.12, 1.27, 0.32); uFine.add(fcap);
+    const prime = box(0.08, 0.12, 0.08, C.darkSteel); prime.position.set(-2.2, 1.0, -0.12); uPrime.add(prime);       // qo'l nasosi
+    const knob = cyl(0.02, 0.02, 0.06, 0x141414, 10); knob.position.set(-2.2, 1.09, -0.12); uPrime.add(knob);
+    const tnvd = box(0.36, 0.14, 0.14, 0x6f7377); tnvd.position.set(-2.62, 1.36, 0); uTnvd.add(tnvd);               // YuBYoN
+    for (let k = 0; k < 8; k++) { const o = cyl(0.008, 0.008, 0.06, C.steel, 6); o.position.set(-2.76 + k * 0.04, 1.45, 0); uTnvd.add(o); }
     fs.add(pipe([[-1.8, 0.86, -0.62], [-1.7, 0.85, -0.3], [-1.62, 0.92, -0.04]]));
     fs.add(pipe([[-1.8, 0.86, 0.62], [-1.7, 0.85, 0.3], [-1.62, 0.92, 0.04]]));
     fs.add(pipe([[-1.62, 0.92, 0], [-1.85, 0.95, -0.25], [-2.05, 0.95, -0.32]]));
     fs.add(pipe([[-2.05, 0.95, -0.32], [-2.2, 0.95, -0.12]]));
     fs.add(pipe([[-2.2, 1.06, -0.12], [-2.15, 1.1, 0.15], [-2.12, 1.05, 0.32]]));
     fs.add(pipe([[-2.12, 1.28, 0.32], [-2.3, 1.38, 0.15], [-2.45, 1.37, 0.02]]));
+    // past bosimli yoqilg'i nasosi (PBYoN) YuBYoN orqa qopqog'ida
+    const pbyon = box(0.08, 0.08, 0.08, C.darkSteel); pbyon.position.set(-2.42, 1.33, 0.05); uTnvd.add(pbyon);
+    // yuqori bosimli quvurlar: YuBYoN seksiyalaridan har bir forsunkaga; drenaj va qaytarish quvurlari
+    const hpPaths = [], drainPaths = [];
+    if (engine.injectors && engine.injectors.length) {
+      const inj = engine.injectors.map((j) => ({ ...j, top: j.top.clone().add(new THREE.Vector3(...ENG)), tip: j.tip.clone().add(new THREE.Vector3(...ENG)) }));
+      root.userData.injectors = inj;
+      const byX = [...inj].sort((a, b) => a.top.x - b.top.x);
+      const hpM = mat(0xa9aeb3, { metalness: 0.8, roughness: 0.3 });
+      const uHp = U('u_hp');
+      byX.forEach((j, k) => {
+        const xo = -2.76 + k * 0.04, t = j.top;
+        const pts = [[xo, 1.48, 0], [xo, 1.53, 0], [(xo + t.x) / 2, Math.max(1.53, t.y + 0.1), t.z * 0.5], [t.x, t.y + 0.05, t.z * 0.95], [t.x, t.y, t.z]];
+        hpPaths.push(pts);
+        uHp.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 30, 0.006, 6), hpM));
+      });
+      // drenaj: har bir qator forsunkalari tepasidan YuBYoN oldiga
+      for (const side of [-1, 1]) {
+        const row = inj.filter((j) => Math.sign(j.top.z) === side).sort((a, b) => a.top.x - b.top.x);
+        if (!row.length) continue;
+        const pts = [...row.map((j) => [j.top.x, j.top.y + 0.025, j.top.z]), [-2.4, row[0].top.y + 0.06, row[0].top.z * 0.6], [-2.4, 1.42, 0.03 * side]];
+        drainPaths.push(pts);
+        fs.add(pipe(pts, 0.006));
+      }
+    }
+    // qaytarish quvuri: YuBYoN dan baklarga
+    const ret = [[-2.4, 1.42, 0], [-2.1, 1.55, 0], [-1.85, 1.7, 0.4], [-1.8, 1.77, 0.7]];
+    const ret2 = [[-2.1, 1.55, 0], [-1.85, 1.7, -0.4], [-1.8, 1.77, -0.7]];
+    fs.add(pipe(ret, 0.009)); fs.add(pipe(ret2, 0.009));
+    root.userData.fuelPaths = { hp: hpPaths, drain: drainPaths, ret: [ret, ret2] };
     add('fuel', fs);
   }
+
+  // Moylash tizimi (ma'ruza 5/1): moy nasosi, filtrlar, issiqlik almashtirgich, quvurlar
+  add('oil', buildLubrication());
+  // Ishga tushirish: starter, kuch kabeli, elektrofakel (alangali shamlar)
+  const starter = buildStarter();
+  add('starter', starter);
+  root.userData.starterPinion = starter.getObjectByName('starterPinion');
+  root.userData.efFlames = starter.getObjectByName('efFlames');
+  root.userData.efFlames.traverse((o) => { if (o.isMesh) o.userData.part = 'starter'; });
 
 
   // Radiator dvigatel orqasida tik turadi, orqasida ventilyator (ma'ruzadagi sxema bo'yicha)
   add('radiator', buildRadiator());
-  add('radiator', buildCooling()); // nasos, termostat, bakcha, moy radiatori, gidromufta, shlanglar
+  const cooling = add('radiator', buildCooling()); // nasos, termostat, bakcha, moy radiatori, gidromufta, shlanglar
+  // moy radiatori va uning shlanglari moylash tizimiga tegishli
+  for (const n of ['u_oilrad', 'u_oilhose1', 'u_oilhose2']) cooling.getObjectByName(n)?.traverse((o) => { if (o.isMesh) o.userData.part = 'oil'; });
   // tomdagi jalyuzlar (radiatorga tegishli)
   for (let i = 0; i < 7; i++) {
     const louver = box(0.07, 0.03, 1.5, C.armorDark);

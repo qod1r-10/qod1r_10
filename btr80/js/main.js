@@ -12,6 +12,7 @@ import { addSignature, syncSignature } from './signature.js';
 import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 import { DEMOS, STROKES } from './demos.js';
 import { buildCoolFlow } from './coolflow.js';
+import { buildOilFlow, buildFuelFlow, buildStartFlow } from './systemflows.js';
 import { createDemoExplode } from './demoexplode.js';
 
 const $ = (s) => document.querySelector(s);
@@ -56,14 +57,7 @@ function fitPanel() {
   }
   // panel ichi ekran balandligiga teng: menyu doim to'liq ko'rinadi, matn sig'masa faqat yuqoridagi ma'lumot qismi aylanadi
   panelIn.style.height = (H / z) + 'px';
-  markInfoClip();
 }
-// ma'lumot qismi sig'masa, pastida xira o'tish ko'rsatiladi: "pastga suring" belgisi
-function markInfoClip() {
-  const el = $('#info');
-  el.classList.toggle('is-clipped', el.scrollHeight - el.scrollTop - el.clientHeight > 4);
-}
-$('#info').addEventListener('scroll', markInfoClip, { passive: true });
 function queueFit() { if (!fitQueued) { fitQueued = true; requestAnimationFrame(fitPanel); } }
 window.addEventListener('resize', queueFit);
 panelEl.addEventListener('load', queueFit, true);   // rasmlar yuklanganda balandlik o'zgaradi
@@ -226,9 +220,10 @@ const explode = createExplode(meshes);
 // Muallif yozuvi korpusning ikki yonida
 const signature = real ? await addSignature(real).catch((e) => { console.warn(e); return []; }) : [];
 // Sovutish suyuqligi oqimi ("Qo'shimcha" bo'limidagi namoyish uchun; qismlar ro'yxatiga kirmaydi)
-const coolFlow = buildCoolFlow();
-coolFlow.group.visible = false;
-interior.add(coolFlow.group);
+// Tizimlardagi oqimlar ("Qo'shimcha" namoyishlari uchun; qismlar ro'yxatiga kirmaydi)
+const flows = { cool: buildCoolFlow(), oil: buildOilFlow(), fuel: buildFuelFlow(interior.userData), start: buildStartFlow() };
+for (const f of Object.values(flows)) { f.group.visible = false; interior.add(f.group); }
+const GAS_DEMOS = new Set(['kshm', 'gtm', 'fuel', 'start']); // silindr ichidagi gaz ko'rinadigan namoyishlar
 const DEMO = new Map(DEMOS.map((d) => [d.id, d]));
 const demoExp = createDemoExplode(interior);
 const v8gas = interior.getObjectByName('v8gas'); // silindr ichidagi gaz (engine3d.js)
@@ -236,7 +231,9 @@ const meshByName = new Map();
 for (const m of meshes) if (m.name && !meshByName.has(m.name)) meshByName.set(m.name, m);
 
 /* ---------- Holat ---------- */
-const state = { cat: null, part: null, open: null, xray: false, demo: null, circuit: 'large', only: false };
+const state = { cat: null, part: null, open: null, xray: false, demo: null, only: false,
+  circuits: { cool: 'large', oil: 'main', fuel: 'feed', start: 'starter' } };
+const circuitOf = (id) => state.circuits[id];
 
 function focusIds() {
   if (state.part) return new Set([state.part]);
@@ -297,7 +294,8 @@ function selectCategory(id, { toggle = true } = {}) {
   render();
 }
 function selectPart(id, fromModel = false) {
-  if (!fromModel && window.matchMedia('(min-width: 861px)').matches) { $('.panel').scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' }); $('#info').scrollTop = 0; }
+  if (window.matchMedia('(min-width: 861px)').matches) $('.side-info').scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' });
+  else if (!fromModel) window.scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' }); // telefonda: menyudan tanlansa, model ko'rinadi
   const info = PART.get(id);
   if (!info) return;
   leaveDemo();
@@ -333,15 +331,18 @@ function selectDemo(id) {
   $('#btn-explode').title = "Faqat shu mexanizm yoki tizimning o'z qismlari ajraladi";
   $('#btn-only').hidden = false;
   $('#btn-only').setAttribute('aria-pressed', String(state.only));
-  coolFlow.group.visible = id === 'cool';
-  if (v8gas) v8gas.visible = id === 'kshm' || id === 'gtm';
-  coolFlow.setCircuit(state.circuit);
+  for (const [k, f] of Object.entries(flows)) f.group.visible = k === id;
+  if (flows[id]) flows[id].setCircuit(circuitOf(id));
+  if (v8gas) v8gas.visible = GAS_DEMOS.has(id);
   buildDemoLabels();
   applyMeshStates();
   // kamera: har bir namoyish uchun tanlangan burchakdan
   const b = new THREE.Box3();
-  [...D.show, ...D.xray].flatMap((p) => meshesByPart.get(p) || []).forEach((m) => b.expandByObject(m));
-  if (id === 'cool') b.expandByObject(coolFlow.group);
+  if (D.focus) b.set(new THREE.Vector3(...D.focus[0]), new THREE.Vector3(...D.focus[1])).applyMatrix4(interior.matrixWorld);
+  else {
+    [...D.show, ...D.xray].flatMap((p) => meshesByPart.get(p) || []).forEach((m) => b.expandByObject(m));
+    if (flows[id]) b.expandByObject(flows[id].group);
+  }
   const center = b.getCenter(new THREE.Vector3());
   const size = b.getSize(new THREE.Vector3()).length();
   const fov = THREE.MathUtils.degToRad(camera.fov);
@@ -349,15 +350,17 @@ function selectDemo(id) {
   const dir = new THREE.Vector3(...(D.view || [0.5, 0.5, 1])).normalize().transformDirection(interior.matrixWorld);
   flyTo(center.clone().addScaledVector(dir, dist), center, 1100);
   render();
-  $('#info').scrollTop = 0;
+  $('.side-info').scrollTop = 0;
+  if (!window.matchMedia('(min-width: 861px)').matches) window.scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' });
 }
 function leaveDemo() {
   if (!state.demo) return;
   state.demo = null;
   demoExp.reset();
   $('#btn-explode').setAttribute('aria-pressed', 'false');
-  coolFlow.group.visible = false;
+  for (const f of Object.values(flows)) f.group.visible = false;
   if (v8gas) v8gas.visible = false;
+  if (interior.userData.efFlames) interior.userData.efFlames.visible = false;
   state.only = false;
   $('#btn-only').hidden = true;
   $('#btn-explode').title = "BTR qismlarga ajralib havoda yoyiladi; qayta bosilsa yig'iladi";
@@ -367,8 +370,8 @@ function buildDemoLabels() {
   labelsEl.innerHTML = ''; demoLabels = [];
   const D = DEMO.get(state.demo);
   if (!D) return;
-  const list = state.demo === 'cool'
-    ? coolFlow.labels[state.circuit].map((l) => ({ ...l, local: new THREE.Vector3(...l.pos) }))
+  const list = flows[state.demo]
+    ? flows[state.demo].labels[circuitOf(state.demo)].map((l) => ({ ...l, local: new THREE.Vector3(...l.pos) }))
     : (D.labels || []).map((l) => ({ ...l, at: l.at || [0.5, 0.5, 0.5], obj: l.gas !== undefined ? (v8gas && v8gas.children[l.gas]) : meshByName.get(l.mesh) })).filter((l) => l.obj);
   // modelda faqat raqam; nomlari paneldagi ro'yxatda shu raqam bilan
   for (const l of list) {
@@ -433,13 +436,14 @@ function demoHTML(D) {
   let h = `<p class="eyebrow">Qo'shimcha · ${esc(D.kind)}</p><h2>${esc(D.name)}</h2><p>${esc(D.desc)}</p>`;
   if (D.circuits) {
     h += `<div class="seg" role="group" aria-label="Suyuqlik aylanish doirasi">${Object.entries(D.circuits).map(([k, c]) =>
-      `<button type="button" class="seg-btn" data-circuit="${k}" aria-pressed="${state.circuit === k}">${esc(c.title)}</button>`).join('')}</div>`;
-    const c = D.circuits[state.circuit];
-    h += `<p class="circ-when">${esc(c.when)}</p><ol class="steps">${c.steps.map((s, i) => i === c.steps.length - 1
+      `<button type="button" class="seg-btn" data-circuit="${k}" aria-pressed="${circuitOf(D.id) === k}">${esc(c.title)}</button>`).join('')}</div>`;
+    const c = D.circuits[circuitOf(D.id)];
+    // kichik harf bilan boshlangan qadam — boshiga qaytish (masalan, "yana suyuqlik nasosiga")
+    h += `<p class="circ-when">${esc(c.when)}</p><ol class="steps">${c.steps.map((s, i) => /^[a-z]/.test(s)
       ? `<li class="back" data-n="↺">${esc(s)}</li>` : `<li data-n="${i + 1}">${esc(s)}</li>`).join('')}</ol>`;
-    const extra = coolFlow.labels[state.circuit].filter((l) => typeof l.n === 'string');
+    const extra = flows[D.id].labels[circuitOf(D.id)].filter((l) => typeof l.n === 'string');
     if (extra.length) h += `<ul class="steps steps-side">${extra.map((l) => `<li data-n="${esc(l.n)}">${esc(l.text)}</li>`).join('')}</ul>`;
-    h += `<p class="swatches"><span><i class="sw sw-hot"></i>issiq</span><span><i class="sw sw-warm"></i>iliq</span><span><i class="sw sw-cold"></i>radiatorda sovigan</span></p>`;
+    if (D.swatches) h += `<p class="swatches">${D.swatches.map(([c, t]) => `<span><i class="sw" style="background:${c}"></i>${esc(t)}</span>`).join('')}</p>`;
   }
   if (D.live) {
     h += `<div class="live" id="demo-live"><p class="eyebrow">1-silindr hozir</p><div class="strokes">${STROKES.map(([n]) => `<span class="stroke">${esc(n)}</span>`).join('')}</div><p class="live-text"></p></div>`;
@@ -479,12 +483,14 @@ $('#lightbox').addEventListener('click', (e) => { if (e.target.id === 'lightbox'
 
 function extraHTML() {
   const open = state.open === '_extra';
-  const items = open ? `<ul class="parts" id="parts-extra">${DEMOS.map((d) => `
+  const item = (d) => `
       <li><button class="part${state.demo === d.id ? ' is-active' : ''}" data-demo="${d.id}" aria-pressed="${state.demo === d.id}">
-        <span class="dot" aria-hidden="true"></span>${esc(d.name)}</button></li>`).join('')}</ul>` : '';
+        <span class="dot" aria-hidden="true"></span>${esc(d.name)}</button></li>`;
+  const group = (kind, title) => `<li class="sub-h">${title}</li>${DEMOS.filter((d) => d.kind === kind).map(item).join('')}`;
+  const items = open ? `<ul class="parts" id="parts-extra">${group('Mexanizm', 'Mexanizmlar')}${group('Tizim', 'Tizimlar')}</ul>` : '';
   return `<li class="cat cat-extra${state.demo ? ' is-active' : ''}${open ? ' is-open' : ''}">
     <button class="cat-btn" data-extra="1" aria-expanded="${open}" aria-controls="parts-extra">
-      <span class="cat-name">Qo'shimcha: mexanizmlar va tizimlar</span>
+      <span class="cat-name">Qo'shimcha: dvigatel mexanizmlari va tizimlari</span>
       <span class="count">${DEMOS.length}</span>
       <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>${items}</li>`;
@@ -540,7 +546,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.cat) selectCategory(t.dataset.cat);
   else if (t.dataset.extra) { state.open = state.open === '_extra' ? null : '_extra'; render(); }
   else if (t.dataset.demo) selectDemo(t.dataset.demo);
-  else if (t.dataset.circuit) { state.circuit = t.dataset.circuit; coolFlow.setCircuit(state.circuit); buildDemoLabels(); render(); }
+  else if (t.dataset.circuit && state.demo) { state.circuits[state.demo] = t.dataset.circuit; flows[state.demo].setCircuit(t.dataset.circuit); buildDemoLabels(); render(); }
   else if (t.dataset.part) selectPart(t.dataset.part);
   else if (t.dataset.catCrumb) selectCategory(t.dataset.catCrumb, { toggle: false });
   else if (t.dataset.act === 'home') resetView();
@@ -710,9 +716,19 @@ function frame() {
   demoExp.apply(dt, reduceMotion);
   // yoyilgan holatda oqim va gaz yashiriladi (ular qismlar bilan birga ajralmaydi)
   const assembled = demoExp.state.p < 0.02;
-  coolFlow.group.visible = state.demo === 'cool' && assembled;
-  if (v8gas) v8gas.visible = (state.demo === 'kshm' || state.demo === 'gtm') && assembled;
-  if (state.demo === 'cool') coolFlow.update(dt, drive.state.slow ? 0.08 : 0.32);
+  for (const [k, f] of Object.entries(flows)) f.group.visible = state.demo === k && assembled;
+  if (v8gas) v8gas.visible = GAS_DEMOS.has(state.demo) && assembled;
+  if (flows[state.demo]) flows[state.demo].update(dt, drive.state.slow ? 0.08 : 0.32);
+  // starter shesternyasi maxovik gardishi bilan ilashib aylanadi; sovuq havoda alangali shamlar yonadi
+  const ud = interior.userData;
+  if (state.demo === 'start') {
+    if (ud.starterPinion) ud.starterPinion.rotation.x = -drive.state.crank * 7.8;
+    if (ud.efFlames) {
+      ud.efFlames.visible = circuitOf('start') === 'cold' && assembled;
+      const fl = 0.85 + 0.25 * Math.sin(t * 23) * Math.sin(t * 7.3);
+      ud.efFlames.children.forEach((c) => c.scale.set(1, fl, 1));
+    }
+  }
   controls.update();
 
   const pulse = reduceMotion ? 0.45 : 0.38 + 0.22 * Math.sin(t * 3.4);

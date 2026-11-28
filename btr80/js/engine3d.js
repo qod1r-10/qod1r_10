@@ -153,6 +153,32 @@ export function buildV8(asset, kamaz) {
     gasCols.push({ m, c, i, d, top, z: (zMin + zMax) / 2 });
   });
   const SMAX = R + L, CLEAR = 0.9;
+  // Forsunkalar (ta'minlash tizimi): har bir silindr kallagida, silindr o'qi bo'ylab; uchidan yoqilg'i purkaladi
+  inner.updateMatrix();
+  const injectors = [];
+  const injM = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, metalness: 0.85, roughness: 0.3 });
+  const injCapM = new THREE.MeshStandardMaterial({ color: 0x3a3d40, metalness: 0.6, roughness: 0.4 });
+  const sprayM = new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false });
+  const IL = 0.11 / K, IR = 0.011 / K;
+  for (const g of gasCols) {
+    const dir3 = new THREE.Vector3(g.d.x, g.d.y, 0);
+    const tip = new THREE.Vector3(cAx.x + g.d.x * (SMAX + g.top + CLEAR), cAx.y + g.d.y * (SMAX + g.top + CLEAR), g.z);
+    const q = new THREE.Quaternion().setFromUnitVectors(unitY, dir3);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(IR * 0.75, IR, IL, 14), injM);
+    body.quaternion.copy(q); body.position.copy(tip).addScaledVector(dir3, IL / 2);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(IR * 1.2, IR * 1.2, IL * 0.18, 14), injCapM);
+    cap.quaternion.copy(q); cap.position.copy(tip).addScaledVector(dir3, IL * 0.85);
+    for (const m of [body, cap]) { m.userData.part = 'fuel'; m.name = 'injector_' + g.i; inner.add(m); }
+    // purkalayotgan yoqilg'i (faqat namoyishda, ish yo'li boshida ko'rinadi)
+    const spray = new THREE.Mesh(new THREE.ConeGeometry(0.02 / K, 0.055 / K, 16, 1, true), sprayM);
+    spray.quaternion.copy(q); spray.position.copy(tip).addScaledVector(dir3, -0.0275 / K);
+    spray.renderOrder = 8; spray.raycast = () => {}; spray.userData.noReg = true; spray.visible = false;
+    gas.add(spray);
+    g.spray = spray;
+    const top = tip.clone().addScaledVector(dir3, IL).applyMatrix4(inner.matrix);
+    const tipR = tip.clone().applyMatrix4(inner.matrix);
+    injectors.push({ cyl: g.i, top, tip: tipR });
+  }
   const cA = new THREE.Color(0x59b6ff), cB = new THREE.Color(0xd2f2ff), cF = new THREE.Color(0xfff2a0), cP = new THREE.Color(0xff6a1a), cQ = new THREE.Color(0xb0301a), cE = new THREE.Color(0x8d8478);
   function updateGas(theta) {
     if (!gas.visible) return;
@@ -170,10 +196,11 @@ export function buildV8(asset, kamaz) {
       else if (k === 1) { mt.color.copy(cA).lerp(cB, t); mt.opacity = 0.32 + 0.33 * t; }
       else if (k === 2) { if (t < 0.25) mt.color.copy(cF).lerp(cP, t / 0.25); else mt.color.copy(cP).lerp(cQ, (t - 0.25) / 0.75); mt.opacity = 0.9 - 0.35 * t; }
       else { mt.color.copy(cE); mt.opacity = 0.5 - 0.25 * t; }
+      if (g.spray) g.spray.visible = (k === 1 && t > 0.9) || (k === 2 && t < 0.14);
     }
   }
 
 
   update(0);
-  return { root, update: (theta) => { update(theta); updateGas(theta); }, gas };
+  return { root, update: (theta) => { update(theta); updateGas(theta); }, gas, injectors };
 }

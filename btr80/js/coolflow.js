@@ -21,17 +21,18 @@ function arrowTexture() {
   return t;
 }
 
-export function buildCoolFlow() {
+// Umumiy oqim to'plami (sovutish, moylash, ta'minlash uchun): har bir doira — alohida guruh,
+// seg() bilan yo'l bo'laklari qo'shiladi, update() strelkalarni suradi.
+export function makeFlow(name, keys) {
   const group = new THREE.Group();
-  group.name = 'coolflow';
+  group.name = name;
   const tex = arrowTexture();
   const mat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, transparent: true, depthWrite: false, toneMapped: false });
-  const sets = { small: new THREE.Group(), large: new THREE.Group() };
-  group.add(sets.small, sets.large);
-
+  const sets = {};
+  for (const k of keys) { sets[k] = new THREE.Group(); group.add(sets[k]); }
   // bitta yo'l bo'lagi: nuqtalar, boshlang'ich va oxirgi rang
-  function seg(target, pts, c0, c1, r = 0.013) {
-    const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)), false, 'centripetal');
+  function seg(key, pts, c0, c1 = c0, r = 0.013) {
+    const curve = new THREE.CatmullRomCurve3(pts.map((p) => (p.isVector3 ? p.clone() : new THREE.Vector3(...p))), false, 'centripetal');
     const len = curve.getLength();
     const tubular = Math.max(12, Math.round(len / 0.025));
     const radial = 8;
@@ -48,8 +49,19 @@ export function buildCoolFlow() {
     const m = new THREE.Mesh(geo, mat);
     m.renderOrder = 6;
     m.raycast = () => {};
-    target.add(m);
+    sets[key].add(m);
   }
+  let circuit = keys[0];
+  function setCircuit(c) { circuit = c; for (const k of keys) sets[k].visible = k === c; }
+  setCircuit(keys[0]);
+  function update(dt, speed) { tex.offset.x -= dt * speed / SPACING; }
+  return { group, sets, seg, setCircuit, update, get circuit() { return circuit; } };
+}
+
+export function buildCoolFlow() {
+  const F = makeFlow('coolflow', ['large', 'small']);
+  const seg = (target, pts, c0, c1, r) => F.seg(target === 'small' ? 'small' : 'large', pts, c0, c1, r);
+  const sets = { small: 'small', large: 'large' };
 
   // Dvigatel ichidagi yo'l (ikkala doirada bir xil, faqat rangi farq qiladi):
   // nasos -> blok g'ilofi (orqaga) -> kallak g'ilofi (oldinga) -> suv yig'uvchi quvur -> termostat
@@ -83,10 +95,6 @@ export function buildCoolFlow() {
   seg(sets.large, [[RX, bots, 0.38], [RX, bots, 0], [RX, bots, -0.3]], COLD, COLD);
   seg(sets.large, [[RX, bots, -0.3], [-3.42, 1.13, -0.3], [-3.36, 1.05, -0.2], [-3.3, 1.0, -0.08], PUMP], COLD, COLD);
 
-  let circuit = 'large';
-  function setCircuit(c) { circuit = c; sets.small.visible = c === 'small'; sets.large.visible = c === 'large'; }
-  setCircuit('large');
-  function update(dt, speed) { tex.offset.x -= dt * speed / SPACING; }
 
   // Raqamli yorliqlar: suyuqlik o'tadigan qismlar tartibi bilan (paneldagi ro'yxat bilan bir xil).
   // unit — yoyilmada yorliq qaysi bo'lak bilan birga siljishi.
@@ -111,5 +119,5 @@ export function buildCoolFlow() {
       L('B', 'Ventilyator', [RX - 0.2, RY - 0.42, 0], 'u_fan'),
     ],
   };
-  return { group, setCircuit, update, labels, get circuit() { return circuit; } };
+  return { group: F.group, setCircuit: F.setCircuit, update: F.update, labels, get circuit() { return F.circuit; } };
 }
