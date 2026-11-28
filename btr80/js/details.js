@@ -387,6 +387,12 @@ export function buildCooling() {
   g.add(pipe([[-3.15, 1.63, 0.5], [-3.1, 1.3, 0.35], [-3.28, 1.02, 0.08]], 0.016));
   g.add(pipe([[-3.46, 1.3, -0.66], [-3.3, 1.05, -0.5], [-3.1, 0.85, -0.32]], 0.02));
   g.add(pipe([[-3.46, 1.62, -0.66], [-3.25, 1.5, -0.5], [-3.0, 1.3, -0.35]], 0.02));
+  // dvigatelga ulanish: ikki qator kallagidan termostatga suv yig'uvchi quvurlar (metall)
+  const steelPipe = (pts, r) => { const m = pipe(pts, r); m.material = M(0x8c9196, { metalness: 0.7, roughness: 0.35 }); return m; };
+  g.add(steelPipe([[-3.24, 1.18, 0.3], [-3.27, 1.24, 0.3], [-3.25, 1.31, 0.3], [-3.22, 1.37, 0.3]], 0.024));
+  g.add(steelPipe([[-3.24, 1.18, -0.3], [-3.27, 1.25, -0.28], [-3.24, 1.34, -0.14], [-3.21, 1.38, 0.05], [-3.21, 1.39, 0.2], [-3.22, 1.4, 0.27]], 0.024));
+  // termostatdan nasosga aylanib o'tish (kichik doira) shlangi
+  g.add(pipe([[-3.22, 1.38, 0.3], [-3.24, 1.24, 0.27], [-3.27, 1.1, 0.16], [-3.29, 1.02, 0.08], [-3.3, 0.98, 0.04]], 0.026));
   return g;
 }
 

@@ -282,6 +282,59 @@ button { font: inherit; color: inherit; }
 .lb-cap p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
 .lb-close { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-size: 16px; cursor: pointer; }
 
+/* "Qo'shimcha" namoyishi: modeldagi raqamli yorliqlar */
+.dlabels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.dl {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 9px 3px 3px;
+  border-radius: 99px;
+  background: rgb(14 16 11 / 0.82);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  color: #eef0e6;
+  font: 600 12.5px/1.2 var(--font-body);
+  white-space: nowrap;
+}
+.dl b {
+  display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #f2a33a; color: #1b1405;
+  font: 700 12px/1 var(--font-mono);
+}
+.dl-side { padding-left: 9px; color: #c9cdbf; font-weight: 500; }
+/* Namoyish paneli: doira tanlovi, qadamlar, ranglar, takt ko'rsatkichi */
+.seg { display: flex; margin: 10px 0 8px; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg-btn { flex: 1; border: 0; background: none; padding: 8px 10px; font: 600 15px/1.2 var(--font-display); letter-spacing: 0.02em; color: var(--muted); cursor: pointer; }
+.seg-btn + .seg-btn { border-left: 1px solid var(--line); }
+.seg-btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.circ-when { font-size: 13.5px; }
+.steps { margin: 6px 0 8px; padding: 0; list-style: none; counter-reset: st; display: grid; gap: 3px; }
+.steps li { counter-increment: st; display: flex; align-items: baseline; gap: 8px; font-size: 14px; }
+.steps li::before {
+  content: counter(st); flex: none;
+  display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--hl); color: #1b1405; font: 700 11.5px/1 var(--font-mono);
+}
+.steps li.back { color: var(--muted); font-style: italic; }
+.steps li.back::before { content: "↺"; background: none; color: var(--muted); border: 1px solid var(--line); }
+.swatches { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+.swatches span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 18px; height: 6px; border-radius: 3px; }
+.sw-hot { background: #ff3b1f; } .sw-warm { background: #ffb02e; } .sw-cold { background: #2f9bff; }
+.live { margin: 10px 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; }
+.strokes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
+.stroke { text-align: center; padding: 5px 2px; border-radius: 4px; background: var(--accent-soft); font: 600 13px/1.2 var(--font-display); color: var(--muted); }
+.stroke.is-on { background: var(--hl); color: #1b1405; }
+.live-text { margin: 6px 0 0; font-size: 13px; min-height: 2.6em; }
+.demo-link {
+  margin: 4px 0 8px; padding: 7px 12px;
+  border: 1px solid var(--accent); border-radius: 6px;
+  background: var(--accent-soft); color: var(--fg);
+  font: 600 15px/1.2 var(--font-display); letter-spacing: 0.02em; cursor: pointer;
+}
+.demo-link:hover { background: var(--accent); color: var(--surface); }
+.cat-extra { margin-top: 6px; border-top: 1px dashed var(--line); padding-top: 6px; }
+
 /* O'ng panel */
 .panel {
   min-height: 0;
@@ -430,6 +483,9 @@ button { font: inherit; color: inherit; }
   .crumbs, .info, .list-title, .foot { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .cats { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .legend { display: none; }
+  /* telefonda modeldagi yorliqlar faqat raqam bilan; nomlari paneldagi ro'yxatda */
+  .dl-num span, .dl-side { display: none; }
+  .dl-num { padding: 2px; }
   .fig-img img { max-height: 260px; }
   .hud { left: 8px; bottom: 8px; padding: 8px 10px; gap: 4px 10px; grid-template-columns: auto auto; max-width: calc(100% - 190px); }
   .hud .rpm, .hud .keys { display: none; }
