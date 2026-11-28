@@ -14,6 +14,45 @@ import { VEHICLE, CATEGORIES, FIGS } from './parts.js';
 const $ = (s) => document.querySelector(s);
 // Oflayn (bitta fayl) versiyada fayllar ichki xotiradan olinadi
 const asset = (p) => (window.__asset ? window.__asset(p) : p);
+
+/* ---------- O'ng panelni ekranga sig'dirish ----------
+   Yotiq va past ekranlarda (masalan, sensorli interaktiv doska) panel ichidagi hamma narsa — ma'lumot va
+   "Asosiy qismlar" ro'yxati — aylantirmasdan ko'rinishi uchun panel ichi zoom bilan kichraytiriladi. */
+const panelEl = $('.panel'), panelIn = $('.panel-in');
+const FIT_MIN = 0.72;
+let fitQueued = false;
+function fitPanel() {
+  fitQueued = false;
+  panelIn.style.zoom = '';
+  panelIn.style.height = '';
+  if (!window.matchMedia('(min-width: 861px)').matches) return;
+  const H = panelEl.clientHeight;
+  if (!H) return;
+  let z = 1;
+  for (let i = 0; i < 6; i++) {
+    const need = panelEl.scrollHeight; // panel ichining haqiqiy (kichraytirilgan) balandligi
+    if (need <= H + 1) break;
+    const nz = Math.max(FIT_MIN, z * (H / need) * (i ? 0.99 : 1));
+    if (Math.abs(nz - z) < 0.002) break;
+    z = nz;
+    panelIn.style.zoom = String(z);
+    if (z === FIT_MIN) break;
+  }
+  // panel ichi ekran balandligiga teng: menyu doim to'liq ko'rinadi, matn sig'masa faqat yuqoridagi ma'lumot qismi aylanadi
+  panelIn.style.height = (H / z) + 'px';
+  markInfoClip();
+}
+// ma'lumot qismi sig'masa, pastida xira o'tish ko'rsatiladi: "pastga suring" belgisi
+function markInfoClip() {
+  const el = $('#info');
+  el.classList.toggle('is-clipped', el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+}
+$('#info').addEventListener('scroll', markInfoClip, { passive: true });
+function queueFit() { if (!fitQueued) { fitQueued = true; requestAnimationFrame(fitPanel); } }
+window.addEventListener('resize', queueFit);
+panelEl.addEventListener('load', queueFit, true);   // rasmlar yuklanganda balandlik o'zgaradi
+panelEl.addEventListener('toggle', queueFit, true); // "Belgilar" ochilganda
+if (document.fonts) document.fonts.ready.then(queueFit);
 const viewer = $('#viewer');
 const tagEl = $('#tag');
 const tipEl = $('#tip');
@@ -222,7 +261,7 @@ function selectCategory(id, { toggle = true } = {}) {
   render();
 }
 function selectPart(id, fromModel = false) {
-  if (!fromModel && window.matchMedia('(min-width: 861px)').matches) $('.panel').scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' });
+  if (!fromModel && window.matchMedia('(min-width: 861px)').matches) { $('.panel').scrollTo({ top: 0, behavior: reduceMotionPref() ? 'auto' : 'smooth' }); $('#info').scrollTop = 0; }
   const info = PART.get(id);
   if (!info) return;
   state.part = id; state.cat = info.cat.id; state.open = info.cat.id;
@@ -303,6 +342,7 @@ function render() {
   }).join('');
 
   $('#btn-reset').disabled = false; // har doim ishlaydi: qo'lda aylantirilgan kamerani ham qaytaradi
+  queueFit();
 }
 
 document.addEventListener('click', (e) => {

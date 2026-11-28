@@ -1,32 +1,22 @@
 /* Layout: chap tomonda to'liq balandlikdagi 3D ko'rinish, o'ngda qismlar paneli; telefonda ustma-ust. */
 :root {
-  --bg: #e7e9e0;
-  --surface: #f4f5ef;
-  --line: #cfd3c3;
-  --fg: #1e2218;
-  --muted: #5d6452;
-  --accent: #55652c;
-  --accent-soft: #dfe5cc;
-  --hl: #d98613;
-  --grid: #b9bea9;
-  --stage-top: #f1f2ec;
-  --stage-bottom: #d9dccf;
+  /* Sayt doim bitta, tungi (yashil-qora) ko'rinishda: kunduzgi rejim yo'q */
+  --bg: #12150f;
+  --surface: #191d15;
+  --line: #2c3225;
+  --fg: #e3e6d9;
+  --muted: #9aa18b;
+  --accent: #a9bb6c;
+  --accent-soft: #283019;
+  --hl: #f2a33a;
+  --grid: #343b2b;
+  --stage-top: #1c2017;
+  --stage-bottom: #0e100b;
   --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --panel-w: 400px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #12150f; --surface: #191d15; --line: #2c3225; --fg: #e3e6d9; --muted: #9aa18b;
-    --accent: #a9bb6c; --accent-soft: #283019; --hl: #f2a33a; --grid: #343b2b;
-    --stage-top: #1c2017; --stage-bottom: #0e100b; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #12150f; --surface: #191d15; --line: #2c3225; --fg: #e3e6d9; --muted: #9aa18b;
-  --accent: #a9bb6c; --accent-soft: #283019; --hl: #f2a33a; --grid: #343b2b;
-  --stage-top: #1c2017; --stage-bottom: #0e100b; color-scheme: dark;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -233,9 +223,9 @@ button { font: inherit; color: inherit; }
 
 /* Ma'ruza rasmlari */
 .figs { margin-top: 14px; display: grid; gap: 12px; }
-.fig { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
-.fig-img { display: block; width: 100%; padding: 0; border: 0; background: #fff; cursor: zoom-in; }
-.fig-img img { display: block; width: 100%; max-height: 260px; object-fit: contain; }
+.fig { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--stage-bottom); }
+.fig-img { display: block; width: 100%; padding: 0; border: 0; background: var(--stage-bottom); cursor: zoom-in; }
+.fig-img img { display: block; width: auto; max-width: 100%; height: auto; max-height: 190px; margin: 0 auto; }
 .fig figcaption { padding: 8px 10px 10px; background: var(--surface); border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; }
 .fig figcaption b { display: block; font-weight: 600; }
 .fig details { margin-top: 4px; }
@@ -260,9 +250,10 @@ button { font: inherit; color: inherit; }
   overflow-y: auto;
   border-left: 1px solid var(--line);
   background: var(--surface);
-  display: flex;
-  flex-direction: column;
 }
+/* Panel ichi: ekran past bo'lsa (masalan, yotiq interaktiv doska), main.js uni zoom bilan kichraytirib,
+   qismlar ro'yxatini aylantirmasdan to'liq sig'diradi */
+.panel-in { display: flex; flex-direction: column; }
 .crumbs {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
   padding: 12px 18px 0;
@@ -309,20 +300,20 @@ button { font: inherit; color: inherit; }
 
 .list-title {
   margin: 0;
-  padding: 14px 18px 6px;
+  padding: 10px 18px 4px;
   font: 600 12px var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.cats { list-style: none; margin: 0; padding: 0 10px 18px; }
+.cats { list-style: none; margin: 0; padding: 0 10px 10px; }
 .cat-btn {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 10px;
-  padding: 10px 10px;
+  padding: 7px 10px;
   border: 0;
   border-radius: 6px;
   background: none;
@@ -363,10 +354,24 @@ button { font: inherit; color: inherit; }
 
 .foot {
   margin-top: auto;
-  padding: 12px 18px 16px;
+  padding: 10px 18px 12px;
   border-top: 1px solid var(--line);
   font-size: 12px;
   color: var(--muted);
+}
+.foot p { margin: 0; }
+.foot details { margin-top: 4px; }
+.foot summary { cursor: pointer; color: var(--accent); }
+.foot details p { margin-top: 4px; }
+
+/* Katta ekran: panel ichi ustun; menyu va pastki yozuv qisqarmaydi, sig'masa faqat ma'lumot qismi aylanadi */
+@media (min-width: 861px) {
+  .crumbs, .list-title, .cats, .foot { flex: none; }
+  .info { flex: 1 1 auto; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; }
+  .info.is-clipped {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+  }
 }
 
 /* Telefon va planshet */
@@ -385,6 +390,7 @@ button { font: inherit; color: inherit; }
   .crumbs, .info, .list-title, .foot { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .cats { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .legend { display: none; }
+  .fig-img img { max-height: 260px; }
   .hud { left: 8px; bottom: 8px; padding: 8px 10px; gap: 4px 10px; grid-template-columns: auto auto; max-width: calc(100% - 190px); }
   .hud .rpm, .hud .keys { display: none; }
   .speed { font-size: 32px; }
